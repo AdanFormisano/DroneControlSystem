@@ -16,4 +16,5 @@ Si progetti il centro di controllo per una formazione di droni che deve sorvegli
 - C++.
 - Redis
 - PostgreSQL
+- spdlog (https://github.com/gabime/spdlog)
 
