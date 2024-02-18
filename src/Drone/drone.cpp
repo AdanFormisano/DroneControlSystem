@@ -2,7 +2,6 @@
 // It sends status updates
 
 #include "spdlog/spdlog.h"
-#include <sw/redis>
 
 class Drone {
 public:
