@@ -13,8 +13,7 @@ Si progetti il centro di controllo per una formazione di droni che deve sorvegli
 5. Monitors per almeno due proprietà non funzionali
 
 ## Dipendenze e software usato
-- C++.
-- Redis
+- C++
+- redis-plus-plus (https://github.com/sewenew/redis-plus-plus)
 - PostgreSQL
 - spdlog (https://github.com/gabime/spdlog)
-
