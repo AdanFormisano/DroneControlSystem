@@ -5,10 +5,14 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(DroneControlSystem
         src/main.cpp
-        src/main.h
-        src/DroneControl.cpp
         utils/utils.cpp
-        utils/utils.h)
+        utils/utils.h
+        src/DroneControl.cpp
+        src/DroneControl.h
+        src/Drone.cpp
+        src/Drone.h
+        utils/RedisUtils.cpp
+        utils/RedisUtils.h)
 
 # Add spdlog dependency
 include(FetchContent)

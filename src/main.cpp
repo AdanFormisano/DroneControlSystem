@@ -1,22 +1,19 @@
+#include "DroneControl.h"
 #include <spdlog/spdlog.h>
-#include <sw/redis++/redis++.h>
-#include "../utils/utils.h"
-
-using namespace sw::redis;
-
-int SystemStart() {
-    spdlog::info("System starting");
-
-    spdlog::info("Connecting to Redis");
-    auto redis = Redis("tcp://127.0.0.1:7777");
-
-    utils::RedisConnectionCheck(redis);
-
-    return 0;
-}
+#include "Drone.h"
 
 int main() {
-    SystemStart();
+    // Start DroneControl
+    DroneControl droneControl;
+
+    // For testing purposes create a single drone
+    spdlog::info("Creating a test drone");
+    drones::Drone testDrone;
+    spdlog::info("Test drone {} created", testDrone.getId());
+
+    // Start ChargingBase
+
+    //Start MovementControl
 
     return 0;
 }
