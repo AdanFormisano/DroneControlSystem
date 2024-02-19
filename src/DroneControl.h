@@ -17,10 +17,7 @@ private:
 
 public:
     DroneControl();
-
-    // Get drone status from Redis
-    DroneData getDroneStatusFromRedis(int id);
-
+    DroneData getDroneData(int id); // Get drone data from Redis
 };
 
 #endif //DRONECONTROLSYSTEM_DRONECONTROL_H
