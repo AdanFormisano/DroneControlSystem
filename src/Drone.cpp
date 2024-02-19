@@ -7,16 +7,14 @@ using namespace sw::redis;
 
 // TODO: Check if namespace is necessary
 namespace drones {
-    int Drone::nextId = 0;
-
-
-    Drone::Drone() : id(nextId++) {
-        spdlog::info("Drone {} starting", id);
-        const std::string key = "drone:" + std::to_string(id);
+    Drone::Drone(int id) : id(id), redis("tcp://127.0.0.1:7777") {
+        // id = 1;
         data = "Wendy is a sleepy cat.";
 
+        spdlog::info("Drone {} starting", id);
+        key = "drone:" + std::to_string(id);
+
         // TODO: This should be a sub/pub connection
-        auto redis = Redis("tcp://127.0.0.1:7777");
         utils::RedisConnectionCheck(redis, key);
 
         // Add a drone to Redis
@@ -25,11 +23,13 @@ namespace drones {
         redis.hset(key, "status", "idle");
     }
 
+
     int Drone::getId() const {
         return id;
     }
 
-    int Drone::uploadData(Redis &redis, std::string& key) const {
+    // Maybe better way to upload data to Redis?
+    int Drone::uploadData() {
         // TODO: Use try/catch, maybe?
         redis.hset(key, "data", data);
 
