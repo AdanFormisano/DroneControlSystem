@@ -1,28 +1,38 @@
-#include "DroneControl.h"
 #include <spdlog/spdlog.h>
-#include "Drone.h"
-
-using namespace sw::redis;
+#include <unistd.h>
+#include "DroneControl.h"
 
 int main() {
-    // Start DroneControl
-    DroneControl droneControl;
+    // Fork to create the Drone and DroneControl processes
+    pid_t pidDroneControl = fork();
 
-    // For testing purposes create a single drone
-    spdlog::info("Creating a test drone");
-    drones::Drone testDrone(1);
-    spdlog::info("Test drone {} created", testDrone.getId());
-    
-    // Get drone data from Redis
-    DroneData data = droneControl.getDroneData(testDrone.getId());
-    spdlog::info("Drone {} status: {}", data.id, data.status);
+    if (pidDroneControl == -1) {
+        spdlog::error("Fork for DroneControl failed");
+        return 1;
+    } else if (pidDroneControl == 0) {
+        // In child DroneControl process
+        spdlog::info("Drone Control process starting");
+        drone_control::DroneControl droneControl;
+    } else {
+        // In parent process create new child Drone process
+        pid_t pidDrone = fork();
 
-    // Upload data from drone to Redis
-    testDrone.uploadData();
+        if (pidDrone == -1) {
+            spdlog::error("Fork for Drone failed");
+            return 1;
+        } else if (pidDrone == 0) {
+            // In child Drone process
+            spdlog::info("Drone process starting");
+            // "Drone process" class here
+        } else {
+            // In parent process
+//            spdlog::info("Parent process waiting for children to finish");
+//            waitpid(pidDroneControl, nullptr, 0);
+//            waitpid(pidDrone, nullptr, 0);
 
-    // Start ChargingBase
-
-    //Start MovementControl
+            // Here should be the monitor and simulation processes (should stay in the main process?)
+        }
+    }
 
     return 0;
 }
