@@ -7,12 +7,13 @@ add_executable(DroneControlSystem
         src/main.cpp
         utils/utils.cpp
         utils/utils.h
-        src/DroneControl.cpp
-        src/DroneControl.h
-        src/Drone.cpp
-        src/Drone.h
+        src/DroneControl/DroneControl.cpp
+        src/DroneControl/DroneControl.h
+        src/Drone/Drone.cpp
+        src/Drone/Drone.h
         utils/RedisUtils.cpp
-        utils/RedisUtils.h)
+        utils/RedisUtils.h
+)
 
 # Add spdlog dependency
 include(FetchContent)
