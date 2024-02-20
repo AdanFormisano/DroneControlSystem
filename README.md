@@ -14,6 +14,6 @@ Si progetti il centro di controllo per una formazione di droni che deve sorvegli
 
 ## Dipendenze e software usato
 - C++
-- redis-plus-plus (https://github.com/sewenew/redis-plus-plus)
 - PostgreSQL
+- redis-plus-plus (https://github.com/sewenew/redis-plus-plus)
 - spdlog (https://github.com/gabime/spdlog)
