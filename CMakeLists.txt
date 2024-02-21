@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(DroneControlSystem
         src/main.cpp
-        utils/utils.cpp
-        utils/utils.h
         src/DroneControl/DroneControl.cpp
         src/DroneControl/DroneControl.h
         src/Drone/Drone.cpp

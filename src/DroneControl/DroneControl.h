@@ -16,7 +16,7 @@ namespace drone_control {
     public:
         Redis redis = Redis("tcp://127.0.0.1:7777");
         DroneControl();
-        void start();
+        void Init();
     };
 } // drone_control
 

@@ -19,4 +19,15 @@ namespace utils {
 
         return 0;
     }
+
+    long long RedisGetClientID(Redis& redis) {
+        try {
+            auto clientID = redis.command<long long>("CLIENT", "ID");
+            return clientID;
+        }
+        catch (const sw::redis::IoError& e) {
+            spdlog::error("Couldn't get ID: {}", e.what());
+            return -1;
+        }
+    }
 }

@@ -5,8 +5,8 @@
 namespace drone_control {
     DroneControl::DroneControl() = default;
 
-    void DroneControl::start() {
-        spdlog::info("Drone Control starting");
+    void DroneControl::Init() {
+        // spdlog::info("Drone Control starting");
         utils::RedisConnectionCheck(redis, "Drone Control");
     }
 

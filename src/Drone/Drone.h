@@ -21,7 +21,13 @@ namespace drones {
         Drone(int, Redis& sharedRedis);    // Constructor
         [[nodiscard]] int getId() const;
         int uploadData();
+
+
     };
+
+    // This initializes the drone PROCESS
+    // TODO: Check if drone process class is needed
+    int Init();
 } // drones
 
 #endif //DRONECONTROLSYSTEM_DRONE_H
