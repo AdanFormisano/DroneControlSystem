@@ -14,10 +14,11 @@ namespace drone_control {
 
     class DroneControl {
     public:
-        Redis redis = Redis("tcp://127.0.0.1:7777");
-        DroneControl();
-        void Init();
+        Redis& redis;
+        DroneControl(Redis& shared_redis);
     };
+
+    void Init(Redis& redis); // This initializes the drone control PROCESS
 } // drone_control
 
 #endif //DRONECONTROLSYSTEM_DRONECONTROL_H
