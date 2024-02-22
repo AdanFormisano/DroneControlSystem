@@ -10,17 +10,17 @@
 using namespace sw::redis;
 
 int main() {
-    std::cout << "PID: " << getpid() << std::endl;
+    // std::cout << "PID: " << getpid() << std::endl;
     spdlog::set_pattern("[%T.%e] [Main] [%^%l%$] %v");
 
-    // Fork to create the Drone and DroneControl processes
+    // Forks to create the Drone and DroneControl processes
     pid_t pid_drone_control = fork();
     if (pid_drone_control == -1) {
         spdlog::error("Fork for DroneControl failed");
         return 1;
     } else if (pid_drone_control == 0) {
         // In child DroneControl process
-        std::cout << "PID: " << getpid() << std::endl;
+        // std::cout << "PID: " << getpid() << std::endl;
 
         auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
         drone_control_redis.incr(sync_counter_key);
@@ -34,7 +34,7 @@ int main() {
             return 1;
         } else if (pid_drone == 0) {
             // In child Drone process
-            std::cout << "PID: " << getpid() << std::endl;
+            // std::cout << "PID: " << getpid() << std::endl;
 
             auto drone_redis = Redis("tcp://127.0.0.1:7777");
             drone_redis.incr(sync_counter_key);

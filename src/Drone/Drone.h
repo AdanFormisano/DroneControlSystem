@@ -6,7 +6,6 @@
 
 using namespace sw::redis;
 
-// TODO: Check if namespace is necessary
 namespace drones {
     class Drone {
     private:
@@ -16,9 +15,9 @@ namespace drones {
         std::string key;
 
     public:
-        Redis& redis; // This is the shared redis connection used for data/status updates
+        Redis& redis;   // This is the shared redis connection used for data/status updates
 
-        Drone(int, Redis& sharedRedis);    // Constructor
+        Drone(int, Redis& sharedRedis); // Constructor
         [[nodiscard]] int getId() const;
     };
 

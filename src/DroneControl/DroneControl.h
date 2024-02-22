@@ -15,7 +15,7 @@ namespace drone_control {
     class DroneControl {
     public:
         Redis& redis;
-        DroneControl(Redis& shared_redis);
+        explicit DroneControl(Redis& shared_redis);
     };
 
     void Init(Redis& redis); // This initializes the drone control PROCESS

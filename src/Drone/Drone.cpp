@@ -20,11 +20,6 @@ namespace drones {
     }
 
 
-    int Drone::getId() const {
-        return id;
-    }
-
-
     int Init(Redis& redis) {
         spdlog::set_pattern("[%T.%e] [Drone] [%^%l%$] %v");
         spdlog::info("Initializing drone process");
@@ -41,5 +36,9 @@ namespace drones {
         utils::SyncWait(redis);
 
         return 0;
+    }
+
+    int Drone::getId() const {
+        return id;
     }
 } // drones

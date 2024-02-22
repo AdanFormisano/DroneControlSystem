@@ -32,16 +32,20 @@ namespace utils {
 
     void SyncWait(Redis& redis) {
         bool sync_done = false;
+        // Decrement the counter when process is ready
         redis.decr(sync_counter_key);
         auto value = redis.get(sync_counter_key);
 
         try {
             int current_count = std::stoi(value.value());
 
+            // If the counter is 0 all processes are ready
             if (current_count == 0) {
+                // Notify all processes that they can continue and sync is done
                 redis.publish(sync_channel, "SYNC_DONE");
                 spdlog::info("SYNC_DONE sent");
             } else {
+                // If the counter is not 0, there are still processes working, wait for the SYNC_DONE message
                 auto sub = redis.subscriber();
                 sub.subscribe(sync_channel);
 
