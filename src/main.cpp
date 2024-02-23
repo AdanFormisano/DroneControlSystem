@@ -10,7 +10,6 @@
 using namespace sw::redis;
 
 int main() {
-    // std::cout << "PID: " << getpid() << std::endl;
     spdlog::set_pattern("[%T.%e] [Main] [%^%l%$] %v");
 
     // Forks to create the Drone and DroneControl processes
@@ -20,7 +19,6 @@ int main() {
         return 1;
     } else if (pid_drone_control == 0) {
         // In child DroneControl process
-        // std::cout << "PID: " << getpid() << std::endl;
 
         auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
         drone_control_redis.incr(sync_counter_key);
@@ -34,7 +32,6 @@ int main() {
             return 1;
         } else if (pid_drone == 0) {
             // In child Drone process
-            // std::cout << "PID: " << getpid() << std::endl;
 
             auto drone_redis = Redis("tcp://127.0.0.1:7777");
             drone_redis.incr(sync_counter_key);
@@ -49,6 +46,11 @@ int main() {
             utils::SyncWait(main_redis);
 
             // Here should be the monitor and simulation processes (should stay in the main process?)
+
+            // FIXME: This is a placeholder for the monitor process, without it the main process will exit and
+            //  the children will be terminated
+            std::this_thread::sleep_for(std::chrono::seconds(15));
+            std::cout << "Exiting..." << std::endl;
         }
     }
 

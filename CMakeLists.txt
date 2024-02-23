@@ -13,6 +13,8 @@ add_executable(DroneControlSystem
         utils/RedisUtils.h
         src/globals.cpp
         src/globals.h
+        utils/utils.cpp
+        utils/utils.h
 )
 
 # Add spdlog dependency

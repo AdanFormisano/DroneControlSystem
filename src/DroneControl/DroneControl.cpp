@@ -17,4 +17,8 @@ namespace drone_control {
         // Finished initialization
         utils::SyncWait(redis);
     }
+
+    void DroneControl::Run() {
+        // spdlog::info("DroneControl process running");
+    }
 } // drone_control
