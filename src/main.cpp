@@ -10,7 +10,7 @@
 using namespace sw::redis;
 
 int main() {
-    spdlog::set_pattern("[%T.%e] [Main] [%^%l%$] %v");
+    spdlog::set_pattern("[%T.%e][%^%l%$][Main] %v");
 
     // Forks to create the Drone and DroneControl processes
     pid_t pid_drone_control = fork();
@@ -37,6 +37,11 @@ int main() {
             drone_redis.incr(sync_counter_key);
 
             drones::Init(drone_redis);
+
+            // TESTING: Create 10 drones and each is a thread
+            drones::DroneManager dm;
+            dm.CreateDrone(10, drone_redis);
+            dm.PrintDroneThreadsIDs();
         } else {
             // In parent process
             auto main_redis = Redis("tcp://127.0.0.1:7777");
@@ -49,7 +54,7 @@ int main() {
 
             // FIXME: This is a placeholder for the monitor process, without it the main process will exit and
             //  the children will be terminated
-            std::this_thread::sleep_for(std::chrono::seconds(15));
+            std::this_thread::sleep_for(std::chrono::seconds(10));
             std::cout << "Exiting..." << std::endl;
         }
     }

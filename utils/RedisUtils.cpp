@@ -4,6 +4,7 @@
 #include "../src/globals.h"
 
 namespace utils {
+    // FIXME: This placeholder might be broken
     int RedisConnectionCheck(Redis& redis, std::string clientName) {
         try {
             spdlog::info("Waiting Redis-server response to {}", clientName);
