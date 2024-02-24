@@ -14,7 +14,7 @@ namespace drones {
     public:
         Drone(int, Redis& sharedRedis); // Constructor
 
-        Redis& drone_redis;   // This is the shared redis connection used for data/status updates
+        Redis& drone_redis;   // TODO: Check if it needs to be static
         std::pair<float, float> position;
 
         std::thread::id getThreadId() { return drone_thread_id; }
