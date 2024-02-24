@@ -6,48 +6,21 @@
 #include <chrono>
 
 namespace drones {
-    // TODO: Write/format better this constructor
     Drone::Drone(int id, Redis& sharedRedis) : id(id), drone_redis(sharedRedis) {
         redis_id = "drone:" + std::to_string(id);
-        data = "Wendy is a sleepy cat.";
-
-        utils::RedisConnectionCheck(drone_redis, redis_id);
+        drone_charge = 100.0;
 
         // Adding the drone to the dataset on redis
         drone_redis.hset(redis_id, "status", "idle");
-
-        // Creating the thread for the drone
-        drone_thread = std::thread(&Drone::Run, this);
-        std::thread::id thread_id = std::this_thread::get_id();
-        std::cout << "Drone ID: " << id << " Thread ID: " << thread_id << std::endl;
-    }
-
-    Drone::~Drone() {
-        if (drone_thread.joinable()) {
-            std::thread::id thread_id = std::this_thread::get_id();
-            std::cout << "Joining thread " << thread_id << std::endl;
-            drone_thread.join();
-        } 
     }
 
 
     int Init(Redis& redis) {
-        spdlog::set_pattern("[%T.%e] [Drone] [%^%l%$] %v");
-
+        spdlog::set_pattern("[%T.%e][%^%l%$][Drone] %v");
         spdlog::info("Initializing Drone process");
 
         // Initialization finished
         utils::SyncWait(redis);
-
-        // TESTING: Create 10 drones and each is a thread
-        spdlog::info("Creating 10 drones");
-        for (int i = 0; i < 10; i++) {
-            drones::Drone drone(i, redis);
-            spdlog::info("Drone {} created (Client ID {})", i, utils::RedisGetClientID(redis));
-        }
-        spdlog::info("----------All drones created----------");
-
-        std::cout << "Drones Are working" << std::endl;
 
         return 0;
     }
@@ -55,7 +28,7 @@ namespace drones {
 /*
 Drones should update their status every 5 seconds.
 
-Theare are multiple ways to do this:
+There are multiple ways to do this:
 1. Each drone has its key in Redis and updates its status every 5 seconds
 2. Every drone uses sub/pub to broadcast its status and the DroneControl should be listening to the channel
     and manages all the messages that are being sent
@@ -68,13 +41,13 @@ The best way to choose is to implement a monitor and compare the performance of 
     // This will be the ran in the threads of each drone
     void Drone::Run() {
         // Implementing option 1: each drone updates its status using its key in Redis
-        
-        // Sleep
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        drone_thread_id = std::this_thread::get_id();
 
         Move();
-
-        std::cout << position.first << " " << position.second << std::endl;
+        int sleep_time = std::abs(static_cast<int>(std::round(position.first * 100)));
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+        UpdateStatus();
+        std::cout << "Thread " << drone_thread_id << " slept for " << sleep_time << " milliseconds" << std::endl;
     }
 
     // This will just move the drone to a random position
@@ -85,7 +58,40 @@ The best way to choose is to implement a monitor and compare the performance of 
         position = std::make_pair(x, y);
     }
 
-    int Drone::getId() const {
-        return id;
+    void Drone::UpdateStatus() {
+        // Implementing option 1: each drone updates its status using its key in Redis and uploading a map with the data
+        drone_data = {
+                {"status", "moving"},
+                {"charge", std::to_string(drone_charge)},
+                {"X", std::to_string(position.first)},
+                {"Y", std::to_string(position.second)},
+        };
+
+        drone_redis.hmset(redis_id, drone_data.begin(), drone_data.end());
+        spdlog::info("Drone {} updated its status", id);
+    }
+
+
+    void DroneManager::CreateDrone(int number_of_drones, Redis& shared_redis) {
+        for (int i = 0; i < number_of_drones; i++) {
+            auto drone = std::make_unique<Drone>(i, shared_redis);
+            drone_threads.emplace_back(&Drone::Run, drone.get());
+            drone_vector.push_back(std::move(drone));
+        }
+        spdlog::info("Created {} drones", number_of_drones);
+    }
+
+    DroneManager::~DroneManager() {
+        for (auto& thread : drone_threads) {
+            if (thread.joinable()) {
+                thread.join();
+            }
+        }
+    }
+
+    void DroneManager::PrintDroneThreadsIDs() const {
+        for (const auto& drone : drone_vector) {
+            std::cout << "Drone thread ID: " << drone->getThreadId() << std::endl;
+        }
     }
 } // drones

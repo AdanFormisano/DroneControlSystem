@@ -7,10 +7,10 @@ namespace drone_control {
     DroneControl::DroneControl(Redis& shared_redis) : redis(shared_redis) {};
 
     void Init(Redis& redis) {
-        spdlog::set_pattern("[%T.%e] [DroneControl] [%^%l%$] %v");
+        spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
         spdlog::info("DroneControl process starting");
 
-        utils::RedisConnectionCheck(redis, "Drone Control");
+        // utils::RedisConnectionCheck(redis, "Drone Control");
 
         drone_control::DroneControl droneControl(redis);
 
