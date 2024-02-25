@@ -15,6 +15,10 @@ add_executable(DroneControlSystem
         src/globals.h
         utils/utils.cpp
         utils/utils.h
+        src/Drone/DroneZone.cpp
+        src/Drone/DroneZone.h
+        src/Drone/DroneManager.cpp
+        src/Drone/DroneManager.h
 )
 
 # Add spdlog dependency

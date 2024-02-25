@@ -3,7 +3,7 @@
 #include <sw/redis++/redis++.h>
 #include <iostream>
 #include "DroneControl/DroneControl.h"
-#include "Drone/Drone.h"
+#include "Drone/DroneManager.h"
 #include "globals.h"
 #include "../utils/RedisUtils.h"
 
@@ -25,25 +25,22 @@ int main() {
 
         drone_control::Init(drone_control_redis);
     } else {
-        // In parent process create new child Drone process
+        // In parent process create new child Drones process
         pid_t pid_drone = fork();
         if (pid_drone == -1) {
             spdlog::error("Fork for Drone failed");
             return 1;
         } else if (pid_drone == 0) {
-            // In child Drone process
+            // In child Drones process
 
             auto drone_redis = Redis("tcp://127.0.0.1:7777");
             drone_redis.incr(sync_counter_key);
 
             drones::Init(drone_redis);
 
-            // TESTING: Create 10 drones and each is a thread
-            drones::DroneManager dm;
-            dm.CreateDrone(10, drone_redis);
-            dm.PrintDroneThreadsIDs();
+
         } else {
-            // In parent process
+            // In Main process
             auto main_redis = Redis("tcp://127.0.0.1:7777");
             main_redis.incr(sync_counter_key);
 

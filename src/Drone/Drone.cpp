@@ -6,23 +6,12 @@
 #include <chrono>
 
 namespace drones {
-    Drone::Drone(int id, Redis& sharedRedis) : id(id), drone_redis(sharedRedis) {
+    Drone::Drone(int id, Redis& sharedRedis) : drone_id(id), drone_redis(sharedRedis) {
         redis_id = "drone:" + std::to_string(id);
         drone_charge = 100.0;
 
         // Adding the drone to the dataset on redis
         drone_redis.hset(redis_id, "status", "idle");
-    }
-
-
-    int Init(Redis& redis) {
-        spdlog::set_pattern("[%T.%e][%^%l%$][Drone] %v");
-        spdlog::info("Initializing Drone process");
-
-        // Initialization finished
-        utils::SyncWait(redis);
-
-        return 0;
     }
 
 /*
@@ -68,30 +57,6 @@ The best way to choose is to implement a monitor and compare the performance of 
         };
 
         drone_redis.hmset(redis_id, drone_data.begin(), drone_data.end());
-        spdlog::info("Drone {} updated its status", id);
-    }
-
-
-    void DroneManager::CreateDrone(int number_of_drones, Redis& shared_redis) {
-        for (int i = 0; i < number_of_drones; i++) {
-            auto drone = std::make_unique<Drone>(i, shared_redis);
-            drone_threads.emplace_back(&Drone::Run, drone.get());
-            drone_vector.push_back(std::move(drone));
-        }
-        spdlog::info("Created {} drones", number_of_drones);
-    }
-
-    DroneManager::~DroneManager() {
-        for (auto& thread : drone_threads) {
-            if (thread.joinable()) {
-                thread.join();
-            }
-        }
-    }
-
-    void DroneManager::PrintDroneThreadsIDs() const {
-        for (const auto& drone : drone_vector) {
-            std::cout << "Drone thread ID: " << drone->getThreadId() << std::endl;
-        }
+        spdlog::info("Drone {} updated its status", drone_id);
     }
 } // drones
