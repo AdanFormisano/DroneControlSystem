@@ -21,7 +21,7 @@ namespace drones {
         ChargeBase* chargeBase = ChargeBase::getInstance();
         if (chargeBase && chargeBase->takeDrone(*this)) {
             status = "Charging Requested";
-            redis.hset(key, "status", status);
+            drone_redis.hset(redis_id, "status", status);
         }
     }
 
@@ -37,7 +37,7 @@ namespace drones {
 }
     void Drone::onChargingComplete() {
         status = "Charging Complete";
-        redis.hset(key, "status", status);
+        drone_redis.hset(redis_id, "status", status);
         spdlog::info("Drone {} charging complete", id);
     }
 
@@ -87,6 +87,13 @@ The best way to choose is to implement a monitor and compare the performance of 
         spdlog::info("Drone {} updated its status", id);
     }
 
+    float Drone::getCharge() const {
+        return drone_charge;
+    }
+
+    void Drone::setCharge(float newCharge) {
+        drone_charge=newCharge;
+    }
 
     void DroneManager::CreateDrone(int number_of_drones, Redis& shared_redis) {
         for (int i = 0; i < number_of_drones; i++) {

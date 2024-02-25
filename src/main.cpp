@@ -8,7 +8,6 @@
 #include "../utils/RedisUtils.h"
 
 using namespace sw::redis;
-
 int main() {
     spdlog::set_pattern("[%T.%e][%^%l%$][Main] %v");
 

@@ -6,6 +6,7 @@
 #define DRONECONTROLSYSTEM_CHARGEBASE_H
 #include <vector>
 #include <optional>
+#include "Drone.h"
 
 namespace drones {
 
@@ -18,8 +19,8 @@ namespace drones {
     private:
         struct ChargingSlot {
             bool isOccupied = false;
-            Drone* drone = nullptr; // Pointer to the drone currently being charged (nullptr if empty)
-            int chargeRate = 10; // can be changed according to how we deal with time
+            Drone* drone; // Pointer to the drone currently being charged (nullptr if empty)
+            float chargeRate = 10.0f; // can be changed according to how we deal with time
         };
 
         std::vector<ChargingSlot> chargingSlots;
@@ -37,7 +38,7 @@ namespace drones {
     public:
         static ChargeBase* getInstance(int numSlots = 1) {
             if (!instance) {
-                instance = new ChargeBase(numSlots);
+                instance = new ChargeBase(numSlots); // Constructor
             }
             return instance;
         }
@@ -51,7 +52,6 @@ namespace drones {
     };
 
 // Initialize the static instance pointer
-    ChargeBase* ChargeBase::instance = nullptr;
 
 }
 #endif //DRONECONTROLSYSTEM_CHARGEBASE_H

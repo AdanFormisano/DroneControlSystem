@@ -2,13 +2,14 @@
 // Created by roryu on 23/02/2024.
 //
 #include "ChargeBase.h"
-#include "Drone.h"
 #include <algorithm>
 
 namespace drones {
 
-    bool ChargeBase::takeDrone(Drone& drone) {
-        for (auto& slot : chargingSlots) {
+    ChargeBase* ChargeBase::instance = nullptr;
+
+    bool ChargeBase::takeDrone(Drone &drone) {
+        for (auto &slot: chargingSlots) {
             if (!slot.isOccupied) {
                 slot.isOccupied = true;
                 slot.drone = &drone;
@@ -19,9 +20,9 @@ namespace drones {
     }
 
     void ChargeBase::chargeDrones() {
-        for (auto& slot : chargingSlots) {
+        for (auto &slot: chargingSlots) {
             if (slot.isOccupied && slot.drone) {
-                int newCharge = std::min(100, slot.drone->getCharge() + slot.chargeRate);
+                float newCharge = std::min(100.0f, slot.drone->getCharge() + slot.chargeRate);
                 slot.drone->setCharge(newCharge);
                 if (newCharge == 100) {
                     slot.drone->onChargingComplete();
@@ -30,10 +31,10 @@ namespace drones {
         }
     }
 
-    std::optional<Drone*> ChargeBase::releaseDrone() {
-        for (auto& slot : chargingSlots) {
+    std::optional<Drone *> ChargeBase::releaseDrone() {
+        for (auto &slot: chargingSlots) {
             if (slot.isOccupied && slot.drone && slot.drone->getCharge() == 100) {
-                Drone* chargedDrone = slot.drone;
+                Drone *chargedDrone = slot.drone;
                 slot.isOccupied = false;
                 slot.drone = nullptr;
                 return chargedDrone;
@@ -41,5 +42,5 @@ namespace drones {
         }
         return std::nullopt;
     }
-
 }
+
