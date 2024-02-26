@@ -48,6 +48,7 @@ namespace drones {
     void Drone::Run() {
         // Implementing option 1: each drone updates its status using its key in Redis
         drone_thread_id = std::this_thread::get_id();
+        std::cout << "Thread " << drone_thread_id << " started" << std::endl;
 
         Move();
         int sleep_time = std::abs(static_cast<int>(std::round(position.first * 100)));

@@ -18,9 +18,9 @@ namespace drones {
     public:
         // List of zones using the global coordinates
         std::array<std::array<std::pair<int, int>, 4>, 300> zones;
+        std::vector<DroneZone> drone_zones;
         std::vector<std::shared_ptr<Drone>> drone_vector;
         std::vector<std::thread> drone_threads;
-        std::vector<DroneZone> drone_zones;
         Redis& shared_redis;
 
         explicit DroneManager(Redis&);
@@ -32,7 +32,7 @@ namespace drones {
         void CreateDroneZone(std::array<std::pair<int, int>, 4>, int);
         void PrintDroneThreadsIDs() const;
         // Returns a reference to the vector of drones
-        std::vector<std::shared_ptr<Drone>>& getDroneVector() { return drone_vector; }
+        std::vector<std::shared_ptr<Drone>>& getDroneVector() {return drone_vector; }
         // Returns a reference to the vector of threads
         std::vector<std::thread>& getDroneThreads() { return drone_threads; }
 

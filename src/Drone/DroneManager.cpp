@@ -34,6 +34,7 @@ namespace drones {
     DroneManager::~DroneManager() {
         for (auto& thread : drone_threads) {
             if (thread.joinable()) {
+                std::cout << "Joining thread " << thread.get_id() << std::endl;
                 thread.join();
             }
         }
