@@ -3,7 +3,7 @@
 #include <sw/redis++/redis++.h>
 #include <iostream>
 #include "DroneControl/DroneControl.h"
-#include "Drone/DroneManager.h"
+#include "Drone/Drone.h"
 #include "globals.h"
 #include "../utils/RedisUtils.h"
 

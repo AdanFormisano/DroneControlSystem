@@ -28,6 +28,22 @@ namespace drones {
         drone_redis.hset(redis_id, "status", "idle");
     }
 
+    void Drone::requestCharging() {
+        // Example logging, adjust as needed
+        spdlog::info("Drone {} requesting charging", drone_id);
+        ChargeBase* chargeBase = ChargeBase::getInstance();
+        if (chargeBase && chargeBase->takeDrone(*this)) {
+            status = "Charging Requested";
+            drone_redis.hset(redis_id, "status", status);
+        }
+    }
+
+    void Drone::onChargingComplete() {
+        status = "Charging Complete";
+        drone_redis.hset(redis_id, "status", status);
+        spdlog::info("Drone {} charging complete", drone_id);
+    }
+
     // This will be the ran in the threads of each drone
     void Drone::Run() {
         // Implementing option 1: each drone updates its status using its key in Redis
@@ -60,4 +76,13 @@ namespace drones {
         drone_redis.hmset(redis_id, drone_data.begin(), drone_data.end());
         // spdlog::info("Drone {} updated its status", drone_id);
     }
+
+    float Drone::getCharge() const {
+        return drone_charge;
+    }
+
+    void Drone::setCharge(float newCharge) {
+        drone_charge=newCharge;
+    }
+
 } // drones
