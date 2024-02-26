@@ -73,13 +73,23 @@ The best way to choose is to implement a monitor and compare the performance of 
 
 
     void DroneManager::CreateDrone(int number_of_drones, Redis& shared_redis) {
-        for (int i = 0; i < number_of_drones; i++) {
-            auto drone = std::make_unique<Drone>(i, shared_redis);
-            drone_threads.emplace_back(&Drone::Run, drone.get());
-            drone_vector.push_back(std::move(drone));
-        }
-        spdlog::info("Created {} drones", number_of_drones);
+    for (int i = 0; i < number_of_drones; i++) {
+        // Crea un nuovo obj Drone utilizzando std::make_unique.
+        // std::make_unique alloca dinamicamente un obj e ritorna un pointer unico ad esso
+        auto drone = std::make_unique<Drone>(i, shared_redis);
+
+        // Aggiunge un nuovo thread alla lista drone_threads.
+        // Il thread eseguirà la func membro Run() dell'obj Drone appena creato
+        drone_threads.emplace_back(&Drone::Run, drone.get());
+
+        // Aggiunge l'obj Drone appena creato al vettore drone_vector.
+        // std::move viene usato per trasf la proprietà dell'obj drone al vettore
+        drone_vector.push_back(std::move(drone));
     }
+    // Stampa un msg di log usando la lib spdlog.
+    // Il msg indica il numero di droni creati.
+    spdlog::info("Created {} drones", number_of_drones);
+}
 
     DroneManager::~DroneManager() {
         for (auto& thread : drone_threads) {
