@@ -30,5 +30,4 @@ namespace drones {
         void UpdateStatus();        // FIXME: This is a placeholder for the status update function
     };
 } // drones
-
 #endif //DRONECONTROLSYSTEM_DRONE_H

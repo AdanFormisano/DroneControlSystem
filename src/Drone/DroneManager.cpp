@@ -4,21 +4,31 @@
 #include <spdlog/spdlog.h>
 
 namespace drones {
+    // Initializes the Drone process
     int Init(Redis& redis) {
         spdlog::set_pattern("[%T.%e][%^%l%$][Drone] %v");
         spdlog::info("Initializing Drone process");
 
-        // TESTING: Create 10 drones and each is a thread
-        drones::DroneManager dm;
+        // Create DroneManager
+        drones::DroneManager dm(redis);
+
+        // Calculate the zones' coordinates
         dm.CreateGlobalZones();
-        // FIXME: DroneManager should first create the DroneZones
-        // dm.CreateDrone(10, drone_redis);
-        // dm.PrintDroneThreadsIDs();
+
+        int zone_id = 1;
+        // Create the DroneZones objects for every zone calculated
+        for (auto& zone : dm.zones) {
+            dm.CreateDroneZone(zone, zone_id);
+            ++zone_id;
+        }
 
         // Initialization finished
         utils::SyncWait(redis);
 
         return 0;
+    }
+
+    DroneManager::DroneManager(Redis& redis) : shared_redis(redis) {
     }
 
     DroneManager::~DroneManager() {
@@ -29,16 +39,7 @@ namespace drones {
         }
     }
 
-    void DroneManager::CreateDrone(int number_of_drones, Redis& shared_redis) {
-        for (int i = 0; i < number_of_drones; i++) {
-            auto drone = std::make_unique<Drone>(i, shared_redis);
-            drone_threads.emplace_back(&Drone::Run, drone.get());
-            drone_vector.push_back(std::move(drone));
-        }
-        spdlog::info("Created {} drones", number_of_drones);
-    }
-
-    // Creates the zones using the global coordinates
+    // Creates the zones' global coordinates
     void DroneManager::CreateGlobalZones() {
         int i = 0;
         int width = 62;
@@ -50,14 +51,14 @@ namespace drones {
                 zones[i][1] = {x + width, y};
                 zones[i][2] = {x, y + height};
                 zones[i][3] = {x + width, y + height};
-                spdlog::info("Zone {} created 1:({},{}) 2:({},{}) 3:({},{}) 4:({},{})", i,
-                             zones[i][0].first, zones[i][0].second,
-                             zones[i][1].first, zones[i][1].second,
-                             zones[i][2].first, zones[i][2].second,
-                             zones[i][3].first, zones[i][3].second);
                 ++i;
             }
         }
+    }
+
+    // For a set of coords creates a DroneZone object
+    void DroneManager::CreateDroneZone(std::array<std::pair<int, int>, 4> zone, int zone_id) {
+        drone_zones.emplace_back(zone_id, zone, shared_redis, this);
     }
 
     void DroneManager::PrintDroneThreadsIDs() const {

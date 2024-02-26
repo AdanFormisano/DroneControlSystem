@@ -19,7 +19,6 @@ int main() {
         return 1;
     } else if (pid_drone_control == 0) {
         // In child DroneControl process
-
         auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
         drone_control_redis.incr(sync_counter_key);
 
@@ -32,13 +31,10 @@ int main() {
             return 1;
         } else if (pid_drone == 0) {
             // In child Drones process
-
             auto drone_redis = Redis("tcp://127.0.0.1:7777");
             drone_redis.incr(sync_counter_key);
 
             drones::Init(drone_redis);
-
-
         } else {
             // In Main process
             auto main_redis = Redis("tcp://127.0.0.1:7777");

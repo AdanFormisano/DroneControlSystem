@@ -5,15 +5,6 @@
 #include <iostream>
 #include <chrono>
 
-namespace drones {
-    Drone::Drone(int id, Redis& sharedRedis) : drone_id(id), drone_redis(sharedRedis) {
-        redis_id = "drone:" + std::to_string(id);
-        drone_charge = 100.0;
-
-        // Adding the drone to the dataset on redis
-        drone_redis.hset(redis_id, "status", "idle");
-    }
-
 /*
 Drones should update their status every 5 seconds.
 
@@ -26,6 +17,16 @@ There are multiple ways to do this:
 
 The best way to choose is to implement a monitor and compare the performance of each method.
 */
+
+namespace drones {
+    Drone::Drone(int id, Redis& sharedRedis) : drone_id(id), drone_redis(sharedRedis) {
+        redis_id = "drone:" + std::to_string(id);
+        drone_charge = 100.0;
+        spdlog::info("Drone {} created", id);
+
+        // Adding the drone to the dataset on redis
+        drone_redis.hset(redis_id, "status", "idle");
+    }
 
     // This will be the ran in the threads of each drone
     void Drone::Run() {
