@@ -57,6 +57,6 @@ The best way to choose is to implement a monitor and compare the performance of 
         };
 
         drone_redis.hmset(redis_id, drone_data.begin(), drone_data.end());
-        spdlog::info("Drone {} updated its status", drone_id);
+        // spdlog::info("Drone {} updated its status", drone_id);
     }
 } // drones
