@@ -11,7 +11,8 @@ namespace drones{
 }
 
 namespace drones {
-    int Init(Redis& redis); // This initializes the Drones PROCESS
+    // This initializes the Drones PROCESS
+    int Init(Redis& redis);
 
     class DroneManager {
     public:

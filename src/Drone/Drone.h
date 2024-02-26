@@ -9,12 +9,12 @@
 using namespace sw::redis;
 
 namespace drones {
-    int Init(Redis& redis); // This initializes the drone PROCESS
-
     class Drone {
     public:
         Drone(int, Redis& sharedRedis); // Constructor
+        ~Drone() = default; // Destructor
 
+        std::string status = "idle";
         std::pair<float, float> position;
         Redis& drone_redis;   // TODO: Check if it needs to be static
 

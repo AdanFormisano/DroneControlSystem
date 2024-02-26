@@ -4,6 +4,7 @@
 #include <iostream>
 #include "DroneControl/DroneControl.h"
 #include "Drone/Drone.h"
+#include "Drone/DroneManager.h"
 #include "globals.h"
 #include "../utils/RedisUtils.h"
 
