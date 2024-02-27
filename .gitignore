@@ -1,4 +1,6 @@
 cmake-build-debug/*
+.vscode/*
 
 # For now remove build directory
 build/*
+

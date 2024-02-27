@@ -36,6 +36,7 @@ namespace drones {
         // Returns a reference to the vector of threads
         std::vector<std::thread>& getDroneThreads() { return drone_threads; }
 
+    // TODO: Check which member needs to be private
     private:
     };
 
