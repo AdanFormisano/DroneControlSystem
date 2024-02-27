@@ -1,3 +1,3 @@
 #!/bin/bash
 
-redis-server --port 7777
+redis-server ./redis.conf
