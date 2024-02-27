@@ -68,7 +68,7 @@ namespace drones {
     void Drone::UpdateStatus() {
         // Implementing option 1: each drone updates its status using its key in Redis and uploading a map with the data
         drone_data = {
-                {"status", "moving"},
+                {"status", "moving"},                           // FIXME: This is a placeholder, it should take Drone.status
                 {"charge", std::to_string(drone_charge)},
                 {"X", std::to_string(position.first)},
                 {"Y", std::to_string(position.second)},

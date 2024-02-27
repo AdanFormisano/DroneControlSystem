@@ -25,11 +25,10 @@ For testing purposes, the right column will be ignored for now.*/
 
         // Add the drone to the vector
         // TODO: What is going on here?? Do I need & or not?!?!?1          Check here-->
-        std::vector<std::shared_ptr<Drone>> drone_vector = dm->getDroneVector(); // <-- CHECK HERE
+        std::vector<std::shared_ptr<Drone>>& drone_vector = dm->getDroneVector(); // <-- CHECK HERE
         // Add the drone's thread to the vector
         std::vector<std::thread>& thread_vector = dm->getDroneThreads();
         thread_vector.emplace_back(&Drone::Run, drone.get());
         drone_vector.push_back(std::move(drone));
-
     }
 }
