@@ -1,12 +1,13 @@
-#include <spdlog/spdlog.h>
-#include <unistd.h>
-#include <sw/redis++/redis++.h>
-#include <iostream>
-#include "DroneControl/DroneControl.h"
+#include "../utils/RedisUtils.h"
 #include "Drone/Drone.h"
 #include "Drone/DroneManager.h"
+#include "DroneControl/DroneControl.h"
 #include "globals.h"
-#include "../utils/RedisUtils.h"
+#include <iostream>
+#include <pqxx/pqxx>
+#include <spdlog/spdlog.h>
+#include <sw/redis++/redis++.h>
+#include <unistd.h>
 
 using namespace sw::redis;
 
