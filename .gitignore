@@ -1,8 +1,10 @@
 cmake-build-debug/*
+
+# VScode settings
 .vscode/*
 
 # For now remove build directory
 build/*
 
-# For now: seems unsafe to push
-redis.conf
+# For now: seems unsafe to share
+# redis.conf

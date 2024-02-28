@@ -54,3 +54,10 @@ target_link_libraries(DroneControlSystem ${REDIS_PLUS_PLUS_LIB})
 
 target_link_libraries(DroneControlSystem spdlog::spdlog)
 # target_link_libraries(Drone spdlog::spdlog)
+
+# <------------ libpqxx dependency -------------->
+find_path(LIBPQXX_HEADER pqxx)
+target_include_directories(DroneControlSystem PUBLIC ${LIBPQXX_HEADER})
+
+find_library(LIBPQXX_LIB pqxx)
+target_link_libraries(DroneControlSystem ${LIBPQXX_LIB})

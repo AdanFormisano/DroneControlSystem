@@ -14,43 +14,92 @@ using namespace sw::redis;
 int main() {
     spdlog::set_pattern("[%T.%e][%^%l%$][Main] %v");
 
-    // Forks to create the Drone and DroneControl processes
-    pid_t pid_drone_control = fork();
-    if (pid_drone_control == -1) {
-        spdlog::error("Fork for DroneControl failed");
-        return 1;
-    } else if (pid_drone_control == 0) {
-        // In child DroneControl process
-        auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
-        drone_control_redis.incr(sync_counter_key);
-
-        drone_control::Init(drone_control_redis);
-    } else {
-        // In parent process create new child Drones process
-        pid_t pid_drone = fork();
-        if (pid_drone == -1) {
-            spdlog::error("Fork for Drone failed");
+    // Drone and DroneControl processes
+    {
+        pid_t pid_drone_control = fork();
+        if (pid_drone_control == -1) {
+            spdlog::error("Fork for DroneControl failed");
             return 1;
-        } else if (pid_drone == 0) {
-            // In child Drones process
-            auto drone_redis = Redis("tcp://127.0.0.1:7777");
-            drone_redis.incr(sync_counter_key);
+        } else if (pid_drone_control == 0) {
+            // In child DroneControl process
+            auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
+            drone_control_redis.incr(sync_counter_key);
 
-            drones::Init(drone_redis);
+            drone_control::Init(drone_control_redis);
         } else {
-            // In Main process
-            auto main_redis = Redis("tcp://127.0.0.1:7777");
-            main_redis.incr(sync_counter_key);
+            // In parent process create new child Drones process
+            pid_t pid_drone = fork();
+            if (pid_drone == -1) {
+                spdlog::error("Fork for Drone failed");
+                return 1;
+            } else if (pid_drone == 0) {
+                // In child Drones process
+                auto drone_redis = Redis("tcp://127.0.0.1:7777");
+                drone_redis.incr(sync_counter_key);
 
-            // Initialization finished
-            utils::SyncWait(main_redis);
+                drones::Init(drone_redis);
+            } else {
+                // In Main process
+                auto main_redis = Redis("tcp://127.0.0.1:7777");
+                main_redis.incr(sync_counter_key);
 
-            // Here should be the monitor and simulation processes (should stay in the main process?)
+                // Postgres connection
+                {
+                    try {
+                        pqxx::connection C("dbname = dcs user = postgres password = admin@123 hostaddr = 127.0.0.1 port = 5432");
+                        if (C.is_open()) {
+                            std::cout << "DB: opened: " << C.dbname() << std::endl;
+                        } else {
+                            std::cout << "DB: can't open" << std::endl;
+                            return 1;
+                        }
 
-            // FIXME: This is a placeholder for the monitor process, without it the main process will exit and
-            //  the children will be terminated
-            std::this_thread::sleep_for(std::chrono::seconds(10));
-            std::cout << "Exiting..." << std::endl;
+                        // SQL transaction
+                        pqxx::work W(C);
+
+                        // SQL query
+                        std::string sql = "SELECT * FROM droni";
+
+                        // Execute SQL query
+                        pqxx::result R = W.exec(sql);
+
+                        // Print result
+                        // for (const auto &row : R) {
+                        //     std::cout << "DB: " << row[0].c_str() << " " << row[1].c_str() << " " << row[2].c_str() << " " << row[3].c_str() << std::endl;
+                        // }
+
+                        // Print alternative
+                        for (const auto &row : R) {
+                            std::cout << "Column 1: " << row[0].as<std::string>() << std::endl;
+                            std::cout << "Column 2: " << row[1].as<std::string>() << std::endl;
+                            std::cout << "Column 3: " << row[2].as<std::string>() << std::endl;
+                        }
+
+                        // Close transaction
+                        W.commit();
+
+                        // Close connection
+                        C.disconnect();
+
+                        // Print DB interaction success
+                        std::cout << "DB interaction succesfully" << std::endl;
+
+                    } catch (const std::exception &e) {
+                        std::cerr << e.what() << std::endl;
+                        return 1;
+                    }
+                }
+
+                // Initialization finished
+                utils::SyncWait(main_redis);
+
+                // Here should be the monitor and simulation processes (should stay in the main process?)
+
+                // FIXME: This is a placeholder for the monitor process, without it the main process will exit and
+                //  the children will be terminated
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+                std::cout << "Exiting..." << std::endl;
+            }
         }
     }
 
