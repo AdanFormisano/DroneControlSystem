@@ -13,11 +13,11 @@ For testing purposes, the right column will be ignored for now.*/
     // The zone is created with the global coordinates.
     DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Redis& shared_redis, DroneManager* dm)
         : id(zone_id), coordinates(coords), drone_redis(shared_redis), drone_manager(dm) {
-            spdlog::info("Zone {} created 1:({},{}) 2:({},{}) 3:({},{}) 4:({},{})", zone_id,
-                         coordinates[0].first, coordinates[0].second,
-                         coordinates[1].first, coordinates[1].second,
-                         coordinates[2].first, coordinates[2].second,
-                         coordinates[3].first, coordinates[3].second);
+            // spdlog::info("Zone {} created 1:({},{}) 2:({},{}) 3:({},{}) 4:({},{})", zone_id,
+            //              coordinates[0].first, coordinates[0].second,
+            //              coordinates[1].first, coordinates[1].second,
+            //              coordinates[2].first, coordinates[2].second,
+            //              coordinates[3].first, coordinates[3].second);
 
         // Create the zone's drone
         int drone_id = zone_id;

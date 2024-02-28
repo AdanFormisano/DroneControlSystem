@@ -22,7 +22,7 @@ namespace drones {
     Drone::Drone(int id, Redis& sharedRedis) : drone_id(id), drone_redis(sharedRedis) {
         redis_id = "drone:" + std::to_string(id);
         drone_charge = 100.0;
-        spdlog::info("Drone {} created", id);
+        // spdlog::info("Drone {} created", id);
 
         // Adding the drone to the dataset on redis
         drone_redis.hset(redis_id, "status", "idle");
@@ -48,13 +48,13 @@ namespace drones {
     void Drone::Run() {
         // Implementing option 1: each drone updates its status using its key in Redis
         drone_thread_id = std::this_thread::get_id();
-        std::cout << "Thread " << drone_thread_id << " started" << std::endl;
+        // std::cout << "Thread " << drone_thread_id << " started" << std::endl;
 
         Move();
         int sleep_time = std::abs(static_cast<int>(std::round(position.first * 100)));
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
         UpdateStatus();
-        std::cout << "Thread " << drone_thread_id << " slept for " << sleep_time << " milliseconds" << std::endl;
+        // std::cout << "Thread " << drone_thread_id << " slept for " << sleep_time << " milliseconds" << std::endl;
     }
 
     // This will just move the drone to a random position

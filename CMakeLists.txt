@@ -16,6 +16,8 @@ add_executable(DroneControlSystem
         src/Drone/DroneManager.h
         src/globals.cpp
         src/globals.h
+        database/Database.cpp
+        database/Database.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
@@ -30,7 +32,6 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.13.0
 )
-
 FetchContent_MakeAvailable(spdlog)
 
 # <------------ add hiredis dependency --------------->

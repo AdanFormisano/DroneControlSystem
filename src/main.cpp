@@ -2,6 +2,7 @@
 #include "Drone/Drone.h"
 #include "Drone/DroneManager.h"
 #include "DroneControl/DroneControl.h"
+#include "../database/Database.h"
 #include "globals.h"
 #include <iostream>
 #include <pqxx/pqxx>
@@ -43,52 +44,10 @@ int main() {
                 auto main_redis = Redis("tcp://127.0.0.1:7777");
                 main_redis.incr(sync_counter_key);
 
-                // Postgres connection
-                {
-                    try {
-                        pqxx::connection C("dbname = dcs user = postgres password = admin@123 hostaddr = 127.0.0.1 port = 5432");
-                        if (C.is_open()) {
-                            std::cout << "DB: opened: " << C.dbname() << std::endl;
-                        } else {
-                            std::cout << "DB: can't open" << std::endl;
-                            return 1;
-                        }
-
-                        // SQL transaction
-                        pqxx::work W(C);
-
-                        // SQL query
-                        std::string sql = "SELECT * FROM droni";
-
-                        // Execute SQL query
-                        pqxx::result R = W.exec(sql);
-
-                        // Print result
-                        // for (const auto &row : R) {
-                        //     std::cout << "DB: " << row[0].c_str() << " " << row[1].c_str() << " " << row[2].c_str() << " " << row[3].c_str() << std::endl;
-                        // }
-
-                        // Print alternative
-                        for (const auto &row : R) {
-                            std::cout << "Column 1: " << row[0].as<std::string>() << std::endl;
-                            std::cout << "Column 2: " << row[1].as<std::string>() << std::endl;
-                            std::cout << "Column 3: " << row[2].as<std::string>() << std::endl;
-                        }
-
-                        // Close transaction
-                        W.commit();
-
-                        // Close connection
-                        C.disconnect();
-
-                        // Print DB interaction success
-                        std::cout << "DB interaction succesfully" << std::endl;
-
-                    } catch (const std::exception &e) {
-                        std::cerr << e.what() << std::endl;
-                        return 1;
-                    }
-                }
+                // Create Database object
+                Database db;
+                db.getDabase();
+                
 
                 // Initialization finished
                 utils::SyncWait(main_redis);
