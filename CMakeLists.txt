@@ -9,8 +9,8 @@ add_executable(DroneControlSystem
         src/DroneControl/DroneControl.h
         src/Drone/Drone.cpp
         src/Drone/Drone.h
-        src/Drone/ChargeBase.cpp
-        src/Drone/ChargeBase.h
+        src/ChargeBase/ChargeBase.cpp
+        src/ChargeBase/ChargeBase.h
         src/Drone/DroneZone.cpp
         src/Drone/DroneManager.cpp
         src/Drone/DroneManager.h
