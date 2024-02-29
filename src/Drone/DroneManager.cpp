@@ -15,7 +15,7 @@ namespace drones {
         // Calculate the zones' coordinates
         dm.CreateGlobalZones();
 
-        int zone_id = 1;
+        int zone_id = 0;    // Needs to be 0 because is used in DroneControl::setDroneData()
         // Create the DroneZones objects for every zone calculated
         for (auto& zone : dm.zones) {
             dm.CreateDroneZone(zone, zone_id);

@@ -44,7 +44,7 @@ namespace utils {
             if (current_count == 0) {
                 // Notify all processes that they can continue and sync is done
                 redis.publish(sync_channel, "SYNC_DONE");
-                spdlog::info("SYNC_DONE sent");
+                spdlog::info("SYNC IS DONE!");
             } else {
                 // If the counter is not 0, there are still processes working, wait for the SYNC_DONE message
                 auto sub = redis.subscriber();
@@ -53,7 +53,7 @@ namespace utils {
                 // Wait for the SYNC_DONE message
                 sub.on_message([&sub, &sync_done](const std::string &channel, const std::string &msg) {
                     if (msg == "SYNC_DONE") {
-                        spdlog::info("SYNC_DONE received");
+                        // spdlog::info("SYNC_DONE received");
                         sync_done = true;
                         sub.unsubscribe(sync_channel);
                     } else {

@@ -14,8 +14,8 @@ void Database::getDabase() {
         pqxx::nontransaction N(C);
 
         // Check if the target database exists
-        std::string dbname = "dcs";
-        pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='" + dbname + "'");
+        std::string db_name = "dcs";
+        pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='" + db_name + "'");
 
         if (R.empty()) {
             // The database does not exist, so create it
@@ -24,7 +24,7 @@ void Database::getDabase() {
             // Disconnect from the current database to avoid issues with creating a new database in a transaction block
 
             // Connect again to the maintenance database because you can't create a database within a transaction block of another database
-            N.exec("CREATE DATABASE " + dbname);
+            N.exec("CREATE DATABASE " + db_name);
             N.commit();
             pqxx::connection C("dbname=dcs user=postgres password=admin@123 hostaddr=127.0.0.1 port=5432");
             pqxx::work W(C);
