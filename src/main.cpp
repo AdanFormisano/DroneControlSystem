@@ -1,8 +1,8 @@
+#include "../database/Database.h"
 #include "../utils/RedisUtils.h"
 #include "Drone/Drone.h"
 #include "Drone/DroneManager.h"
 #include "DroneControl/DroneControl.h"
-#include "../database/Database.h"
 #include "globals.h"
 #include <iostream>
 #include <pqxx/pqxx>
@@ -44,10 +44,12 @@ int main() {
                 auto main_redis = Redis("tcp://127.0.0.1:7777");
                 main_redis.incr(sync_counter_key);
 
+                // Database db;
+
                 // Create Database object
                 Database db;
-                db.getDabase();
-                
+                // db.getDabase();
+                db.TestDatabase();
 
                 // Initialization finished
                 utils::SyncWait(main_redis);
