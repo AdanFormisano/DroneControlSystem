@@ -13,20 +13,18 @@ namespace drones {
     // This will be the ran in the threads of each drone
     void Drone::Run() {
         // Initialization
-        {
-            // TODO: Implement a Init for the threads
-            drone_thread_id = std::this_thread::get_id();
-            drone_redis.incr("sync_process_count");
+        // TODO: Implement a Init for the threads
+        drone_thread_id = std::this_thread::get_id();
+        drone_redis.incr("sync_process_count");
 
-            float x = generateRandomFloat();
-            float y = generateRandomFloat();
+        float x = generateRandomFloat();
+        float y = generateRandomFloat();
 
-            position = std::make_pair(x, y);
+        position = std::make_pair(x, y);
 
-            int sleep_time = std::abs(static_cast<int>(std::round(position.first * 100)));
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
-            UpdateStatus();
-        }
+        int sleep_time = std::abs(static_cast<int>(std::round(position.first * 100)));
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+        UpdateStatus();
 
         // Initialization finished
         utils::SyncWait(drone_redis);
@@ -76,6 +74,7 @@ namespace drones {
                 {"charge", std::to_string(drone_charge)},
                 {"X", std::to_string(position.first)},
                 {"Y", std::to_string(position.second)},
+                {"latestStatusUpdateTime", std::to_string(std::chrono::system_clock::now().time_since_epoch().count())}
         };
 
         // Updating the drone's status in Redis using streams

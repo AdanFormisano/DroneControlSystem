@@ -64,19 +64,18 @@ int main() {
             // Initialization finished
             utils::SyncWait(main_redis);
 
-            // Here should be the monitor and simulation processes (should stay in the main process?)
-                // Start simulation
-                auto sim_end_time = std::chrono::steady_clock::now() + sim_duration_ms;
-                int tick_n = 0;
-                while (std::chrono::steady_clock::now() < sim_end_time) {
-                    // Do simulation stuff
-                    std::cout << "Tick " << tick_n << " started" << std::endl;
-                    std::this_thread::sleep_for(tick_duration_ms);  // Sleep for 1 tick: 1 second
-                    std::cout << "Tick " << tick_n << " ended" << std::endl;
-                    ++tick_n;
-                }
-                // Use Redis to stop the simulation
-                main_redis.set("sim_running", "false");
+            // Start simulation
+            auto sim_end_at = sim_duration_ms / tick_duration_ms;
+            int tick_n = 0;
+            while (tick_n < sim_end_at) {
+                // Do simulation stuff
+                std::cout << "Tick " << tick_n << " started" << std::endl;
+                std::this_thread::sleep_for(tick_duration_ms);  // Sleep for 1 tick: 1 second
+                std::cout << "Tick " << tick_n << " ended" << std::endl;
+                ++tick_n;
+            }
+            // Use Redis to stop the simulation
+            main_redis.set("sim_running", "false");
 
             // FIXME: This is a placeholder for the monitor process, without it the main process will exit and
             //  the children will be terminated
@@ -84,6 +83,5 @@ int main() {
             std::cout << "Exiting..." << std::endl;
         }
     }
-
     return 0;
 }
