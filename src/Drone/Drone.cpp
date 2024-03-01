@@ -3,20 +3,6 @@
 #include "../../utils/RedisUtils.h"
 #include "../../utils/utils.h"
 #include <iostream>
-#include <chrono>
-
-/*
-Drones should update their status every 5 seconds.
-
-There are multiple ways to do this:
-1. Each drone has its key in Redis and updates its status every 5 seconds
-2. Every drone uses sub/pub to broadcast its status and the DroneControl should be listening to the channel
-    and manages all the messages that are being sent
-3. The status updates are sent from the drones using a Redis stream that the DroneControl keeps on reading
-    to manage the status updates
-
-The best way to choose is to implement a monitor and compare the performance of each method.
-*/
 
 namespace drones {
     Drone::Drone(int id, Redis& sharedRedis) : drone_id(id), drone_redis(sharedRedis) {
@@ -26,26 +12,60 @@ namespace drones {
 
     // This will be the ran in the threads of each drone
     void Drone::Run() {
-        // TODO: Implement a Init for the threads
-        drone_thread_id = std::this_thread::get_id();
-        drone_redis.incr("sync_process_count");
+        // Initialization
+        {
+            // TODO: Implement a Init for the threads
+            drone_thread_id = std::this_thread::get_id();
+            drone_redis.incr("sync_process_count");
 
-        Move();
+            float x = generateRandomFloat();
+            float y = generateRandomFloat();
 
-        int sleep_time = std::abs(static_cast<int>(std::round(position.first * 100)));
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+            position = std::make_pair(x, y);
 
-        UpdateStatus();
+            int sleep_time = std::abs(static_cast<int>(std::round(position.first * 100)));
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+            UpdateStatus();
+        }
 
+        // Initialization finished
         utils::SyncWait(drone_redis);
+
+        // Get sim_running from Redis
+        bool sim_running = (drone_redis.get("sim_running") == "true");
+        tick_n = 0;
+
+        // TESTING: placeholder where drone moves by 5 units every tick
+        // Run the simulation
+        while(sim_running) {
+            // Get the time_point
+            auto tick_start = std::chrono::steady_clock::now();
+
+            // Work
+            Move();
+            UpdateStatus();
+
+            // Check if there is time left in the tick
+            auto tick_now = std::chrono::steady_clock::now();
+            if (tick_now < tick_start + tick_duration_ms) {
+                // Sleep for the remaining time
+                std::this_thread::sleep_for(tick_start + tick_duration_ms - tick_now);
+            } else if (tick_now > tick_start + tick_duration_ms) {
+                // Log if the tick took too long
+                spdlog::warn("Drone {} tick took too long", drone_id);
+                break;
+            }
+            // Get sim_running from Redis
+            sim_running = (drone_redis.get("sim_running") == "true");
+            ++tick_n;
+        }
     }
 
     // This will just move the drone to a random position
     void Drone::Move() {
-        float x = generateRandomFloat();
-        float y = generateRandomFloat();
-
-        position = std::make_pair(x, y);
+        // TESTING: move the drone 5 units on the x axis
+        position.first += 5;
+        // spdlog::info("Tick: {} - Drone ID {} moved to ({}, {})",tick_n, drone_id, position.first, position.second);
     }
 
     void Drone::UpdateStatus() {

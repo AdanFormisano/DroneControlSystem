@@ -45,6 +45,10 @@ namespace utils {
                 // Notify all processes that they can continue and sync is done
                 redis.publish(sync_channel, "SYNC_DONE");
                 spdlog::info("SYNC IS DONE!");
+
+                // Start the simulation
+                redis.set("sim_running", "true");
+                spdlog::info("----SIMULATION STARTED----");
             } else {
                 // If the counter is not 0, there are still processes working, wait for the SYNC_DONE message
                 auto sub = redis.subscriber();
