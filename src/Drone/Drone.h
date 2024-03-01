@@ -1,9 +1,9 @@
 #ifndef DRONECONTROLSYSTEM_DRONE_H
 #define DRONECONTROLSYSTEM_DRONE_H
-
+#include "../ChargeBase/ChargeBase.h" // Ensure this is included for charging functionality
+#include "../globals.h"
 #include <string>
 #include <sw/redis++/redis++.h>
-#include "../ChargeBase/ChargeBase.h" // Ensure this is included for charging functionality
 #include <thread>
 
 using namespace sw::redis;
@@ -35,6 +35,8 @@ namespace drones {
         std::unordered_map<std::string, std::string> drone_data;
         // TODO: Add the last time the drone was updated
         std::thread::id drone_thread_id;
+
+        int tick_n;
 
         // [[nodiscard]] std::string getStatus() const;
         void Move();                // FIXME: This is a placeholder for the movement function

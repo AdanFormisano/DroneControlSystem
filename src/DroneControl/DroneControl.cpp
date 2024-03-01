@@ -1,8 +1,6 @@
 #include "spdlog/spdlog.h"
 #include "../../utils/RedisUtils.h"
 #include "DroneControl.h"
-#include "../globals.h"
-#include <iostream>
 #include <chrono>
 
 
@@ -13,6 +11,7 @@ DroneControl could access the drones' status on Redis twice every tick:
 By doing this it should be safe to assume that every status update is read.
 */
 
+// FIXME: On the last tick the stream is not trimmed
 namespace drone_control {
     DroneControl::DroneControl(Redis& shared_redis) : redis(shared_redis) {};
 
@@ -26,13 +25,37 @@ namespace drone_control {
         // Initialization finished
         utils::SyncWait(redis);
 
-        dc.Run();
+        // FIXME: The simulation loop should be inside the run function
+        // Get sim_running from Redis
+        dc.tick_n = 0;
+        bool sim_running = (redis.get("sim_running") == "true");
+        while (sim_running) {
+            // Get the time_point
+            auto tick_start = std::chrono::steady_clock::now();
+
+            // Work
+            dc.Run();
+
+            // Check if there is time left in the tick
+            auto tick_now = std::chrono::steady_clock::now();
+            if (tick_now < tick_start + tick_duration_ms) {
+                // Sleep for the remaining time
+                std::this_thread::sleep_for(tick_start + tick_duration_ms - tick_now);
+            } else if (tick_now > tick_start + tick_duration_ms) {
+                // Log if the tick took too long
+                spdlog::warn("DroneControl tick {} took too long", dc.tick_n);
+                break;
+            }
+            // Get sim_running from Redis
+            sim_running = (redis.get("sim_running") == "true");
+        }
     }
 
     // Run the DroneControl process
     void DroneControl::Run() {
         // TODO: This should be a while loop that runs until the program is stopped or implemented as a thread
         ReadStream();
+        ++tick_n;
     }
 
     // Reads the stream of data from Redis and updates the drones' data
@@ -55,6 +78,8 @@ namespace drone_control {
             for (const auto& item: result) {
                 // There is only one pair: stream_key and stream_data
                 // item.first is the key of the stream. In this case it is "drone_stream"
+
+                spdlog::info("-----------------Tick {}-----------------", tick_n);
                 for (const auto& stream_drone: item.second) {
                     // stream_drone.first is the id of the message in the stream
                     // stream_drone.second is the unordered_map with the data of the drone
