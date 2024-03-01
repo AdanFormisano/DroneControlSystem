@@ -9,6 +9,23 @@ Database::Database() : C("user=postgres password=admin@123 hostaddr=127.0.0.1 po
     //           << "-------";
 }
 
+// Connect to DB
+std::unique_ptr<pqxx::connection> Database::connectToDatabase(const std::string &dbname, const std::string &user, const std::string &password, const std::string &hostaddr, const std::string &port) {
+    auto conn = std::make_unique<pqxx::connection>("dbname = " + dbname +
+                                                   " user = " + user + " password = " + password +
+                                                   " hostaddr = " + hostaddr +
+                                                   " port = " + port);
+    if (conn && conn->is_open()) {
+        std::cout << "\nDB connected: "
+                  << conn->dbname() << std::endl
+                  << std::endl;
+        return conn;
+    } else {
+        std::cout << "\nDB can't connect" << std::endl;
+        return nullptr;
+    }
+}
+
 void Database::getDabase() {
     try {
         W.commit();
@@ -35,7 +52,7 @@ void Database::getDabase() {
             std::cout << "DB created"
                       << std::endl;
         } else {
-            std::cout << "DB already exists."
+            std::cout << "\nDB already exists"
                       << std::endl;
         }
     } catch (const std::exception &e) {
@@ -43,85 +60,113 @@ void Database::getDabase() {
     }
 }
 
-void Database::TestDatabase() {
-    // Postgres connection
-    {
-        try {
-            pqxx::connection C("dbname = dcs\
-                                user = postgres\
-                                password = admin@123 \
-                                hostaddr = 127.0.0.1\
-                                port = 5432");
-            if (C.is_open()) {
-                std::cout << "\nDB connected: "
-                          << C.dbname()
-                          << std::endl
-                          << std::endl;
-            } else {
-                std::cout << "\nDB can't connect"
-                          << std::endl;
-            }
-
-            // SQL transaction
-            pqxx::work W(C);
-
-            // Table name
-            std::string tab_name = "droni";
-
-            // SQL query
-            std::string sql = "SELECT * FROM " + tab_name;
-
-            // Exec query
-            pqxx::result R = W.exec(sql);
-
-            // Columns width
-            int col_wdth = 12;
-
-            // Table width
-            int tab_wdth = R.columns() * col_wdth;
-
-            // Table title
-            std::string tab_title = "--------------> " +
-                                    tab_name +
-                                    " <-------------";
-            int padding = (tab_wdth - tab_title.length()) / 2;
-
-            // Table title
-            std::cout << std::setw(padding + tab_title.length())
-                      << tab_title << std::endl;
-
-            // Print column names
-            for (int i = 0; i < R.columns(); ++i) {
-                std::cout << std::left
-                          << std::setw(col_wdth)
-                          << R.column_name(i);
-            }
-            std::cout << std::endl;
-
-            // Print rows data
-            for (const auto &row : R) {
-                for (int i = 0; i < row.size(); ++i) {
-                    std::cout << std::left
-                              << std::setw(col_wdth)
-                              << row[i].c_str();
-                }
-                std::cout << std::endl;
-            }
-
-            // Final row
-            std::cout << std::setfill('-')
-                      << std::setw(tab_wdth)
-                      << "-" << std::endl
-                      << std::endl;
-
-            // Close transaction
-            W.commit();
-
-            // Close connection
-            C.disconnect();
-
-        } catch (const std::exception &e) {
-            std::cerr << e.what() << std::endl;
-        }
-    }
+pqxx::result Database::executeQuery(const std::string &tableName, const std::shared_ptr<pqxx::connection> &conn) {
+    pqxx::work W(*conn);
+    std::string sql = "SELECT * FROM " + tableName;
+    pqxx::result R = W.exec(sql);
+    W.commit();
+    return R;
 }
+
+void Database::executeQueryAndPrintTable(const std::string &tableName, const std::shared_ptr<pqxx::connection> &conn) {
+    pqxx::result R = executeQuery(tableName, conn);
+    printTable(tableName, R);
+}
+
+void Database::printTable(const std::string &tableName, const pqxx::result &R) {
+    // Columns width
+    int colWidth = 12;
+
+    // Table width
+    int tableWidth = R.columns() * colWidth;
+
+    // Table title
+    std::string tableTitle = "--------------> " + tableName + " <-------------";
+    int padding = (tableWidth - tableTitle.length()) / 2;
+
+    // Print table title
+    std::cout << std::setw(padding + tableTitle.length()) << tableTitle << std::endl;
+
+    // Print column names
+    for (int i = 0; i < R.columns(); ++i) {
+        std::cout << std::left
+                  << std::setw(colWidth)
+                  << R.column_name(i);
+    }
+    std::cout << std::endl;
+
+    // Print rows data
+    for (const auto &row : R) {
+        for (int i = 0; i < row.size(); ++i) {
+            std::cout << std::left
+                      << std::setw(colWidth)
+                      << row[i].c_str();
+        }
+        std::cout << std::endl;
+    }
+
+    // Final row
+    std::cout << std::setfill('-')
+              << std::setw(tableWidth)
+              << "-" << std::endl
+              << std::endl;
+}
+
+// pqxx::work W(C);
+
+// // SQL query
+// std::string sql = "SELECT * FROM " + tableName;
+
+// // Execute query
+// pqxx::result R = W.exec(sql);
+
+// printTable(tableName, R);
+
+// // Close transaction
+// W.commit();
+
+// // Close connection
+// C.disconnect();
+// }
+
+// void Database::TestDatabase() {
+//     Postgres connection try {
+//         pqxx::connection C("dbname = dcs\
+//                                 user = postgres\
+//                                 password = admin@123 \
+//                                 hostaddr = 127.0.0.1\
+//                                 port = 5432");
+//         if (C.is_open()) {
+//             std::cout << "\nDB connected: "
+//                       << C.dbname()
+//                       << std::endl
+//                       << std::endl;
+//         } else {
+//             std::cout << "\nDB can't connect"
+//                       << std::endl;
+//         }
+
+//         // SQL transaction
+//         pqxx::work W(C);
+
+//         // Table name
+//         std::string tab_name = "droni";
+
+//         // SQL query
+//         std::string sql = "SELECT * FROM " + tab_name;
+
+//         // Exec query
+//         pqxx::result R = W.exec(sql);
+
+//         // printTable(tab_name, R);
+
+//         // Close transaction
+//         W.commit();
+
+//         // Close connection
+//         C.disconnect();
+
+//     } catch (const std::exception &e) {
+//         std::cerr << e.what() << std::endl;
+//     }
+// }

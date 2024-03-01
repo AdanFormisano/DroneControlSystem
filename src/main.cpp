@@ -44,12 +44,19 @@ int main() {
                 auto main_redis = Redis("tcp://127.0.0.1:7777");
                 main_redis.incr(sync_counter_key);
 
-                // Database db;
-
-                // Create Database object
                 Database db;
-                // db.getDabase();
-                db.TestDatabase();
+                db.getDabase();
+                // db.TestDatabase();
+
+                auto conn = db.connectToDatabase("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
+                if (conn) {
+                    std::shared_ptr<pqxx::connection> shared_conn = std::move(conn);
+                    db.executeQueryAndPrintTable("droni", shared_conn);
+                    // db.executeQuery("droni", shared_conn);
+                } else {
+                    // Handle connection error
+                }
+                return 0;
 
                 // Initialization finished
                 utils::SyncWait(main_redis);
