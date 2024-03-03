@@ -49,17 +49,18 @@ int main() {
             auto main_redis = Redis("tcp://127.0.0.1:7777");
             main_redis.incr(sync_counter_key);
 
+            // DB obj
             Database db;
-            db.getDabase();
 
-            auto conn = db.connectToDatabase("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
-            if (conn) {
-                std::shared_ptr<pqxx::connection> shared_conn = std::move(conn);
-                db.executeQueryAndPrintTable("droni", shared_conn);
-                // db.executeQuery("droni", shared_conn);
-            } else {
-                // Handle connection error
-            }
+            // DB get or create
+            db.get_DB();
+
+            // Connect to DB
+            auto conn = db.con_2_DB("dcs", "postgres", "admin@123",
+                                    "127.0.0.1", "5432");
+
+            // Handle connection
+            db.hndl_con(conn, "droni");
 
             // Initialization finished
             utils::SyncWait(main_redis);
@@ -70,15 +71,17 @@ int main() {
             while (tick_n < sim_end_at) {
                 // Do simulation stuff
                 std::cout << "Tick " << tick_n << " started" << std::endl;
-                std::this_thread::sleep_for(tick_duration_ms);  // Sleep for 1 tick: 1 second
+                std::this_thread::sleep_for(tick_duration_ms); // Sleep for 1 tick: 1 second
                 std::cout << "Tick " << tick_n << " ended" << std::endl;
                 ++tick_n;
             }
+
             // Use Redis to stop the simulation
             main_redis.set("sim_running", "false");
 
-            // FIXME: This is a placeholder for the monitor process, without it the main process will exit and
-            //  the children will be terminated
+            // FIXME: This is a placeholder for the monitor process,
+            // without it the main process will exit and
+            // the children will be terminated
             std::this_thread::sleep_for(std::chrono::seconds(10));
             std::cout << "Exiting..." << std::endl;
         }
