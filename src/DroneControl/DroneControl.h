@@ -12,22 +12,26 @@ namespace drone_control {
     // This is the data that represents a drone's status
     struct drone_data {
         int id;
-        std::string status;;
+        std::string status;
         std::string charge;
         std::pair<float, float> position;
         // TODO: Add zoneId
         // TODO: Add latest status update time
     };
 
+    std::vector<int> atBase;
+
     class DroneControl {
     public:
         explicit DroneControl(Redis& shared_redis);
-        
+        std::vector<int> atBase;
         Redis& redis;
         drone_data drones[300];     // Array with data of all the drones
 
         void Run();                 // Run the DroneControl process
         void ReadStream();          // Read the stream of data from Redis
+        int check_at_base(int);
+        void StatusHandler(drone_data&);
         void setDroneData(const std::unordered_map<std::string, std::string>&); // Update the drones' local data
         std::unordered_map<std::string, std::string> getData(int drone_id);     // Get the local data of a drone
 

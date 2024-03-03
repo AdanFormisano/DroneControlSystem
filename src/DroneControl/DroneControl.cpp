@@ -1,5 +1,6 @@
 #include "spdlog/spdlog.h"
 #include "../../utils/RedisUtils.h"
+#include "../../utils/utils.h"
 #include "DroneControl.h"
 #include <chrono>
 
@@ -127,6 +128,7 @@ namespace drone_control {
                 temp_drone_struct.position.second = std::stof(value);
                 spdlog::info("Drone Y position: {}", temp_drone_struct.position.second);
             }
+            StatusHandler(temp_drone_struct);
         }
         // Update the drone data array
         drones[temp_drone_struct.id] = temp_drone_struct;
@@ -139,5 +141,35 @@ namespace drone_control {
         redis.hgetall(drone_key, std::inserter(redis_data, redis_data.begin()));
 
         return redis_data;
+    }
+
+    int DroneControl::check_at_base(int id){
+        for(int i = 0; i < atBase.size(); ++i) {
+            if (id == atBase[i]) {
+                return i;
+            };
+        }
+        return -1;
+    }
+
+    void DroneControl::StatusHandler(drone_data& dd){
+         int status_id = StatusMap[dd.status];
+         switch (status_id) {
+            case 1:
+                 // TODO : Funtion that calculates the charge needed to get back to the base
+                 // TODO : IF the charge is less than charge needed + margin send the d to the charge base
+            case 2:
+                if(check_at_base(dd.id) == -1){
+                    atBase.push_back(dd.id);
+                };
+               // TODO : DO NOTHING
+               // TODO : If the charge is less than the charge needed for a roundtrip don't let the drone out
+             case 3:
+                 atBase.erase(atBase.begin() + check_at_base(dd.id));
+               // TODO: Send the drone back to its zone
+
+             default:
+                 //yarragimi ye
+         };
     }
 } // drone_control

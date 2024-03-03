@@ -1,10 +1,16 @@
 #include "Drone.h"
+
+#ifndef SPDLOG_GUARD_H
+#define SPDLOG_GUARD_H
 #include "spdlog/spdlog.h"
+#endif
+
 #include "../../utils/RedisUtils.h"
 #include "../../utils/utils.h"
 #include <iostream>
 
 namespace drones {
+
     Drone::Drone(int id, Redis& sharedRedis) : drone_id(id), drone_redis(sharedRedis) {
         redis_id = "drone:" + std::to_string(id);
         drone_charge = 100.0;
@@ -81,20 +87,17 @@ namespace drones {
         auto redis_stream_id = drone_redis.xadd("drone_stream", "*", drone_data.begin(), drone_data.end()); // Returns the ID of the message
     }
 
-    void Drone::requestCharging() {
-        // Example logging, adjust as needed
-        spdlog::info("Drone {} requesting charging", drone_id);
-        ChargeBase* chargeBase = ChargeBase::getInstance();
-        if (chargeBase && chargeBase->takeDrone(*this)) {
-            status = "Charging Requested";
-            drone_redis.hset(redis_id, "status", status);
-        }
-    }
+
 
     void Drone::onChargingComplete() {
         status = "Charging Complete";
         drone_redis.hset(redis_id, "status", status);
         spdlog::info("Drone {} charging complete", drone_id);
+    }
+    void Drone::onCharging() {
+        status = "Charging";
+        drone_redis.hset(redis_id, "status", status);
+        spdlog::info("Drone {} charging", drone_id);
     }
 
     float Drone::getCharge() const {
@@ -103,6 +106,10 @@ namespace drones {
 
     void Drone::setCharge(float newCharge) {
         drone_charge=newCharge;
+    }
+
+    const std::string &Drone::getRedisId() const {
+        return redis_id;
     }
 
 } // drones
