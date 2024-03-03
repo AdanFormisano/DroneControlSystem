@@ -154,3 +154,26 @@ void Database::prnt_tab(
               << "-" << std::endl
               << std::endl;
 }
+
+void Database::logDroneData(
+    const std::map<std::string, std::string> &droneData,
+    const std::shared_ptr<pqxx::connection> &conn) {
+    pqxx::work W(*conn);
+
+    // Convert timestamp to proper format
+    long long timestamp = std::stoll(droneData.at("latestStatusUpdateTime"));
+    auto time_in_s = timestamp / 1000000; // timestamp is in microseconds
+    std::time_t time = static_cast<time_t>(time_in_s);
+
+    std::string sql = "INSERT INTO drone_logs \
+                       (time, drone_id, status, charge, zone, x, y) VALUES (" +
+                      W.quote(time) + ", " +
+                      W.quote(droneData.at("id")) + ", " +
+                      W.quote(droneData.at("status")) + ", " +
+                      W.quote(droneData.at("charge")) + ", " + "NULL, " +
+                      W.quote(droneData.at("X")) + ", " +
+                      W.quote(droneData.at("Y")) + ")";
+
+    W.exec0(sql);
+    W.commit();
+}
