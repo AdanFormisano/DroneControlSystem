@@ -11,25 +11,27 @@ public:
     pqxx::work W;
 
     std::unique_ptr<pqxx::connection>
-    connectToDatabase(
+    con_2_DB(
         const std::string &dbname,
         const std::string &user,
         const std::string &password,
         const std::string &hostaddr,
         const std::string &port);
 
-    pqxx::result executeQuery(
+    pqxx::result qry(
         const std::string &tableName,
         const std::shared_ptr<pqxx::connection> &conn);
 
-    void executeQueryAndPrintTable(
+    void qry_prnt(
         const std::string &tableName,
         const std::shared_ptr<pqxx::connection> &conn);
 
-    void getDabase();
+    void get_DB();
 
-    // void TestDatabase();
+    void hndl_con(
+        std::unique_ptr<pqxx::connection> &conn,
+        const std::string &tableName);
 
-    void printTable(const std::string &tableName,
-                    const pqxx::result &R);
+    void prnt_tab(const std::string &tableName,
+                  const pqxx::result &R);
 };
