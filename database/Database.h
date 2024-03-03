@@ -32,6 +32,11 @@ public:
         std::unique_ptr<pqxx::connection> &conn,
         const std::string &tableName);
 
-    void prnt_tab(const std::string &tableName,
-                  const pqxx::result &R);
+    void prnt_tab(
+        const std::string &tableName,
+        const pqxx::result &R);
+
+    void logDroneData(
+        const std::map<std::string, std::string> &droneData,
+        const std::shared_ptr<pqxx::connection> &conn);
 };
