@@ -55,12 +55,8 @@ int main() {
             // DB get or create
             db.get_DB();
 
-            // Connect to DB
-            auto conn = db.con_2_DB("dcs", "postgres", "admin@123",
-                                    "127.0.0.1", "5432");
-
-            // Handle connection
-            db.hndl_con(conn, "droni");
+            // DB print table
+            db.prnt_tab_all("drone_logs");
 
             // Initialization finished
             utils::SyncWait(main_redis);

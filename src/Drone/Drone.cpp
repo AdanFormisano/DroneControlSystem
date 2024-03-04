@@ -1,4 +1,5 @@
 #include "Drone.h"
+#include "../../database/Database.h"
 #include "../../utils/RedisUtils.h"
 #include "../../utils/utils.h"
 #include "spdlog/spdlog.h"
@@ -66,9 +67,10 @@ void Drone::Move() {
     // spdlog::info("Tick: {} - Drone ID {} moved to ({}, {})",tick_n, drone_id, position.first, position.second);
 }
 
+// Update drone status in db
 void Drone::UpdateStatus() {
     // Implementing option 1: each drone updates its status using its key in Redis and uploading a map with the data
-    drone_data = {
+    std::map<std::string, std::string> drone_data = {
         {"id", std::to_string(drone_id)},
         {"status", "moving"}, // FIXME: This is a placeholder, it should take Drone.status
         {"charge", std::to_string(drone_charge)},
@@ -76,9 +78,27 @@ void Drone::UpdateStatus() {
         {"Y", std::to_string(position.second)},
         {"latestStatusUpdateTime", std::to_string(std::chrono::system_clock::now().time_since_epoch().count())}};
 
+    Database db;
+    db.logDroneData(drone_data);
+
     // Updating the drone's status in Redis using streams
     auto redis_stream_id = drone_redis.xadd("drone_stream", "*", drone_data.begin(), drone_data.end()); // Returns the ID of the message
 }
+
+// Duplicate of UpdateStatus, with old implementation
+// void Drone::UpdateStatus() {
+//     // Option 1: each drone updates its status using its key in Redis and uploading a map with the data
+//     drone_data = {
+//         {"id", std::to_string(drone_id)},
+//         {"status", "moving"}, // FIXME: This is a placeholder, it should take Drone.status
+//         {"charge", std::to_string(drone_charge)},
+//         {"X", std::to_string(position.first)},
+//         {"Y", std::to_string(position.second)},
+//         {"latestStatusUpdateTime", std::to_string(std::chrono::system_clock::now().time_since_epoch().count())}};
+
+//     // Updating the drone's status in Redis using streams
+//     auto redis_stream_id = drone_redis.xadd("drone_stream", "*", drone_data.begin(), drone_data.end()); // Returns the ID of the message
+// }
 
 void Drone::requestCharging() {
     // Example logging, adjust as needed

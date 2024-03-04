@@ -1,17 +1,29 @@
 #pragma once
 
+#include <map>
+#include <memory>
 #include <pqxx/pqxx>
-#include <utility>
+#include <string>
 
 class Database {
 public:
     Database();
 
-    pqxx::connection C;
-    pqxx::work W;
+    void get_DB();
 
-    std::unique_ptr<pqxx::connection>
-    con_2_DB(
+    void prnt_tab_all(const std::string &tableName);
+
+    void hndl_con(
+        std::unique_ptr<pqxx::connection> &conn,
+        const std::string &tableName);
+
+    void logDroneData(
+        const std::map<std::string, std::string> &droneData);
+
+private:
+    std::shared_ptr<pqxx::connection> conn;
+
+    void connect_to_db(
         const std::string &dbname,
         const std::string &user,
         const std::string &password,
@@ -19,24 +31,12 @@ public:
         const std::string &port);
 
     pqxx::result qry(
-        const std::string &tableName,
-        const std::shared_ptr<pqxx::connection> &conn);
+        const std::string &tableName);
 
     void qry_prnt(
-        const std::string &tableName,
-        const std::shared_ptr<pqxx::connection> &conn);
-
-    void get_DB();
-
-    void hndl_con(
-        std::unique_ptr<pqxx::connection> &conn,
         const std::string &tableName);
 
     void prnt_tab(
         const std::string &tableName,
         const pqxx::result &R);
-
-    void logDroneData(
-        const std::map<std::string, std::string> &droneData,
-        const std::shared_ptr<pqxx::connection> &conn);
 };
