@@ -78,11 +78,13 @@ void Drone::UpdateStatus() {
         {"Y", std::to_string(position.second)},
         {"latestStatusUpdateTime", std::to_string(std::chrono::system_clock::now().time_since_epoch().count())}};
 
-    Database db;
-    db.logDroneData(drone_data);
-
     // Updating the drone's status in Redis using streams
-    auto redis_stream_id = drone_redis.xadd("drone_stream", "*", drone_data.begin(), drone_data.end()); // Returns the ID of the message
+    auto redis_stream_id = drone_redis.xadd(
+        "drone_stream", "*",
+        drone_data.begin(),
+        drone_data.end()); // Returns the ID of the message
+
+    std::cout << "drone_id " << drone_id << " updated" << std::endl;
 }
 
 // Duplicate of UpdateStatus, with old implementation
