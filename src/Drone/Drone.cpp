@@ -93,11 +93,13 @@ void Drone::UpdateStatus() {
         };
         // TODO: Find better way to get the time
 
-    Database db;
-    db.logDroneData(drone_data);
-
     // Updating the drone's status in Redis using streams
-    try {auto redis_stream_id = drone_redis.xadd("drone_stream", "*", drone_data.begin(), drone_data.end()); // Returns the ID of the message
+    try {auto redis_stream_id = drone_redis.xadd(
+        "drone_stream", "*",
+        drone_data.begin(),
+        drone_data.end()); // Returns the ID of the message
+
+    std::cout << "drone_id " << drone_id << " updated" << std::endl;
 }catch (const sw::redis::IoError& e) {
             spdlog::error("Couldn't update status: {}", e.what());
         }

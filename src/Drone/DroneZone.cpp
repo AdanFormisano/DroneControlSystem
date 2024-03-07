@@ -12,15 +12,15 @@ For testing purposes, the right column will be ignored for now.*/
 
 namespace drones {
     // The zone is created with vertex_coords_sqr set.
-    DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4>& coords, DroneManager* drone_manager)
-        : zone_id(zone_id), vertex_coords_sqr(coords), dm(drone_manager) {
-        // Calculate the real global coord needed for the drone path
-        vertex_coords_glb = SqrToGlbCoords();
+DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords,  DroneManager *drone_manager)
+    : zone_id(zone_id), vertex_coords_sqr(coords), dm(drone_manager) {
+    // Calculate the real global coord needed for the drone path
+    vertex_coords_glb = SqrToGlbCoords();
 
-        // Create drone path
-        CreateDronePath();
+    //              Create drone path
+    CreateDronePath();
 
-        // Uploads the path to the Redis server
+    // Uploads the path to the Redis server
         UploadPathToRedis();
 
         // Create the drone
@@ -29,8 +29,8 @@ namespace drones {
 
     void DroneZone::CreateDrone() {
         // Create the zone's drone
-        int drone_id = zone_id; // TODO: This is a placeholder, use better drone_id
-        auto drone = std::make_shared<Drone>(drone_id, this);
+    int drone_id = zone_id; // TODO: This is a placeholder, use better drone_id
+    auto drone = std::make_shared<Drone>(drone_id, this);
 
         // Gets the vectors of drones and threads from the DroneManager
         std::vector<std::shared_ptr<Drone>>& drone_vector = dm->getDroneVector();
@@ -82,3 +82,4 @@ namespace drones {
         dm->shared_redis.rpush(redis_path_id, drone_path.begin(), drone_path.end());
     }
 }
+} // namespace drones

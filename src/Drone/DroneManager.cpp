@@ -9,26 +9,24 @@ The real global coordinates are needed for the drone path. They are going to be 
 */
 
 namespace drones {
-    void DroneManager::Run() {
-        spdlog::set_pattern("[%T.%e][%^%l%$][Drone] %v");
-        spdlog::info("Initializing Drone process");
+void DroneManager::Run() {
+    spdlog::set_pattern("[%T.%e][%^%l%$][Drone] %v");
+    spdlog::info("Initializing Drone process");
 
-        drone_zones.reserve(300);
-        drone_vector.reserve(300);
+    drone_zones.reserve(300);
+    drone_vector.reserve(300);
         drone_threads.reserve(300);
 
-        // Calculate the zones' vertex_coords
-        // TODO: Sono stronzo e l'ordine e' diverso da quello utilizzato per il path
+    // Calculate the zones' vertex_coords
+    // TODO: Sono stronzo e l'ordine e' diverso da quello utilizzato per il path
         CalculateGlobalZoneCoords();
 
-        int zone_id = 0;    // Needs to be 0 because is used in DroneControl::setDroneData()
-
-        // Create the DroneZones objects for every zone calculated
-        for (auto& zone : zones) {
-            CreateDroneZone(zone, zone_id);
-            ++zone_id;
-        }
-        spdlog::info("All zones created");
+    int zone_id = 0; // Needs to be 0 because is used in DroneControl::setDroneData()
+    // Create the DroneZones objects for every zone calculated
+    for (auto &zone : zones) {
+        CreateDroneZone(zone, zone_id);
+        ++zone_id;
+    }spdlog::info("All zones created");
 
         utils::SyncWait(shared_redis);
 
@@ -42,9 +40,9 @@ namespace drones {
                 // Get the time_point
                 auto tick_start = std::chrono::steady_clock::now();
 
-                // Sleep for the remaining time
+    // Sleep for the remaining time
 
-                // Check if there is time left in the tick
+    // Check if there is time left in the tick
                 auto tick_now = std::chrono::steady_clock::now();
                 if (tick_now < tick_start + tick_duration_ms) {
                     // Sleep for the remaining time
@@ -53,9 +51,9 @@ namespace drones {
                     // Log if the tick took too long
                     spdlog::warn("DroneManager tick took too long");
                     break;
-                }
+}
 
-                // std::cout << n_data_sent << " data sent" << std::endl;
+// std::cout << n_data_sent << " data sent" << std::endl;
                 // Get sim_running from Redis
                 sim_running = (shared_redis.get("sim_running") == "true");
                 ++tick_n;
@@ -63,47 +61,47 @@ namespace drones {
         } catch (const sw::redis::IoError& e) {
             spdlog::error("Couldn't get sim_running: {}", e.what());
         }
-    }
+    }DroneManager::DroneManager(Redis &redis) : shared_redis(redis) {
+}
 
-    DroneManager::DroneManager(Redis& redis) : shared_redis(redis) {}
+DroneManager::~DroneManager() {
+    for (auto &thread : drone_threads) {
+        if (thread.joinable()) {
 
-    DroneManager::~DroneManager() {
-        for (auto& thread : drone_threads) {
-            if (thread.joinable()) {
-                thread.join();
-            }
+            thread.join();
         }
     }
+}
 
-    // Creates the zones' global vertex_coords
-    void DroneManager::CalculateGlobalZoneCoords() {
-        int i = 0;
-        int width = 62;
-        int height = 2;
+// Creates the zones' global vertex_coords
+void DroneManager::CalculateGlobalZoneCoords() {
+    int i = 0;
+    int width = 62;
+    int height = 2;
 
-        for (int x = -124; x <= 124 - width; x += width) {
-            for (int y = -75; y <= 75 - height; y += height) {
-                zones[i][0] = {x, y};                   // Bottom left
-                zones[i][1] = {x + width, y};           // Bottom right
-                zones[i][2] = {x + width, y + height};  // Top right
-                zones[i][3] = {x, y + height};          // Top left
-                ++i;
-            }
+    for (int x = -124; x <= 124 - width; x += width) {
+        for (int y = -75; y <= 75 - height; y += height) {
+            zones[i][0] = {x, y};                   // Bottom left
+            zones[i][1] = {x + width, y};           // Bottom right
+            zones[i][2] = {x + width, y + height};  // Top right
+            zones[i][3] = {x, y + height};          // Top left
+            ++i;
         }
     }
+}
 
-    // For a set of vertex_coords creates a DroneZone object
-    void DroneManager::CreateDroneZone(std::array<std::pair<int, int>, 4>& zone, int zone_id) {
-        drone_zones.emplace_back(zone_id, zone, this);
-    }
+// For a set of vertex_coords creates a DroneZone object
+void DroneManager::CreateDroneZone(std::array<std::pair<int, int>, 4>& zone, int zone_id) {
+    drone_zones.emplace_back(zone_id, zone, this);
+}
 
-    void DroneManager::CreateThreadBlocks() {
+void DroneManager::CreateThreadBlocks() {
         // For every "block" of zones, create the threads
         int width = 62;
         int height = 2;
         int n_drone = 0;
-        for (int x = -124; x <= 124 - width; x += width) {
-            // Creates threads for a column of zones
+    for (int x = -124; x <= 124 - width; x += width) {
+        // Creates threads for a column of zones
             for (int y = -75; y <= 75 - height; y += height) {
                 // Create the threads
                 drone_threads.emplace_back(&Drone::Run, drone_vector[n_drone].get());
@@ -111,7 +109,6 @@ namespace drones {
             }
             std::this_thread::sleep_for(tick_duration_ms * 5);
             spdlog::info("Column of drones created");
-        }
     }
-} // drones
-
+}
+} // namespace drones
