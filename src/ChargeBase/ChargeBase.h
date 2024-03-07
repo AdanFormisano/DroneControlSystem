@@ -6,7 +6,7 @@
 #define DRONECONTROLSYSTEM_CHARGEBASE_H
 #include <vector>
 #include <optional>
-#include "../Drone/Drone.h"
+#include "../Drone/DroneManager.h"
 
 namespace drones {
 
