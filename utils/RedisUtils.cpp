@@ -42,13 +42,14 @@ namespace utils {
 
             // If the counter is 0 all processes are ready
             if (current_count == 0) {
+                // Start the simulation
+                redis.set("sim_running", "true");
+                spdlog::info("----SIMULATION STARTED----");
+
                 // Notify all processes that they can continue and sync is done
                 redis.publish(sync_channel, "SYNC_DONE");
                 spdlog::info("SYNC IS DONE!");
 
-                // Start the simulation
-                redis.set("sim_running", "true");
-                spdlog::info("----SIMULATION STARTED----");
             } else {
                 // If the counter is not 0, there are still processes working, wait for the SYNC_DONE message
                 auto sub = redis.subscriber();
