@@ -3,5 +3,8 @@ cmake-build-debug/*
 # VScode settings
 .vscode/*
 
+# CLion settings
+.idea/copilot/*
+
 # For now remove build directory
 build/*
