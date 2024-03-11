@@ -7,6 +7,11 @@
 #include <iomanip>
 #include <cstdlib>
 
+/* Drones are created by their zone, but its thread is created after the system has ended the initialization process.
+The drones' threads are created in groups, where every group is a "collumn" of the zone. This is done to avoid overloading the system.
+Each thread immediately starts running the drone's simulation.
+*/
+
 namespace drones {
     Drone::Drone(int id, DroneZone* drone_zone)
     : drone_id(id), dz(drone_zone), drone_redis(dz->dm->shared_redis) {
@@ -17,22 +22,20 @@ namespace drones {
 
     // This will be the ran in the threads of each drone
     void Drone::Run() {
-        // Initialize the thread
         tick_n = 0;
-        // InitThread();
+        spdlog::info("Drone {} bound: 1 {},{}, 2 {},{}, 3 {},{}, 4 {},{}",
+        drone_id, dz->vertex_coords_glb[0].first, dz->vertex_coords_glb[0].second,
+        dz->vertex_coords_glb[1].first, dz->vertex_coords_glb[1].second,
+        dz->vertex_coords_glb[2].first, dz->vertex_coords_glb[2].second,
+        dz->vertex_coords_glb[3].first, dz->vertex_coords_glb[3].second);
 
-        //auto random_float = generateRandomFloat();
-        //int random_int = abs(int(random_float) * 100);
-        //std::cout << "Drone " << drone_id << " random_int: " << random_int << std::endl;
-        //uto random_sleep = std::chrono::milliseconds(random_int);
-        //std::this_thread::sleep_for(random_sleep);
+        // Get drone_path length
+        int path_length = dz->drone_path.size();
+        path_index = -1;
 
         // Get sim_running from Redis
-        // std::cout << "Drone " << drone_id << " prima di sim_running" << std::endl;
         bool sim_running = (dz->dm->shared_redis.get("sim_running") == "true");
-        std::cout << "Drone " << drone_id << " dopo di sim_running" << std::endl;
-        // spdlog::info("Drone {}: {}", drone_id, sim_running);
-        // TESTING: placeholder where drone moves by 5 units every tick
+    
         // Run the simulation
         while(sim_running) {
             // Get the time_point
@@ -62,25 +65,23 @@ namespace drones {
         }
     }
 
-    // Thread initialization
-    void Drone::InitThread() {
-        // Increment the process count in Redis
-        drone_redis.incr("sync_process_count");
-        // TODO: Get initial zone position
-        // TODO: Implement the sleep time that simulates the time from base to first coords
-        UpdateStatus();
-        utils::SyncWait(drone_redis);
-    }
-
-    // This will just move the drone to a random position
+    // The drone will follow a path indicated by the zone
     void Drone::Move() {
-        // Every drone will start in the top left corner of its zone.
-        // Every tick the drone will move 20 meters clockwise, until it reaches the boundary of the zone.
-
-        drone_position.first += 20;
+        // Every drone will start in the top left "square" of its zone.
+        
+        // Check if the drone is at the end of the path
+        if (path_index == dz->drone_path.size() - 1) {
+            path_index = 0;
+            drone_position = dz->drone_path[path_index];
+        } else {
+            ++path_index;
+            drone_position = dz->drone_path[path_index];
+        }
+        
     }
 
     void Drone::UpdateStatus() {
+        // TODO: There can be a better way to do this: there is no need to build each time the map
         // Implementing option 1: each drone updates its status using its key in Redis and uploading a map with the data
         drone_data = {
                 {"id", std::to_string(drone_id)},
@@ -94,8 +95,6 @@ namespace drones {
         // Updating the drone's status in Redis using streams
         try {
             auto redis_stream_id = drone_redis.xadd("drone_stream", "*", drone_data.begin(), drone_data.end()); // Returns the ID of the message
-            // dz->dm->n_data_sent++;
-            // std::cout << "Drone " << drone_id << " sent data" << std::endl;
         } catch (const sw::redis::IoError& e) {
             spdlog::error("Couldn't update status: {}", e.what());
         }

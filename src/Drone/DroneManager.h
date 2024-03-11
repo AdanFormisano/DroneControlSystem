@@ -16,7 +16,7 @@ namespace drones {
     class DroneManager {
     public:
         Redis& shared_redis;
-        std::array<std::array<std::pair<int, int>, 4>, 300> zones;  // Array of all the zones' vertex_coords
+        std::array<std::array<std::pair<int, int>, 4>, 300> zones;  // Array of all the zones' vertex_coords_sqr, NOT global coords
         std::vector<DroneZone> drone_zones;                         // Vector of all the zones objects
         std::vector<std::shared_ptr<Drone>> drone_vector;           // Vector of all the drones objects
         std::vector<std::thread> drone_threads;                     // Vector of all the drones threads
@@ -36,17 +36,21 @@ namespace drones {
 
     private:
         int tick_n = 0;
-        // For a set of vertex_coords creates a DroneZone object
+        // For a set of vertex_coords_sqr creates a DroneZone object
         void CreateDroneZone(std::array<std::pair<int, int>, 4>&, int);
         void CreateThreadBlocks();
     };
 
     class DroneZone {
     public:
-        int zone_width = 62;
-        int zone_height = 2;
-        std::array<std::pair<int, int>, 4> vertex_coords;
-        std::vector<std::pair<int, int>> drone_path;
+        int zone_width = 62;                                    // In #squares
+        int zone_height = 2;                                    // In #squares
+        // TODO: Use list of pairs instead of vector
+        std::array<std::pair<int, int>, 4> vertex_coords_sqr;   // Coords of the "squares" that define the zone
+        // TODO: Use list of pairs instead of vector
+        std::array<std::pair<int, int>, 4> vertex_coords_glb;   // Global coords that define the zone
+        // TODO: Use list of pairs instead of vector
+        std::vector<std::pair<int, int>> drone_path;            // Path that the drone will follow
         DroneManager* dm;
 
         DroneZone(int, std::array<std::pair<int, int>, 4>&, DroneManager*);
@@ -58,8 +62,9 @@ namespace drones {
         std::shared_ptr<Drone> drone_ptr;   // Pointer to its drone
 
         void CreateDrone();
-        void CreateDronePath();
-        void GenerateLoopPath(const std::array<std::pair<int, int>, 4>&, int);
+        std::array<std::pair<int, int>, 4> SqrToGlbCoords();                    // Converts the sqr verteces to global coords
+        void CreateDronePath();                                                 // Creates the drone path for the zone using global coords
+        void GenerateLoopPath(const std::array<std::pair<int, int>, 4>&, int);  // Generates a loop path for the drone
     };
 
     class Drone {
@@ -76,6 +81,7 @@ namespace drones {
         std::string redis_id;
         drones::DroneZone* dz;
         Redis& drone_redis;
+        int path_index;         // Index of the current position in the drone_path
 
         // Drone's data
         std::vector<std::pair<std::string, std::string>> drone_data;

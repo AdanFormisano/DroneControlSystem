@@ -58,11 +58,6 @@ namespace drone_control {
 
     // Reads the stream of data from Redis and updates the drones' data
     void DroneControl::ReadStream() {
-//        using Attrs = std::unordered_map<std::string, std::string>; // This is the data of the drone
-//        using Item = std::pair<std::string, Attrs>;                 // This is the id (will be the msg id once the stream is read) and the data of the drone
-//        using ItemStream = std::vector<Item>;                       // This is the stream of data
-//        std::unordered_map<std::string, ItemStream> result;         // This is the key of the stream and the stream of data
-
         using new_Attrs = std::vector<std::pair<std::string, std::string>>; //This NEEDS to be a vector for xread to work
         using new_Item = std::pair<std::string, new_Attrs>;
         using new_ItemStream = std::vector<new_Item>;
@@ -90,7 +85,6 @@ namespace drone_control {
                     // stream_drone.second is the unordered_map with the data of the drone
 
                     // Update the local drone data
-                    // setDroneData(stream_drone.second);
                     new_setDroneData(stream_drone.second);
                 }
             // Move the start_id to the last item read
@@ -105,44 +99,6 @@ namespace drone_control {
     }
 
     // Updates the local drone data
-    void DroneControl::setDroneData(const std::unordered_map<std::string, std::string>& data) {
-        drone_data temp_drone_struct;
-
-        // Uses a temp struct to get the data from the unordered_map
-        for (const auto& item : data) {
-            const auto& key = item.first;
-            const auto& value = item.second;
-
-            if (key == "id") {
-                // Update the status of the drone
-                temp_drone_struct.id = std::stoi(value);
-                // spdlog::info("Drone ID: {}", temp_drone_struct.id);
-            } else if (key == "status") {
-                // Update the status of the drone
-                temp_drone_struct.status = value;
-                // spdlog::info("Drone status: {}", temp_drone_struct.status);
-            } else if (key == "charge") {
-                // Update the charge of the drone
-                temp_drone_struct.charge = value;
-                // spdlog::info("Drone charge: {}", temp_drone_struct.charge);
-            } else if (key == "X") {
-                // Update the X position of the drone
-                temp_drone_struct.position.first = std::stof(value);
-                // spdlog::info("Drone X position: {}", temp_drone_struct.position.first);
-            } else if (key == "Y") {
-                // Update the Y position of the drone
-                temp_drone_struct.position.second = std::stof(value);
-                // spdlog::info("Drone Y position: {}", temp_drone_struct.position.second);
-            }
-//            } else if (key == "latest_update") {
-//                temp_drone_struct.latest_update = value;
-//                spdlog::info("Drone latest update: {}", temp_drone_struct.latest_update);
-//            }
-        }
-        // Update the drone data array
-        drones[temp_drone_struct.id] = temp_drone_struct;
-    }
-
     void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std::string>> &data) {
         // The data is structured as a known array
         drone_data temp_drone_struct;
@@ -154,9 +110,9 @@ namespace drone_control {
 
         // Update the drone data array
         drones[temp_drone_struct.id] = temp_drone_struct;
-        // spdlog::info("Drone {} updated: {}, {}, {}, {}",
-        //             temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
-        //             temp_drone_struct.position.first, temp_drone_struct.position.second);
+        spdlog::info("Drone {} updated: {}, {}, {}, {}",
+                    temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
+                    temp_drone_struct.position.first, temp_drone_struct.position.second);
     }
 
     // Gets the local data of a drone

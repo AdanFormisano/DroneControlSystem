@@ -4,6 +4,10 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 
+/* The coords used for the zones indicates the "square" that the drone is going to cover: it's not a real coordinate.
+The real global coordinates are needed for the drone path. They are going to be calculated when the zones are created.
+*/
+
 namespace drones {
     void DroneManager::Run() {
         spdlog::set_pattern("[%T.%e][%^%l%$][Drone] %v");
@@ -11,9 +15,10 @@ namespace drones {
 
         drone_zones.reserve(300);
         drone_vector.reserve(300);
-        // drone_threads.reserve(300);
+        drone_threads.reserve(300);
 
         // Calculate the zones' vertex_coords
+        // TODO: Sono stronzo e l'ordine e' diverso da quello utilizzato per il path
         CalculateGlobalZoneCoords();
 
         int zone_id = 0;    // Needs to be 0 because is used in DroneControl::setDroneData()
@@ -78,10 +83,10 @@ namespace drones {
 
         for (int x = -124; x <= 124 - width; x += width) {
             for (int y = -75; y <= 75 - height; y += height) {
-                zones[i][0] = {x, y};
-                zones[i][1] = {x + width, y};
-                zones[i][2] = {x, y + height};
-                zones[i][3] = {x + width, y + height};
+                zones[i][0] = {x, y};                   // Bottom left
+                zones[i][1] = {x + width, y};           // Bottom right
+                zones[i][2] = {x + width, y + height};  // Top right
+                zones[i][3] = {x, y + height};          // Top left
                 ++i;
             }
         }
@@ -104,7 +109,8 @@ namespace drones {
                 drone_threads.emplace_back(&Drone::Run, drone_vector[n_drone].get());
                 ++n_drone;
             }
-            std::this_thread::sleep_for(tick_duration_ms * 50);
+            std::this_thread::sleep_for(tick_duration_ms * 5);
+            spdlog::info("Column of drones created");
         }
     }
 } // drones
