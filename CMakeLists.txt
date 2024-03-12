@@ -8,7 +8,6 @@ add_executable(DroneControlSystem
         src/DroneControl/DroneControl.cpp
         src/DroneControl/DroneControl.h
         src/Drone/Drone.cpp
-        src/Drone/Drone.h
         src/ChargeBase/ChargeBase.cpp
         src/ChargeBase/ChargeBase.h
         src/Drone/DroneZone.cpp
@@ -16,8 +15,8 @@ add_executable(DroneControlSystem
         src/Drone/DroneManager.h
         src/globals.cpp
         src/globals.h
-        database/Database.cpp
-        database/Database.h
+        src/db/Database.cpp
+        src/db/Database.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp

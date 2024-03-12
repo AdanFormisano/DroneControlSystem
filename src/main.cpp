@@ -1,8 +1,7 @@
-#include "../database/Database.h"
 #include "../utils/RedisUtils.h"
-#include "Drone/Drone.h"
 #include "Drone/DroneManager.h"
 #include "DroneControl/DroneControl.h"
+#include "db/Database.h"
 #include "globals.h"
 #include <iostream>
 #include <pqxx/pqxx>
@@ -11,10 +10,13 @@
 #include <unistd.h>
 
 using namespace sw::redis;
+
 /* The simulation starts after all the process have initiated and are sync to one another.
  * The tick duration is 1 second, and it simulates 2.42 real time seconds (time needed for a drone to move to the next
  * "checkpoint") in 1 tick.
  * */
+
+// FIXME: All simulation should run from the main file
 int main() {
     spdlog::set_pattern("[%T.%e][%^%l%$][Main] %v");
 
@@ -27,9 +29,11 @@ int main() {
         auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
         drone_control_redis.incr(sync_counter_key);
 
-        drone_control::Init(drone_control_redis);
-
+        // Create the DroneControl object
+        drone_control::DroneControl dc(drone_control_redis);
         // Start simulation
+        dc.Run();
+
     } else {
         // In parent process create new child Drones process
         pid_t pid_drone = fork();
@@ -41,44 +45,51 @@ int main() {
             auto drone_redis = Redis("tcp://127.0.0.1:7777");
             drone_redis.incr(sync_counter_key);
 
-            drones::Init(drone_redis);
-
-            // Start simulation
+            // Create the DroneManager object
+            drones::DroneManager dm(drone_redis);
+            dm.Run();
         } else {
             // In Main process
             auto main_redis = Redis("tcp://127.0.0.1:7777");
             main_redis.incr(sync_counter_key);
 
+            // DB obj
             Database db;
-            db.getDabase();
 
-            auto conn = db.connectToDatabase("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
-            if (conn) {
-                std::shared_ptr<pqxx::connection> shared_conn = std::move(conn);
-                db.executeQueryAndPrintTable("droni", shared_conn);
-                // db.executeQuery("droni", shared_conn);
-            } else {
-                // Handle connection error
-            }
+            // DB get or create
+            db.get_DB();
 
-            // Initialization finished
+            // // DB print table
+            // db.prnt_tab_all("drone_logs");
+
+            drone_control::drone_data myDrone;
+            myDrone.id = 1;
+            myDrone.status = "idle";
+            myDrone.charge = "80";
+            myDrone.position = std::make_pair(3.0, 4.0);
+
+            db.logDroneData(myDrone);
+
+            // Wait for the other processes to finish initialization
             utils::SyncWait(main_redis);
 
             // Start simulation
-            auto sim_end_at = sim_duration_ms / tick_duration_ms;
+            auto sim_end_after = sim_duration_ms / tick_duration_ms;
             int tick_n = 0;
-            while (tick_n < sim_end_at) {
+            while (tick_n < sim_end_after) {
                 // Do simulation stuff
                 std::cout << "Tick " << tick_n << " started" << std::endl;
-                std::this_thread::sleep_for(tick_duration_ms);  // Sleep for 1 tick: 1 second
+                std::this_thread::sleep_for(tick_duration_ms); // Sleep for 1 tick: 1 second
                 std::cout << "Tick " << tick_n << " ended" << std::endl;
                 ++tick_n;
             }
+
             // Use Redis to stop the simulation
             main_redis.set("sim_running", "false");
 
-            // FIXME: This is a placeholder for the monitor process, without it the main process will exit and
-            //  the children will be terminated
+            // FIXME: This is a placeholder for the monitor process,
+            // without it the main process will exit and
+            // the children will be terminated
             std::this_thread::sleep_for(std::chrono::seconds(10));
             std::cout << "Exiting..." << std::endl;
         }

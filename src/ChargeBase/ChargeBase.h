@@ -7,6 +7,7 @@
 #include "../Drone/Drone.h"
 #include <vector>
 #include <optional>
+#include "../Drone/DroneManager.h"
 
 namespace charge_base {
 
