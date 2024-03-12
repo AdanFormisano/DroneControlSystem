@@ -71,6 +71,9 @@ namespace drones {
         position.first += 5;
         // spdlog::info("Tick: {} - Drone ID {} moved to ({}, {})",tick_n, drone_id, position.first, position.second);
     }
+    void Drone::MovetoZone() {
+        // call move and set the destination to the zone that the drone is in charge of
+    }
 
     void Drone::UpdateStatus() {
         // Implementing option 1: each drone updates its status using its key in Redis and uploading a map with the data
@@ -90,13 +93,14 @@ namespace drones {
 
 
     void Drone::onChargingComplete() {
-        status = "Charging Complete";
-        drone_redis.hset(redis_id, "status", status);
+        setDroneStatus("Charging Complete");
+        drone_redis.hset(redis_id, "status", getDroneStatus());
         spdlog::info("Drone {} charging complete", drone_id);
+        //ChargeBase::releaseDrone(this->get_id());
     }
     void Drone::onCharging() {
-        status = "Charging";
-        drone_redis.hset(redis_id, "status", status);
+        setDroneStatus("Charging");
+        drone_redis.hset(redis_id, "status", getDroneStatus());
         spdlog::info("Drone {} charging", drone_id);
     }
 
@@ -110,6 +114,14 @@ namespace drones {
 
     const std::string &Drone::getRedisId() const {
         return redis_id;
+    }
+
+    void Drone::setDroneStatus(const std::string &droneStatus) {
+        drone_status = droneStatus;
+    }
+
+    const std::string &Drone::getDroneStatus() const {
+        return drone_status;
     }
 
 } // drones

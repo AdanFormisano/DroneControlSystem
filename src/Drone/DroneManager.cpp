@@ -3,6 +3,7 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 
+
 namespace drones {
     // Initializes the Drone process
     int Init(Redis& redis) {
