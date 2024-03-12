@@ -1,16 +1,16 @@
 #ifndef DRONECONTROLSYSTEM_DRONEMANAGER_H
 #define DRONECONTROLSYSTEM_DRONEMANAGER_H
-#include "sw/redis++/redis++.h"
 #include "../ChargeBase/ChargeBase.h"
+#include "sw/redis++/redis++.h"
 #include <array>
 #include <thread>
 
 using namespace sw::redis;
 
-namespace drones{
-    class DroneZone;
-    class Drone;
-}
+namespace drones {
+class DroneZone;
+class Drone;
+} // namespace drones
 
 namespace drones {
     class DroneManager {
@@ -97,7 +97,6 @@ namespace drones {
 
         void Move();                // FIXME: This is a placeholder for the movement function
         void UpdateStatus();        // FIXME: This is a placeholder for the status update function
-        void InitThread();          // FIXME: This is a placeholder for the thread initialization function
 
         // For charging interaction
         void requestCharging();

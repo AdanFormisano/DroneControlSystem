@@ -1,19 +1,18 @@
+#include "spdlog/spdlog.h"
+#include "../../utils/RedisUtils.h"
+#include "DroneControl.h"
+#include <chrono>
+#include <iostream>
+
 /** DroneControl explanation
  * The DroneControl class is the main class of the DroneControl process. It is responsible for reading the stream of data
  * from Redis and updating the drones' data. It also creates a log-entry in PostgreSQL for each update received.
  * For each drone data read from the stream it calls the function CheckPath to check if the drone is following the predefined path
  */
 
-#include "DroneControl.h"
-
-#include <chrono>
-#include <iostream>
-
-#include "../../utils/RedisUtils.h"
-#include "spdlog/spdlog.h"
-
+// FIXME: On the last tick the stream is not trimmed
 namespace drone_control {
-DroneControl::DroneControl(Redis& shared_redis) : redis(shared_redis){};
+DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis){};
 
 void DroneControl::Init() {
     spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");

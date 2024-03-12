@@ -3,9 +3,8 @@
 #include "../../utils/utils.h"
 #include "DroneManager.h"
 #include "../globals.h"
-#include <iostream>
-#include <iomanip>
 #include <cstdlib>
+#include <iomanip>
 
 /* Drones are created by their zone, but its thread is created after the system has ended the initialization process.
 The drones' threads are created in groups, where every group is a "collumn" of the zone. This is done to avoid overloading the system.
@@ -13,12 +12,12 @@ Each thread immediately starts running the drone's simulation.
 */
 
 namespace drones {
-    Drone::Drone(int id, DroneZone* drone_zone)
+Drone::Drone(int id, DroneZone *drone_zone)
     : drone_id(id), dz(drone_zone), drone_redis(dz->dm->shared_redis) {
-        redis_id = "drone:" + std::to_string(id);
-        drone_charge = 100.0;
-        drone_position = {0,0};
-    }
+    redis_id = "drone:" + std::to_string(id);
+    drone_charge = 100.0;
+    drone_position = {0, 0};
+}
 
     // This will be the ran in the threads of each drone
     void Drone::Run() {
@@ -35,19 +34,19 @@ namespace drones {
 
         // Get sim_running from Redis
         bool sim_running = (dz->dm->shared_redis.get("sim_running") == "true");
-    
+
         // Run the simulation
         while(sim_running) {
             // Get the time_point
             auto tick_start = std::chrono::steady_clock::now();
 
-            // Work
-            try {
-                Move();
-                UpdateStatus();
-            } catch (const std::exception& e) {
-                spdlog::error("Drone {} failed to move: {}", drone_id, e.what());
-            }
+        // Work
+        try {
+            Move();
+            UpdateStatus();
+        } catch (const std::exception &e) {
+            spdlog::error("Drone {} failed to move: {}", drone_id, e.what());
+        }
 
             // Check if there is time left in the tick
             auto tick_now = std::chrono::steady_clock::now();
@@ -68,7 +67,7 @@ namespace drones {
     // The drone will follow a path indicated by the zone
     void Drone::Move() {
         // Every drone will start in the top left "square" of its zone.
-        
+
         // Check if the drone is at the end of the path
         if (path_index == dz->drone_path.size() - 1) {
             path_index = 0;
@@ -77,7 +76,7 @@ namespace drones {
             ++path_index;
             drone_position = dz->drone_path[path_index];
         }
-        
+
     }
 
     void Drone::UpdateStatus() {
@@ -100,28 +99,28 @@ namespace drones {
         }
     }
 
-    void Drone::requestCharging() {
-        // Example logging, adjust as needed
-        spdlog::info("Drone {} requesting charging", drone_id);
-        ChargeBase* chargeBase = ChargeBase::getInstance();
-        if (chargeBase && chargeBase->takeDrone(*this)) {
-            drone_status = "Charging Requested";
-            drone_redis.hset(redis_id, "status", drone_status);
-        }
-    }
-
-    void Drone::onChargingComplete() {
-        drone_status = "Charging Complete";
+void Drone::requestCharging() {
+    // Example logging, adjust as needed
+    spdlog::info("Drone {} requesting charging", drone_id);
+    ChargeBase *chargeBase = ChargeBase::getInstance();
+    if (chargeBase && chargeBase->takeDrone(*this)) {
+        drone_status = "Charging Requested";
         drone_redis.hset(redis_id, "status", drone_status);
-        spdlog::info("Drone {} charging complete", drone_id);
     }
+}
 
-    float Drone::getCharge() const {
-        return drone_charge;
-    }
+void Drone::onChargingComplete() {
+    drone_status = "Charging Complete";
+    drone_redis.hset(redis_id, "status", drone_status);
+    spdlog::info("Drone {} charging complete", drone_id);
+}
 
-    void Drone::setCharge(float newCharge) {
-        drone_charge=newCharge;
-    }
+float Drone::getCharge() const {
+    return drone_charge;
+}
 
-} // drones
+void Drone::setCharge(float newCharge) {
+    drone_charge = newCharge;
+}
+
+} // namespace drones

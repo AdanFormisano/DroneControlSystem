@@ -1,10 +1,8 @@
 #ifndef DRONECONTROLSYSTEM_DRONECONTROL_H
 #define DRONECONTROLSYSTEM_DRONECONTROL_H
-#include <sw/redis++/redis++.h>
-
-#include <vector>
-
 #include "../globals.h"
+#include <vector>
+#include <sw/redis++/redis++.h>
 
 using namespace sw::redis;
 
@@ -13,7 +11,6 @@ namespace drone_control {
 struct drone_data {
     int id;
     std::string status;
-    ;
     std::string charge;
     std::pair<int, int> position;
     // std::string latest_update;  // TODO: Add the last time the drone was updated
@@ -21,7 +18,7 @@ struct drone_data {
 };
 
 class DroneControl {
-   public:
+public:
     void Init();
     explicit DroneControl(Redis& shared_redis);
 
@@ -30,11 +27,10 @@ class DroneControl {
 
     void Run();                                                                      // Run the DroneControl process
     void ReadStream();                                                               // Read the stream of data from Redis
-    void setDroneData(const std::unordered_map<std::string, std::string>&);          // Update the drones' local data
     void new_setDroneData(const std::vector<std::pair<std::string, std::string>>&);  // Update the drones' local data
     std::unordered_map<std::string, std::string> getData(int drone_id);              // Get the local data of a drone
 
-   private:
+private:
     std::string current_stream_id = "0";  // The id of the last message read from the stream
     int tick_n = 0;
     std::array<std::array<std::pair<int, int>, 124>, 300> drone_paths;  // Array with the paths of all the drones

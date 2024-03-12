@@ -81,4 +81,4 @@ namespace drones {
         redis_path_id = "path:" + std::to_string(zone_id);
         dm->shared_redis.rpush(redis_path_id, drone_path.begin(), drone_path.end());
     }
-}
+} // namespace drones
