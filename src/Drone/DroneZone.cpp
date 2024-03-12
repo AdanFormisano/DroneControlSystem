@@ -20,6 +20,9 @@ namespace drones {
         // Create drone path
         CreateDronePath();
 
+        // Uploads the path to the Redis server
+        UploadPathToRedis();
+
         // Create the drone
         CreateDrone();
     }
@@ -71,5 +74,11 @@ namespace drones {
         for (int x = drone_boundaries[2].first; x >= drone_boundaries[3].first; x -= step_size) {
             drone_path.emplace_back(x, drone_boundaries[2].second);
         }
+    }
+
+    // Uploads the path to the Redis server
+    void DroneZone::UploadPathToRedis() {
+        redis_path_id = "path:" + std::to_string(zone_id);
+        dm->shared_redis.rpush(redis_path_id, drone_path.begin(), drone_path.end());
     }
 }

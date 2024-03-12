@@ -23,11 +23,11 @@ namespace drones {
     // This will be the ran in the threads of each drone
     void Drone::Run() {
         tick_n = 0;
-        spdlog::info("Drone {} bound: 1 {},{}, 2 {},{}, 3 {},{}, 4 {},{}",
-        drone_id, dz->vertex_coords_glb[0].first, dz->vertex_coords_glb[0].second,
-        dz->vertex_coords_glb[1].first, dz->vertex_coords_glb[1].second,
-        dz->vertex_coords_glb[2].first, dz->vertex_coords_glb[2].second,
-        dz->vertex_coords_glb[3].first, dz->vertex_coords_glb[3].second);
+        // spdlog::info("Drone {} bound: 1 {},{}, 2 {},{}, 3 {},{}, 4 {},{}",
+        // drone_id, dz->vertex_coords_glb[0].first, dz->vertex_coords_glb[0].second,
+        // dz->vertex_coords_glb[1].first, dz->vertex_coords_glb[1].second,
+        // dz->vertex_coords_glb[2].first, dz->vertex_coords_glb[2].second,
+        // dz->vertex_coords_glb[3].first, dz->vertex_coords_glb[3].second);
 
         // Get drone_path length
         int path_length = dz->drone_path.size();

@@ -51,6 +51,7 @@ namespace drones {
         std::array<std::pair<int, int>, 4> vertex_coords_glb;   // Global coords that define the zone
         // TODO: Use list of pairs instead of vector
         std::vector<std::pair<int, int>> drone_path;            // Path that the drone will follow
+        std::string redis_path_id;
         DroneManager* dm;
 
         DroneZone(int, std::array<std::pair<int, int>, 4>&, DroneManager*);
@@ -65,6 +66,7 @@ namespace drones {
         std::array<std::pair<int, int>, 4> SqrToGlbCoords();                    // Converts the sqr verteces to global coords
         void CreateDronePath();                                                 // Creates the drone path for the zone using global coords
         void GenerateLoopPath(const std::array<std::pair<int, int>, 4>&, int);  // Generates a loop path for the drone
+        void UploadPathToRedis();                                               // Uploads the path to the Redis server
     };
 
     class Drone {
