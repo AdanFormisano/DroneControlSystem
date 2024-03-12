@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../Drone/DroneManager.h"
+#include "../DroneControl/DroneControl.h"
 #include <map>
 #include <memory>
 #include <pqxx/pqxx>
@@ -17,8 +19,10 @@ public:
         std::unique_ptr<pqxx::connection> &conn,
         const std::string &tableName);
 
-    void logDroneData(
-        const std::map<std::string, std::string> &droneData);
+    // void logDroneData(
+    //     const std::map<std::string, std::string> &droneData);
+
+    void logDroneData(const drone_control::drone_data &drone);
 
 private:
     std::shared_ptr<pqxx::connection> conn;

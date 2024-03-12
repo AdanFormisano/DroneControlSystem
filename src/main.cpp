@@ -1,7 +1,7 @@
-#include "../database/Database.h"
 #include "../utils/RedisUtils.h"
 #include "Drone/DroneManager.h"
 #include "DroneControl/DroneControl.h"
+#include "db/Database.h"
 #include "globals.h"
 #include <iostream>
 #include <pqxx/pqxx>
@@ -59,8 +59,16 @@ int main() {
             // DB get or create
             db.get_DB();
 
-            // DB print table
-            db.prnt_tab_all("drone_logs");
+            // // DB print table
+            // db.prnt_tab_all("drone_logs");
+
+            drone_control::drone_data myDrone;
+            myDrone.id = 1;
+            myDrone.status = "idle";
+            myDrone.charge = "80";
+            myDrone.position = std::make_pair(3.0, 4.0);
+
+            db.logDroneData(myDrone);
 
             // Wait for the other processes to finish initialization
             utils::SyncWait(main_redis);
