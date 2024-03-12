@@ -4,7 +4,6 @@
 
 #ifndef DRONECONTROLSYSTEM_CHARGEBASE_H
 #define DRONECONTROLSYSTEM_CHARGEBASE_H
-#include "../Drone/Drone.h"
 #include <vector>
 #include <optional>
 #include "../Drone/DroneManager.h"

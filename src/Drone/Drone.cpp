@@ -1,5 +1,3 @@
-#include "Drone.h"
-
 #ifndef SPDLOG_GUARD_H
 #define SPDLOG_GUARD_H
 #include "spdlog/spdlog.h"
@@ -84,9 +82,6 @@ namespace drones {
             drone_position = dz->drone_path[path_index];
         }
 
-    }
-    void Drone::MovetoZone() {
-        // call move and set the destination to the zone that the drone is in charge of
     }
 
     void Drone::UpdateStatus() {

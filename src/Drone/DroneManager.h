@@ -75,8 +75,15 @@ namespace drones {
         void Run();
 
         // Utilize for charging simulation
+
+        int get_id() const{
+            return this->drone_id;
+        }
+        [[nodiscard]] const std::string &getDroneStatus() const;
+        [[nodiscard]] const std::string &getRedisId() const;
         void setCharge(float newCharge);
         [[nodiscard]] float getCharge() const;
+        void onCharging();
         void onChargingComplete();
 
     private:
@@ -94,7 +101,7 @@ namespace drones {
         // TODO: Add the last time the drone was updated
 
         int tick_n;
-
+        void setDroneStatus(const std::string &droneStatus);
         void Move();                // FIXME: This is a placeholder for the movement function
         void UpdateStatus();        // FIXME: This is a placeholder for the status update function
 
