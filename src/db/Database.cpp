@@ -3,6 +3,7 @@
 #include <iostream>
 #include <pqxx/pqxx>
 
+// Constructor
 Database::Database() {
     // La connessione non viene più
     // stabilita nel costruttore
@@ -39,7 +40,7 @@ void Database::get_DB() {
     pqxx::work W(*conn);
     W.exec("CREATE TABLE IF NOT EXISTS drone_logs ("
            "time TIMESTAMP, "
-           "drone_id INT, "
+           "drone_id INT NOT NULL PRIMARY KEY, "
            "status VARCHAR(255), "
            "charge INT, "
            "zone VARCHAR(255), " // Vuota per ora
@@ -65,7 +66,7 @@ void Database::qry_prnt(
     prnt_tab(tableName, R);
 }
 
-//
+// Handle connection
 void Database::hndl_con(
     std::unique_ptr<pqxx::connection> &conn,
     const std::string &tableName) {
@@ -133,24 +134,25 @@ void Database::prnt_tab_all(const std::string &tableName) {
     }
 }
 
-void Database::logDroneData(
-    const std::map<std::string, std::string> &droneData) {
+// Log drone data
+void Database::logDroneData(const drone_control::drone_data &drone) {
     if (!conn || !conn->is_open()) {
-        std::cerr << "Database connection not established for logging." << std::endl;
+        std::cerr << "Db connection not established for logging."
+                  << std::endl;
         return;
     }
+
     pqxx::work W(*conn);
     try {
-        W.exec("INSERT INTO drone_logs \
-                (time, drone_id, status, charge, zone, x, y) VALUES ("
-               "TO_TIMESTAMP(" +
-               droneData.at("latestStatusUpdateTime") + "), " +
-               droneData.at("id") + ", " +
-               W.quote(droneData.at("status")) + ", " +
-               droneData.at("charge") + ", " +
-               "NULL, " + // Zone vuota per ora
-               droneData.at("X") + ", " +
-               droneData.at("Y") + ")");
+        // Query prep to insert drone data in drone_logs
+        std::string query = "INSERT INTO drone_logs (drone_id, status, charge, x, y) VALUES (" +
+                            std::to_string(drone.id) + ", " +
+                            W.quote(drone.status) + ", " +
+                            W.quote(drone.charge) + ", " +
+                            std::to_string(drone.position.first) + ", " +
+                            std::to_string(drone.position.second) + ");";
+
+        W.exec(query);
         W.commit();
     } catch (const std::exception &e) {
         std::cerr << "Error logging drone data: "

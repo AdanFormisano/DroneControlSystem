@@ -1,7 +1,7 @@
-#include "../database/Database.h"
 #include "../utils/RedisUtils.h"
 #include "Drone/DroneManager.h"
 #include "DroneControl/DroneControl.h"
+#include "db/Database.h"
 #include "globals.h"
 #include <iostream>
 #include <pqxx/pqxx>
