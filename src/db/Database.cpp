@@ -39,14 +39,15 @@ void Database::get_DB() {
     }
     pqxx::work W(*conn);
     W.exec("CREATE TABLE IF NOT EXISTS drone_logs ("
-           "time TIMESTAMP, "
-           "drone_id INT NOT NULL PRIMARY KEY, "
+           "time INT, "
+           "drone_id INT NOT NULL, "
            "status VARCHAR(255), "
            "charge INT, "
            "zone VARCHAR(255), " // Vuota per ora
            "x INT, "
-           "y INT"
-           ")");
+           "y INT, "
+           "checked BOOLEAN, "
+           "CONSTRAINT PK_drone_logs PRIMARY KEY (time, drone_id))");
     W.commit();
 }
 
@@ -135,23 +136,27 @@ void Database::prnt_tab_all(const std::string &tableName) {
 }
 
 // Log drone data
-void Database::logDroneData(const drone_control::drone_data &drone) {
+void Database::logDroneData(const drone_data &drone, std::array<bool, 300>& checklist) {
     if (!conn || !conn->is_open()) {
         std::cerr << "Db connection not established for logging."
                   << std::endl;
         return;
     }
 
+    std::string check = checklist[drone.id] ? "true" : "false";
+
     pqxx::work W(*conn);
     try {
         // Query prep to insert drone data in drone_logs
-        std::string query = "INSERT INTO drone_logs (drone_id, status, charge, x, y) VALUES (" +
+        std::string query = "INSERT INTO drone_logs (time, drone_id, status, charge, x, y, checked) VALUES (" +
+                            std::to_string(log_entry++) + ", " +
                             std::to_string(drone.id) + ", " +
                             W.quote(drone.status) + ", " +
                             W.quote(drone.charge) + ", " +
                             std::to_string(drone.position.first) + ", " +
-                            std::to_string(drone.position.second) + ");";
-
+                            std::to_string(drone.position.second) +  ", " +
+                            W.quote(check) +
+                            ");";
         W.exec(query);
         W.commit();
     } catch (const std::exception &e) {

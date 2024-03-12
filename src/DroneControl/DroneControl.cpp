@@ -13,12 +13,11 @@
 #include "../../utils/RedisUtils.h"
 #include "spdlog/spdlog.h"
 namespace drone_control {
-DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis){};
-
-void DroneControl::Init() {
-    spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
-    spdlog::info("DroneControl process starting");
-}
+DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis) {
+    std::cout << "DroneControl constructor" << std::endl;
+    db.get_DB();
+    std::cout << "DroneControl constructor after db" << std::endl;
+};
 
 // Run the DroneControl process
 void DroneControl::Run() {
@@ -112,7 +111,7 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     drone_data temp_drone_struct;
     temp_drone_struct.id = std::stoi(data[0].second);
     temp_drone_struct.status = data[1].second;
-    temp_drone_struct.charge = data[2].second;
+    temp_drone_struct.charge = std::stoi(data[2].second);
     temp_drone_struct.position.first = std::stoi(data[3].second);
     temp_drone_struct.position.second = std::stoi(data[4].second);
 
@@ -123,6 +122,9 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     //             temp_drone_struct.position.first, temp_drone_struct.position.second);
 // Make the check for the drone's path and add the result to the checklist
     checklist[temp_drone_struct.id] = CheckPath(temp_drone_struct.id, temp_drone_struct.position);
+
+    // Upload the data to the database
+    // db.logDroneData(temp_drone_struct, checklist);
 }
 
 // Gets the local data of a drone

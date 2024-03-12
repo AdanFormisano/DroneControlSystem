@@ -57,7 +57,7 @@ int main() {
             Database db;
 
             // DB get or create
-            db.get_DB();
+            // db.get_DB();
 
             // Wait for the other processes to finish initialization
             utils::SyncWait(main_redis);

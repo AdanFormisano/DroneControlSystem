@@ -1,7 +1,6 @@
 #pragma once
-
 #include "../Drone/DroneManager.h"
-#include "../DroneControl/DroneControl.h"
+#include "../globals.h"
 #include <map>
 #include <memory>
 #include <pqxx/pqxx>
@@ -22,10 +21,11 @@ public:
     // void logDroneData(
     //     const std::map<std::string, std::string> &droneData);
 
-    void logDroneData(const drone_control::drone_data &drone);
+    void logDroneData(const drone_data &drone, std::array<bool, 300>&);
 
 private:
     std::shared_ptr<pqxx::connection> conn;
+    int log_entry = 0;
 
     void connect_to_db(
         const std::string &dbname,

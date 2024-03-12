@@ -1,12 +1,9 @@
 #ifndef DRONECONTROLSYSTEM_DRONECONTROL_H
 #define DRONECONTROLSYSTEM_DRONECONTROL_H
 #include "../globals.h"
+#include "../db/Database.h"
 #include <sw/redis++/redis++.h>
 #include <vector>
-
-#include <vector>
-
-#include "../globals.h"
 
 using namespace sw::redis;
 
@@ -15,7 +12,7 @@ namespace drone_control {
 struct drone_data {
     int id;
     std::string status;
-    ;std::string charge;
+    std::string charge;
     std::pair<int, int> position;
     // std::string latest_update;  // TODO: Add the last time the drone was updated
     // TODO: Add zoneId
@@ -23,8 +20,8 @@ struct drone_data {
 
 class DroneControl {
 public:
-    void Init();
     explicit DroneControl(Redis &shared_redis);
+
 
     Redis &redis;
     drone_data drones[300]; // Array with data of all the drones
@@ -40,7 +37,8 @@ public:
     int tick_n = 0;
     std::array<std::array<std::pair<int, int>, 124>, 300> drone_paths;  // Array with the paths of all the drones
     std::array<int, 300> drone_path_next_index{};                       // Array with the index of the last point of the path of all the drones
-    std::array<bool, 300> checklist;                                    // Array with bool values to check if the drone is following the path
+    std::array<bool, 300> checklist{};                                    // Array with bool values to check if the drone is following the path
+    Database db;
 
     void GetDronePaths();
     bool CheckPath(int drone_id, std::pair<int, int>&);
