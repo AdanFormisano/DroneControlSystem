@@ -27,17 +27,15 @@ void Drone::Run() {
     // spdlog::info("Drone {} bound: 1 {},{}, 2 {},{}, 3 {},{}, 4 {},{}",
     // drone_id, dz->vertex_coords_glb[0].first, dz->vertex_coords_glb[0].second,
     // dz->vertex_coords_glb[1].first, dz->vertex_coords_glb[1].second,
-        // dz->vertex_coords_glb[2].first, dz->vertex_coords_glb[2].second,
+    // dz->vertex_coords_glb[2].first, dz->vertex_coords_glb[2].second,
     // dz->vertex_coords_glb[3].first, dz->vertex_coords_glb[3].second);
 
     // Get drone_path length
-
-     int path_length = dz->drone_path.size();
+    int path_length = dz->drone_path.size();
 
     path_index = -1;
 
     // Get sim_running from Redis
-
     bool sim_running = (dz->dm->shared_redis.get("sim_running") == "true");
 
     // Run the simulation
@@ -106,9 +104,16 @@ void Drone::UpdateStatus() {
 }
 
 void Drone::onChargingComplete() {
-    drone_status = "Charging Complete";
-    drone_redis.hset(redis_id, "status", drone_status);
+    setDroneStatus("Charging Complete");
+    drone_redis.hset(redis_id, "status", getDroneStatus());
     spdlog::info("Drone {} charging complete", drone_id);
+    //ChargeBase::releaseDrone(this->get_id());
+}
+
+void Drone::onCharging() {
+    setDroneStatus("Charging");
+    drone_redis.hset(redis_id, "status", getDroneStatus());
+    spdlog::info("Drone {} charging", drone_id);
 }
 
 float Drone::getCharge() const {
@@ -119,4 +124,11 @@ void Drone::setCharge(float newCharge) {
     drone_charge = newCharge;
 }
 
+void Drone::setDroneStatus(const std::string &droneStatus) {
+    drone_status = droneStatus;
+}
+
+const std::string &Drone::getDroneStatus() const {
+    return drone_status;
+}
 } // namespace drones

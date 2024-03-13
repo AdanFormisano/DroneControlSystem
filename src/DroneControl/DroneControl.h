@@ -13,7 +13,6 @@ class DroneControl {
 public:
     explicit DroneControl(Redis &shared_redis);
 
-
     Redis &redis;
     drone_data drones[300]; // Array with data of all the drones
 
@@ -22,7 +21,7 @@ public:
     void new_setDroneData(const std::vector<std::pair<std::string, std::string>> &); // Update the drones' local data
     std::unordered_map<std::string, std::string> getData(int drone_id);              // Get the local data of a drone
 
-   private:
+private:
     std::string current_stream_id = "0";  // The id of the last message read from the stream
     int tick_n = 0;
     std::array<std::array<std::pair<int, int>, 124>, 300> drone_paths;  // Array with the paths of all the drones

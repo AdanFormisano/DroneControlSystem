@@ -27,8 +27,8 @@ void DroneManager::Run() {
     for (auto &zone : zones) {
         CreateDroneZone(zone, zone_id);
         ++zone_id;
-
-    }spdlog::info("All zones created");
+    }
+    spdlog::info("All zones created");
 
     utils::SyncWait(shared_redis);
 

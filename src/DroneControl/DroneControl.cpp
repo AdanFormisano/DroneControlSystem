@@ -13,10 +13,8 @@
 #include "../../utils/RedisUtils.h"
 #include "spdlog/spdlog.h"
 namespace drone_control {
-DroneControl::DroneControl(Redis& shared_redis) : redis(shared_redis) {
-    std::cout << "DroneControl constructor" << std::endl;
+DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis) {
     db.get_DB();
-    std::cout << "DroneControl constructor after db" << std::endl;
 };
 
 // Run the DroneControl process
@@ -33,7 +31,6 @@ void DroneControl::Run() {
 
     // TODO: Implement as a thread
     bool sim_running = (redis.get("sim_running") == "true");
-
     while (sim_running) {
         // Get the time_point
         auto tick_start = std::chrono::steady_clock::now();
@@ -70,38 +67,35 @@ void DroneControl::ReadStream() {
         // Gets the number of items in the stream
         auto number_items_stream = redis.command<long long>("XLEN", "drone_stream");
 
-
         // Reads the stream
-        redis.xread(
-            "drone_stream", current_stream_id, std::chrono::milliseconds(10),
-            number_items_stream, std::inserter(new_result, new_result.end()));
+        redis.xread("drone_stream", current_stream_id, std::chrono::milliseconds(10), number_items_stream, std::inserter(new_result, new_result.end()));
 
         // Parses the stream
-        for (const auto &item : new_result) {
+        for (const auto& item : new_result) {
             // There is only one pair: stream_key and stream_data
             // item.first is the key of the stream. In this case it is "drone_stream"
 
             // spdlog::info("-----------------Tick {}-----------------", tick_n);
-            for (const auto &stream_drone : item.second) {
+            for (const auto& stream_drone : item.second) {
                 // stream_drone.first is the id of the message in the stream
                 // stream_drone.second is the unordered_map with the data of the drone
 
                 // Update the local drone data
-
                 new_setDroneData(stream_drone.second);
             }
             // Move the start_id to the last item read
             current_stream_id = item.second.back().first;
         }
         // Trim the stream
-        spdlog::info("{} entries read from stream. Trimming the stream." , number_items_stream);
+        spdlog::info("{} entries read from stream. Trimming the stream.", number_items_stream);
         redis.command<long long>("XTRIM", "drone_stream", "MINID", current_stream_id);
-    } catch (const Error &e) {
+    } catch (const Error& e) {
         spdlog::error("Error reading the stream: {}", e.what());
     }
 }
 
-void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std::string>> &data) {
+// Updates the local drone data and executes the check for the drone's path
+void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std::string>>& data) {
     // The data is structured as a known array
     drone_data temp_drone_struct;
     temp_drone_struct.id = std::stoi(data[0].second);
@@ -115,7 +109,8 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     // spdlog::info("Drone {} updated: {}, {}, {}, {}",
     //             temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
     //             temp_drone_struct.position.first, temp_drone_struct.position.second);
-// Make the check for the drone's path and add the result to the checklist
+
+    // Make the check for the drone's path and add the result to the checklist
     checklist[temp_drone_struct.id] = CheckPath(temp_drone_struct.id, temp_drone_struct.position);
 
     // Upload the data to the database

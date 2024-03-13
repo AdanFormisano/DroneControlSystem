@@ -8,3 +8,11 @@ float generateRandomFloat() {
     randomFloat = std::round(randomFloat * 100) / 100;
     return randomFloat;
 }
+std::unordered_map<std::string, int> StatusMap = {
+        {"moving", 1},
+        {"Charging", 2},
+        {"Charging Complete", 3},
+        {"Working", 4}
+
+};
+

@@ -43,15 +43,15 @@ private:
 
 class DroneZone {
 public:
-    int zone_width = 62;// In #squares
-    int zone_height = 2;// In #squares
-        // TODO: Use list of pairs instead of vector
-        std::array<std::pair<int, int>, 4> vertex_coords_sqr;   // Coords of the "squares" that define the zone
-        // TODO: Use list of pairs instead of vector
+    int zone_width = 62;                                    // In #squares
+    int zone_height = 2;                                    // In #squares
+    // TODO: Use list of pairs instead of vector
+    std::array<std::pair<int, int>, 4> vertex_coords_sqr;   // Coords of the "squares" that define the zone
+    // TODO: Use list of pairs instead of vector
     std::array<std::pair<int, int>, 4> vertex_coords_glb;   // Global coords that define the zone
-        // TODO: Use list of pairs instead of vector
+    // TODO: Use list of pairs instead of vector
     std::vector<std::pair<int, int>> drone_path;// Path that the drone will follow
-        std::string redis_path_id;
+    std::string redis_path_id;
     DroneManager *dm;
 
     DroneZone(int, std::array<std::pair<int, int>, 4> &, DroneManager *);
@@ -73,16 +73,20 @@ public:
     Drone(int, DroneZone *);
     void Run();
 
-    // Utilize for charging simulation
-    void setCharge(float newCharge);
-    [[nodiscard]] float getCharge() const;
-    void onChargingComplete();
+        // Utilize for charging simulation
+
+        int get_id() const { return this->drone_id; }
+        [[nodiscard]] const std::string &getDroneStatus() const;
+        void setCharge(float newCharge);
+        [[nodiscard]] float getCharge() const;
+        void onCharging();
+        void onChargingComplete();
 
 private:
     std::string redis_id;
     drones::DroneZone *dz;
     Redis &drone_redis;
-        int path_index;         // Index of the current position in the drone_path
+    int path_index;         // Index of the current position in the drone_path
 
     // Drone's data
     std::vector<std::pair<std::string, std::string>> drone_data;
@@ -96,9 +100,7 @@ private:
 
     void Move();         // FIXME: This is a placeholder for the movement function
     void UpdateStatus(); // FIXME: This is a placeholder for the status update function
-
-    // For charging interaction
-    void requestCharging();
+    void setDroneStatus(const std::string &droneStatus);
 };
 } // namespace drones
 
