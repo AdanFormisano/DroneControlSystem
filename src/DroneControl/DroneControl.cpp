@@ -13,7 +13,7 @@
 #include "../../utils/RedisUtils.h"
 #include "spdlog/spdlog.h"
 namespace drone_control {
-DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis) {
+DroneControl::DroneControl(Redis& shared_redis) : redis(shared_redis) {
     std::cout << "DroneControl constructor" << std::endl;
     db.get_DB();
     std::cout << "DroneControl constructor after db" << std::endl;

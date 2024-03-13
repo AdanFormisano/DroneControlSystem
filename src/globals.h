@@ -1,7 +1,7 @@
 #ifndef DRONECONTROLSYSTEM_GLOBALS_H
 #define DRONECONTROLSYSTEM_GLOBALS_H
-#include <string>
 #include <chrono>
+#include <string>
 
 // Variables used for synchronization of processes
 extern std::string sync_counter_key;
@@ -20,4 +20,4 @@ struct drone_data {
     // TODO: Add zoneId
 };
 
-#endif //DRONECONTROLSYSTEM_GLOBALS_H
+#endif // DRONECONTROLSYSTEM_GLOBALS_H

@@ -9,4 +9,4 @@ extern std::uniform_real_distribution<float> float_distribution_mten_to_ten;
 float generateRandomFloat();
 
 
-#endif //DRONECONTROLSYSTEM_UTILS_H
+#endif  // DRONECONTROLSYSTEM_UTILS_H
