@@ -20,9 +20,9 @@ DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Dr
     CreateDronePath();
 
     // Uploads the path to the Redis server
-        UploadPathToRedis();
+    UploadPathToRedis();
 
-        // Create the drone
+    // Create the drone
     CreateDrone();
 }
 

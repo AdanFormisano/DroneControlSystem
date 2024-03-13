@@ -15,7 +15,7 @@ void DroneManager::Run() {
 
     drone_zones.reserve(300);
     drone_vector.reserve(300);
-     drone_threads.reserve(300);
+    drone_threads.reserve(300);
 
     // Calculate the zones' vertex_coords
     // TODO: Sono stronzo e l'ordine e' diverso da quello utilizzato per il path
@@ -110,7 +110,7 @@ void DroneManager::CreateThreadBlocks() {
             ++n_drone;
         }
         std::this_thread::sleep_for(tick_duration_ms * 5);
-            spdlog::info("Column of drones created");
+        spdlog::info("Column of drones created");
     }
 }
 } // namespace drones

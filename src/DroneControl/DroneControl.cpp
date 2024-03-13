@@ -59,7 +59,7 @@ void DroneControl::Run() {
 
 // Reads the stream of data from Redis and updates the drones' data
 void DroneControl::ReadStream() {
-        using  new_Attrs = std::vector<std::pair<std::string, std::string>>; // This NEEDS to be a vector for xread to work
+    using new_Attrs = std::vector<std::pair<std::string, std::string>>; // This NEEDS to be a vector for xread to work
     using new_Item = std::pair<std::string, new_Attrs>;
     using new_ItemStream = std::vector<new_Item>;
     std::unordered_map<std::string, new_ItemStream> new_result;
