@@ -101,11 +101,6 @@ void DroneControl::ReadStream() {
     }
 }
 
-// Updates the local drone data
-and executes the check
-    for  the drone
-            's path
-
 void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std::string>> &data) {
     // The data is structured as a known array
     drone_data temp_drone_struct;
@@ -124,7 +119,7 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     checklist[temp_drone_struct.id] = CheckPath(temp_drone_struct.id, temp_drone_struct.position);
 
     // Upload the data to the database
-    // db.logDroneData(temp_drone_struct, checklist);
+    db.logDroneData(temp_drone_struct, checklist);
 }
 
 // Gets the local data of a drone

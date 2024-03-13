@@ -96,7 +96,6 @@ private:
 
     void Move();         // FIXME: This is a placeholder for the movement function
     void UpdateStatus(); // FIXME: This is a placeholder for the status update function
-    void InitThread();   // FIXME: This is a placeholder for the thread initialization function
 
     // For charging interaction
     void requestCharging();

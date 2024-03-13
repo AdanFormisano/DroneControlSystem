@@ -51,14 +51,15 @@ void DroneZone::CreateDrone() {
         return global_coords;
     }
 
-    // Creates the drone path for the zone using global coordsvoid DroneZone::CreateDronePath() {
-    std::array<std::pair<int, int>, 4> drone_boundaries;
-    drone_boundaries[0] = {vertex_coords_glb[3].first + 10, vertex_coords_glb[3].second - 10};
-    drone_boundaries[1] = {vertex_coords_glb[2].first - 10, vertex_coords_glb[2].second - 10};
-    drone_boundaries[2] = {vertex_coords_glb[1].first - 10, vertex_coords_glb[1].second + 10};
-    drone_boundaries[3] = {vertex_coords_glb[0].first + 10, vertex_coords_glb[0].second + 10};
+    // Creates the drone path for the zone using global coords
+    void DroneZone::CreateDronePath() {
+        std::array<std::pair<int, int>, 4> drone_boundaries;
+        drone_boundaries[0] = {vertex_coords_glb[3].first + 10, vertex_coords_glb[3].second - 10};
+        drone_boundaries[1] = {vertex_coords_glb[2].first - 10, vertex_coords_glb[2].second - 10};
+        drone_boundaries[2] = {vertex_coords_glb[1].first - 10, vertex_coords_glb[1].second + 10};
+        drone_boundaries[3] = {vertex_coords_glb[0].first + 10, vertex_coords_glb[0].second + 10};
 
-    GenerateLoopPath(drone_boundaries, 20);
+        GenerateLoopPath(drone_boundaries, 20);
 }
 
     // Generates a loop path for the drone
@@ -79,5 +80,4 @@ void DroneZone::CreateDrone() {
         redis_path_id = "path:" + std::to_string(zone_id);
         dm->shared_redis.rpush(redis_path_id, drone_path.begin(), drone_path.end());
     }
-}
 } // namespace drones

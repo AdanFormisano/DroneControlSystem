@@ -9,15 +9,6 @@ using namespace sw::redis;
 
 namespace drone_control {
 // This is the data that represents a drone's status
-struct drone_data {
-    int id;
-    std::string status;
-    std::string charge;
-    std::pair<int, int> position;
-    // std::string latest_update;  // TODO: Add the last time the drone was updated
-    // TODO: Add zoneId
-};
-
 class DroneControl {
 public:
     explicit DroneControl(Redis &shared_redis);
@@ -28,7 +19,6 @@ public:
 
     void Run();                                                                      // Run the DroneControl process
     void ReadStream();                                                               // Read the stream of data from Redis
-    void setDroneData(const std::unordered_map<std::string, std::string> &);         // Update the drones' local data
     void new_setDroneData(const std::vector<std::pair<std::string, std::string>> &); // Update the drones' local data
     std::unordered_map<std::string, std::string> getData(int drone_id);              // Get the local data of a drone
 
