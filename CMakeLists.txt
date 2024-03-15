@@ -17,6 +17,7 @@ add_executable(DroneControlSystem
         src/globals.h
         src/db/Database.cpp
         src/db/Database.h
+        src/GUI/GuiLite.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
