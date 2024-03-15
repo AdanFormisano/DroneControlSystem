@@ -23,23 +23,10 @@ DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Dr
     UploadPathToRedis();
 
     // Create the drone
-    CreateDrone();
+    // CreateDrone();
 }
 
-void DroneZone::CreateDrone() {
-    // Create the zone's drone
-    int drone_id = zone_id; // TODO: This is a placeholder, use better drone_id
-    auto drone = std::make_shared<Drone>(drone_id, this);
 
-    // Gets the vectors of drones and threads from the DroneManager
-    std::vector<std::shared_ptr<Drone>> &drone_vector = dm->getDroneVector();
-    // std::vector<std::thread>& thread_vector = dm->getDroneThreads();
-
-    // Create the thread for the drone
-    // thread_vector.emplace_back(&Drone::Run, drone.get());
-    // Adds the drone to the vector
-    drone_vector.push_back(std::move(drone));
-}
 
 // Converts the square coordinates to global coordinates used for the drone path
     std::array<std::pair<int, int>, 4> DroneZone::SqrToGlbCoords() {

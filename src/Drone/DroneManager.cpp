@@ -1,6 +1,5 @@
 #include "DroneManager.h"
 #include "../../utils/RedisUtils.h"
-#include "../globals.h"
 #include <iostream>
 #include <spdlog/spdlog.h>
 
@@ -25,7 +24,10 @@ void DroneManager::Run() {
 
     // Create the DroneZones objects for every zone calculated
     for (auto &zone : zones) {
-        CreateDroneZone(zone, zone_id);
+        DroneZone* dz = CreateDroneZone(zone, zone_id);
+
+        // Create the drone
+        CreateDrone(zone_id, dz);
         ++zone_id;
     }
     spdlog::info("All zones created");
@@ -93,8 +95,18 @@ void DroneManager::CalculateGlobalZoneCoords() {
 }
 
 // For a set of vertex_coords creates a DroneZone object
-void DroneManager::CreateDroneZone(std::array<std::pair<int, int>, 4> &zone, int zone_id) {
+DroneZone* DroneManager::CreateDroneZone(std::array<std::pair<int, int>, 4> &zone, int zone_id) {
     drone_zones.emplace_back(zone_id, zone, this);
+    return &drone_zones.back();
+}
+
+void DroneManager::CreateDrone(int zone_id, const DroneZone* dz) {
+    // Create the zone's drone
+    int drone_id = zone_id; // TODO: This is a placeholder, use better drone_id
+    auto drone = std::make_shared<Drone>(drone_id, dz);
+
+    // Adds the drone to the vector
+    drone_vector.push_back(std::move(drone));
 }
 
 void DroneManager::CreateThreadBlocks() {

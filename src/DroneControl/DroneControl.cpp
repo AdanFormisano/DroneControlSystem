@@ -38,6 +38,12 @@ void DroneControl::Run() {
         // Work
         ReadStream();
 
+        //TESTING: Tell drone[tick_n-1] to go to work
+        if (tick_n > 0) {
+            int drone_id = tick_n - 1;
+            redis.set("drone:"+std::to_string(drone_id)+":command", "work");
+        }
+
         // Check if there is time left in the tick
         auto tick_now = std::chrono::steady_clock::now();
         if (tick_now < tick_start + tick_duration_ms) {
@@ -83,7 +89,7 @@ void DroneControl::ReadStream() {
                 // Update the local drone data
                 new_setDroneData(stream_drone.second);
             }
-            // Move the start_id to the last item read
+            // FollowPath the start_id to the last item read
             current_stream_id = item.second.back().first;
         }
         // Trim the stream
@@ -100,9 +106,10 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     drone_data temp_drone_struct;
     temp_drone_struct.id = std::stoi(data[0].second);
     temp_drone_struct.status = data[1].second;
-    temp_drone_struct.charge = std::stoi(data[2].second);
-    temp_drone_struct.position.first = std::stoi(data[3].second);
-    temp_drone_struct.position.second = std::stoi(data[4].second);
+    temp_drone_struct.charge = std::stof(data[2].second);
+    temp_drone_struct.position.first = std::stof(data[3].second);
+    temp_drone_struct.position.second = std::stof(data[4].second);
+    temp_drone_struct.zone_id = std::stoi(data[5].second);
 
     // Update the drone data array
     drones[temp_drone_struct.id] = temp_drone_struct;
@@ -114,7 +121,7 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     checklist[temp_drone_struct.id] = CheckPath(temp_drone_struct.id, temp_drone_struct.position);
 
     // Upload the data to the database
-    db.logDroneData(temp_drone_struct, checklist);
+    // db.logDroneData(temp_drone_struct, checklist);
 }
 
 // Gets the local data of a drone
@@ -140,8 +147,8 @@ void DroneControl::GetDronePaths() {
                 std::string x = temp_x.value();
                 std::string y = temp_y.value();
 
-                drone_paths[i][j].first = std::stoi(x);
-                drone_paths[i][j].second = std::stoi(y);
+                drone_paths[i][j].first = std::stof(x);
+                drone_paths[i][j].second = std::stof(y);
             } else {
                 spdlog::error("Error getting the drone {} path from Redis", i);
             }
@@ -150,7 +157,7 @@ void DroneControl::GetDronePaths() {
 }
 
 // Check if the drone's path is correct
-bool DroneControl::CheckPath(int drone_id, std::pair<int, int>& drone_position) {
+bool DroneControl::CheckPath(int drone_id, std::pair<float, float>& drone_position) {
     // Get the next point in the path
     auto next_point = drone_paths[drone_id][drone_path_next_index[drone_id]];
 

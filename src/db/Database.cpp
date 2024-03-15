@@ -43,7 +43,7 @@ void Database::get_DB() {
            "drone_id INT NOT NULL, "
            "status VARCHAR(255), "
            "charge INT, "
-           "zone VARCHAR(255), " // Vuota per ora
+           "zone VARCHAR(255), " // TODO: Change to int
            "x INT, "
            "y INT, "
            "checked BOOLEAN, "

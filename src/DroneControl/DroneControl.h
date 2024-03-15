@@ -24,13 +24,13 @@ public:
 private:
     std::string current_stream_id = "0";  // The id of the last message read from the stream
     int tick_n = 0;
-    std::array<std::array<std::pair<int, int>, 124>, 300> drone_paths;  // Array with the paths of all the drones
+    std::array<std::array<std::pair<float, float>, 124>, 300> drone_paths;  // Array with the paths of all the drones
     std::array<int, 300> drone_path_next_index{};                       // Array with the index of the last point of the path of all the drones
     std::array<bool, 300> checklist{};                                    // Array with bool values to check if the drone is following the path
     Database db;
 
     void GetDronePaths();
-    bool CheckPath(int drone_id, std::pair<int, int>&);
+    bool CheckPath(int drone_id, std::pair<float, float>&);
 };
 } // namespace drone_control
 

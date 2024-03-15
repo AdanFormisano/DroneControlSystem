@@ -2,6 +2,7 @@
 #define DRONECONTROLSYSTEM_GLOBALS_H
 #include <chrono>
 #include <string>
+#include <array>
 
 // Variables used for synchronization of processes
 extern std::string sync_counter_key;
@@ -14,10 +15,9 @@ extern std::chrono::milliseconds sim_duration_ms;   // duration of the simulatio
 struct drone_data {
     int id;
     std::string status;
-    int charge;
-    std::pair<int, int> position;
-    // std::string latest_update;  // TODO: Add the last time the drone was updated
-    // TODO: Add zoneId
+    float charge;
+    std::pair<float, float> position;
+    int zone_id = 0;
+    // TODO: Add the last time the drone was updated
 };
-
 #endif // DRONECONTROLSYSTEM_GLOBALS_H
