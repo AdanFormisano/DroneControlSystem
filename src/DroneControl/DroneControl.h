@@ -2,6 +2,8 @@
 #define DRONECONTROLSYSTEM_DRONECONTROL_H
 #include "../globals.h"
 #include "../db/Database.h"
+#include "../GUI/UI.h"
+#include <boost/thread.hpp>
 #include <sw/redis++/redis++.h>
 #include <vector>
 

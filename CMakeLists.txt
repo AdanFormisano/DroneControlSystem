@@ -17,11 +17,17 @@ add_executable(DroneControlSystem
         src/globals.h
         src/db/Database.cpp
         src/db/Database.h
-        src/GUI/GuiLite.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
         utils/utils.h
+        src/GUI/UI.cpp
+        src/GUI/UI.h
+        src/GUI/MovingPoint.cpp
+        src/GUI/MovingPoint.h
+        src/GUI/Drone_ui.cpp
+        src/GUI/Drone_ui.h
+        src/GUI/Drone_ui.h
 
 )
 
@@ -33,6 +39,8 @@ FetchContent_Declare(
         GIT_TAG v1.13.0
 )
 FetchContent_MakeAvailable(spdlog)
+
+find_package(Boost REQUIRED COMPONENTS thread)
 
 # <------------ add hiredis dependency --------------->
 find_path(HIREDIS_HEADER hiredis)
@@ -62,3 +70,10 @@ target_include_directories(DroneControlSystem PUBLIC ${LIBPQXX_HEADER})
 
 find_library(LIBPQXX_LIB pqxx)
 target_link_libraries(DroneControlSystem ${LIBPQXX_LIB})
+
+find_package(FLTK REQUIRED)
+include_directories(${FLTK_INCLUDE_DIRS})
+target_link_libraries(DroneControlSystem ${FLTK_LIBRARIES})
+
+target_include_directories(DroneControlSystem PUBLIC ${Boost_INCLUDE_DIRS})
+target_link_libraries(DroneControlSystem ${Boost_LIBRARIES})

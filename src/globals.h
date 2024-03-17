@@ -20,4 +20,9 @@ struct drone_data {
     int zone_id = 0;
     // TODO: Add the last time the drone was updated
 };
+
+// 1200 is 6000/5 = the size of the area is nicely divisible by 5
+#define WINDOW_WIDTH 1200
+#define WINDOW_HEIGHT 1200
+
 #endif // DRONECONTROLSYSTEM_GLOBALS_H

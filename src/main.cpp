@@ -4,6 +4,7 @@
 #include "ChargeBase/ChargeBase.h"
 #include "db/Database.h"
 #include "globals.h"
+#include "GUI/UI.h"
 #include <iostream>
 #include <pqxx/pqxx>
 #include <spdlog/spdlog.h>
@@ -75,9 +76,11 @@ int main() {
                 cb->Run();
 
             } else {
+
                 // In Main process
                 auto main_redis = Redis("tcp://127.0.0.1:7777");
                 main_redis.incr(sync_counter_key);
+
 
                 // DB obj
                 Database db;
@@ -106,6 +109,7 @@ int main() {
                 // without it the main process will exit and
                 // the children will be terminated
                 std::this_thread::sleep_for(std::chrono::seconds(10));
+
                 std::cout << "Exiting..." << std::endl;
             }
         }
