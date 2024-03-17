@@ -29,7 +29,7 @@ namespace charge_base {
         std::vector<ext_drone_data> charging_drones;
         int tick_n = 0;
 
-        ChargeBase(Redis& redis) : redis(redis){}
+        ChargeBase(Redis& redis);
 
         void ReadChargeStream();
         void SetChargeData(const std::vector<std::pair<std::string, std::string>>& data);

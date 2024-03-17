@@ -16,14 +16,12 @@ DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Dr
     : zone_id(zone_id), vertex_coords_sqr(coords), dm(drone_manager) {
     // Calculate the real global coord needed for the drone path
     vertex_coords_glb = SqrToGlbCoords();
+
     // Create drone path
     CreateDronePath();
 
     // Uploads the path to the Redis server
     UploadPathToRedis();
-
-    // Create the drone
-    // CreateDrone();
 }
 
 

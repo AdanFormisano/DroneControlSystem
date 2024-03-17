@@ -54,7 +54,7 @@ public:
     // TODO: Use list of pairs instead of vector
     std::vector<std::pair<int, int>> drone_path;// Path that the drone will follow
     std::string redis_path_id;
-    DroneManager *dm;
+    std::shared_ptr<DroneManager> dm;
 
     DroneZone(int, std::array<std::pair<int, int>, 4> &, DroneManager *);
     ~DroneZone() = default;
@@ -72,15 +72,16 @@ private:
 
 class Drone {
 public:
-    Drone(int, const DroneZone *);
+    float drone_charge_to_base;         // Charge needed to go back to the base
+    Drone(int, const DroneZone *, const DroneManager *);
     void Run();
 
 private:
+    Redis &drone_redis;
     std::string redis_id;
     const DroneZone *dz;
-    Redis &drone_redis;
+    const DroneManager *dm;
     int path_index;         // Index of the current position in the drone_path
-    bool inBase = true;     // True if the drone is in the base
 
 
     // Drone data
@@ -90,12 +91,16 @@ private:
     std::pair<float, float> drone_position;
     int tick_n;
 
+    void SetChargeNeededToBase();   // Sets the charge needed to go back to the base
     void Work();
     void Move(float, float);
-    void FollowPath();         // Moves the drone following the drone_path
-    void UpdateStatus(); // FIXME: This is a placeholder for the status update function
+    void UseCharge(float distance_in_meters);  // Uses the charge of the drone
+    void FollowPath();              // Moves the drone following the drone_path
+    void UploadStatusOnStream();    // FIXME: This is a placeholder for the status update function
+    void UploadStatus();
+    void SendChargeRequest();       // Sends a charge request to the base
+    float CalculateChargeNeeded();
     // TODO: Add the last time the drone was updated
-    void upStatusForIdle();
 };
 } // namespace drones
 

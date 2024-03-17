@@ -12,12 +12,15 @@ extern std::string sync_channel;
 extern std::chrono::milliseconds tick_duration_ms;  // duration of 1 tick in milliseconds
 extern std::chrono::milliseconds sim_duration_ms;   // duration of the simulation in milliseconds
 
+#define DRONE_CONSUMPTION 0.00672f
+
 struct drone_data {
     int id;
     std::string status;
     float charge;
     std::pair<float, float> position;
     int zone_id = 0;
+    float charge_needed_to_base;
     // TODO: Add the last time the drone was updated
 };
 #endif // DRONECONTROLSYSTEM_GLOBALS_H

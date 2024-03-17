@@ -6,4 +6,4 @@ std::string sync_channel = "SYNC";
 
 // Simulation settings CHANGE THIS FIRST IF PC IS MELTING!!!!
 std::chrono::milliseconds tick_duration_ms = std::chrono::milliseconds(100);
-std::chrono::milliseconds sim_duration_ms = std::chrono::milliseconds(10000);  // duration of the simulation in milliseconds
+std::chrono::milliseconds sim_duration_ms = std::chrono::milliseconds(200000);  // duration of the simulation in milliseconds
