@@ -66,7 +66,7 @@ void Drone::Run() {
                 }
                 break;
             case drone_state_enum::CHARGING:
-                spdlog::info("TICK {}: Drone {} [{}%] is charging", tick_n, drone_id, drone_charge);
+                // spdlog::info("TICK {}: Drone {} [{}%] is charging", tick_n, drone_id, drone_charge);
                 // Update the drone's charge
                 d_info = drone_redis.hget("drone:" + std::to_string(drone_id), "charge");
                 if (d_info == "100") {

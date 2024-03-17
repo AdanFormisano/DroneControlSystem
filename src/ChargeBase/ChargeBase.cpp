@@ -128,7 +128,9 @@ namespace charge_base {
             return dist(engine);
         }; //GBT FTW
 
-        return generateRandomFloat();
+        auto tick_needed_to_charge =  (generateRandomFloat() * (60*60)) / TICK_TIME_SIMULATED;
+
+        return 100.0f / tick_needed_to_charge;
     }
 }
 
