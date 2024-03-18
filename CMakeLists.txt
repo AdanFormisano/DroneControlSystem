@@ -24,6 +24,12 @@ add_executable(DroneControlSystem
 
 )
 
+option(DEBUG "Enable debug mode" OFF)
+
+if (DEBUG)
+    target_compile_definitions(DroneControlSystem PRIVATE DEBUG)
+endif()
+
 # Add spdlog dependency
 include(FetchContent)
 FetchContent_Declare(
