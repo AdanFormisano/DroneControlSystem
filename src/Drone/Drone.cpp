@@ -9,7 +9,7 @@ Each thread immediately starts running the drone's simulation.
 */
 
 namespace drones {
-Drone::Drone(int id, const DroneZone *drone_zone, const DroneManager *drone_manager) : drone_id(id), dz(drone_zone),
+Drone::Drone(int id, DroneZone *drone_zone, const DroneManager *drone_manager) : drone_id(id), dz(drone_zone),
     dm(drone_manager), drone_redis(drone_manager->shared_redis) {
     redis_id = "drone:" + std::to_string(id);
     drone_charge = 100.0f;
@@ -46,7 +46,9 @@ void Drone::Run() {
 
         switch (drone_state) {
             case drone_state_enum::IDLE_IN_BASE:
+#ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is idle in base", tick_n, drone_id, drone_charge);
+#endif
                 // Must wait for DroneControl to release the drone
                 cmd = drone_redis.get("drone:" + std::to_string(drone_id) + ":command");
                 if (cmd == "work") {
@@ -56,13 +58,18 @@ void Drone::Run() {
                 break;
             case drone_state_enum::WORKING:
                 Work();
+#ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is working ({} {})", tick_n, drone_id, drone_charge, drone_position.first, drone_position.second);
-
+#endif
                 cmd = drone_redis.get("drone:" + std::to_string(drone_id) + ":command");
                 if (cmd == "charge") {
+                    // Set drone_path_index in DroneZone to the current index
+                    dz->drone_path_index = path_index;
                     drone_redis.set("drone:" + std::to_string(drone_id) + ":command", "none");
                     drone_state = drone_state_enum::TO_BASE;
+#ifdef DEBUG
                     spdlog::info("Drone {} [{}%] received charge command", drone_id, drone_charge);
+#endif
                 }
                 break;
             case drone_state_enum::CHARGING:
@@ -75,15 +82,18 @@ void Drone::Run() {
                 }
                 break;
             case drone_state_enum::WAITING_CHARGE:
+#ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is waiting for charge",tick_n, drone_id, drone_charge);
+#endif
                 SendChargeRequest();   // Uploads the drone status to Redis before sleeping
                 drone_state = drone_state_enum::SLEEP;
                 break;
             case drone_state_enum::TO_ZONE:
                 // Simulate the drone moving to the destination
                 Move(dz->drone_path[0].first, dz->drone_path[0].second);
+#ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is moving to zone {} {}",tick_n, drone_id, drone_charge, drone_position.first, drone_position.second);
-
+#endif
                 if (drone_position.first == dz->drone_path[0].first && drone_position.second == dz->drone_path[0].second) {
                     // If the drone has reached the destination, change its state
                     drone_state = drone_state_enum::WORKING;
@@ -92,14 +102,18 @@ void Drone::Run() {
             case drone_state_enum::TO_BASE:
                 // Simulate the drone moving to the base
                 Move(0, 0);
+#ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is moving to base {} {}",tick_n, drone_id, drone_charge, drone_position.first, drone_position.second);
+#endif
                 if (drone_position.first == 0 && drone_position.second == 0) {
                     // If the drone has reached the base, change its state
                     drone_state = drone_state_enum::WAITING_CHARGE;
                 }
                 break;
             case drone_state_enum::SLEEP:
+#ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} is sleeping", tick_n, drone_id);
+#endif
                 // Read status from redis
                 d_info = drone_redis.hget("drone:" + std::to_string(drone_id), "status");
                 if (d_info == "CHARGING") {
@@ -182,18 +196,16 @@ void Drone::FollowPath() {
 
 // Update drone status in db
 void Drone::UploadStatusOnStream() {
-    // TODO: There can be a better way to do this: there is no need to build each time the map
-    // Implementing option 1: each drone updates its status using its key in Redis and uploading a map with the data
+    // TODO: There can be a better way to do this: there is no need to build each time the map. Change only what is needed
     std::vector<std::pair<std::string, std::string>> drone_data = {
         {"id", std::to_string(drone_id)},
-        {"status", utils::CaccaPupu(drone_state)},  // FIXME: This is a placeholder, it should take Drone.status
+        {"status", utils::CaccaPupu(drone_state)},  // FIXME: name
         {"charge", std::to_string(drone_charge)},
         {"X", std::to_string(drone_position.first)},
         {"Y", std::to_string(drone_position.second)},
         {"zone_id", std::to_string(dz->getZoneId())},
         {"charge_needed_to_base", std::to_string(CalculateChargeNeeded())}
     };
-    // TODO: Find better way to get the time
 
     // Updating the drone's status in Redis using streams
     try {
@@ -264,6 +276,4 @@ float Drone::CalculateChargeNeeded() {
     float distance = std::sqrt(drone_position.first * drone_position.first + drone_position.second * drone_position.second);
     return distance * DRONE_CONSUMPTION;
 }
-
-
 }  // namespace drones

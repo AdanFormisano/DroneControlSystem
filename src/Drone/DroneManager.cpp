@@ -101,7 +101,7 @@ DroneZone* DroneManager::CreateDroneZone(std::array<std::pair<int, int>, 4> &zon
 }
 
 // Creates a drone for a zone
-void DroneManager::CreateDrone(int zone_id, const DroneZone* dz) {
+void DroneManager::CreateDrone(int zone_id, DroneZone* dz) {
     int drone_id = zone_id; // TODO: This is a placeholder, use better drone_id
     auto drone = std::make_shared<Drone>(drone_id, dz, this);
 

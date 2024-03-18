@@ -24,8 +24,6 @@ DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Dr
     UploadPathToRedis();
 }
 
-
-
 // Converts the square coordinates to global coordinates used for the drone path
     std::array<std::pair<int, int>, 4> DroneZone::SqrToGlbCoords() {
         std::array<std::pair<int, int>, 4> global_coords;
@@ -62,7 +60,7 @@ DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Dr
 
     // Uploads the path to the Redis server
     void DroneZone::UploadPathToRedis() {
-        redis_path_id = "path:" + std::to_string(zone_id);
+        std::string redis_path_id = "path:" + std::to_string(zone_id);
         dm->shared_redis.rpush(redis_path_id, drone_path.begin(), drone_path.end());
     }
 } // namespace drones

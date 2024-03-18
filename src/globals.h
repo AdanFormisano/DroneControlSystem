@@ -4,6 +4,9 @@
 #include <string>
 #include <array>
 
+#define DRONE_CONSUMPTION 0.00672f
+#define TICK_TIME_SIMULATED 2.42f
+
 // Variables used for synchronization of processes
 extern std::string sync_counter_key;
 extern std::string sync_channel;
@@ -11,9 +14,6 @@ extern std::string sync_channel;
 // Simulation settings
 extern std::chrono::milliseconds tick_duration_ms;  // duration of 1 tick in milliseconds
 extern std::chrono::milliseconds sim_duration_ms;   // duration of the simulation in milliseconds
-
-#define DRONE_CONSUMPTION 0.00672f
-#define TICK_TIME_SIMULATED 2.42f
 
 struct drone_data {
     int id;
