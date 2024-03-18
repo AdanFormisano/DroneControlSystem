@@ -175,6 +175,9 @@ void Drone::Move(float final_x, float final_y) {
 
         UseCharge(20.0f);
     }
+
+    // Upload status to stream
+    UploadStatusOnStream();
 }
 
 // The drone will follow a path indicated by the zone

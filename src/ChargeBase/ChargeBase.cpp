@@ -105,7 +105,9 @@ namespace charge_base {
         for (auto &drone: charging_drones) {
             if (drone.base_data.charge < 100) {
                 drone.base_data.charge += drone.charge_rate;
+#ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} charge: {}", tick_n, drone.base_data.id, drone.base_data.charge);
+#endif
             } else if (drone.base_data.charge >= 100) {
                 releaseDrone(drone);
             }
