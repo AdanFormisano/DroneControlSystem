@@ -22,7 +22,7 @@ namespace ui {
         UI(Redis&);
         ~UI();
 
-        int Run(std::reference_wrapper<drone_data, 300>);
+        int Run();
     private:
         Redis& redis;
     };

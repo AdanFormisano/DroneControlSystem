@@ -13,7 +13,7 @@ namespace ui {
         spdlog::info("UI process ending");
     }
 
-    int UI::Run(std::reference_wrapper<std::array<drone_data, 300>> drones) {
+    int UI::Run() {
         // Main window
         Fl_Double_Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "Drone Control System");
         DroneUI dui(0,0);

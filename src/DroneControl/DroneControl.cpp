@@ -27,7 +27,7 @@ void DroneControl::Run() {
     // Create GUI thread
     auto ui = ui::UI(redis);
     // std::thread gui_thread(&ui::UI::Run, ui);
-    boost::thread gui_thread(&ui::UI::Run, &ui, std::ref(drones));
+    boost::thread gui_thread(&ui::UI::Run, &ui);
     gui_thread.detach();
 
     // First thing to do is to get all the drone paths from the Redis server
