@@ -4,6 +4,9 @@
 #include <string>
 #include <array>
 
+#define DRONE_CONSUMPTION 0.00672f
+#define TICK_TIME_SIMULATED 2.42f
+
 // Variables used for synchronization of processes
 extern std::string sync_counter_key;
 extern std::string sync_channel;
@@ -18,6 +21,7 @@ struct drone_data {
     float charge;
     std::pair<float, float> position;
     int zone_id = 0;
+    float charge_needed_to_base;
     // TODO: Add the last time the drone was updated
 };
 

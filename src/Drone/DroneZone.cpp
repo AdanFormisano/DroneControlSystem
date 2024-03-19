@@ -16,17 +16,13 @@ DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Dr
     : zone_id(zone_id), vertex_coords_sqr(coords), dm(drone_manager) {
     // Calculate the real global coord needed for the drone path
     vertex_coords_glb = SqrToGlbCoords();
+
     // Create drone path
     CreateDronePath();
 
     // Uploads the path to the Redis server
     UploadPathToRedis();
-
-    // Create the drone
-    // CreateDrone();
 }
-
-
 
 // Converts the square coordinates to global coordinates used for the drone path
     std::array<std::pair<int, int>, 4> DroneZone::SqrToGlbCoords() {
@@ -64,7 +60,7 @@ DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Dr
 
     // Uploads the path to the Redis server
     void DroneZone::UploadPathToRedis() {
-        redis_path_id = "path:" + std::to_string(zone_id);
+        std::string redis_path_id = "path:" + std::to_string(zone_id);
         dm->shared_redis.rpush(redis_path_id, drone_path.begin(), drone_path.end());
     }
 } // namespace drones

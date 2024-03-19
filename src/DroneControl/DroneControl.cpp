@@ -111,20 +111,26 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     // The data is structured as a known array
     drone_data temp_drone_struct;
     temp_drone_struct.id = std::stoi(data[0].second);
+    // Make the check for the drone's path and add the result to the checklist
+
     temp_drone_struct.status = data[1].second;
     temp_drone_struct.charge = std::stof(data[2].second);
     temp_drone_struct.position.first = std::stof(data[3].second);
     temp_drone_struct.position.second = std::stof(data[4].second);
     temp_drone_struct.zone_id = std::stoi(data[5].second);
+    temp_drone_struct.charge_needed_to_base = std::stof(data[6].second);
+
+    checklist[temp_drone_struct.id] = CheckPath(temp_drone_struct.id, temp_drone_struct.position);
+    // Check if the drone's charge is enough to go back to the base
+    CheckDroneCharge(temp_drone_struct.id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
 
     // Update the drone data array
     drones[temp_drone_struct.id] = temp_drone_struct;
-    // spdlog::info("Drone {} updated: {}, {}, {}, {}",
-    //             temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
-    //             temp_drone_struct.position.first, temp_drone_struct.position.second);
 
-    // Make the check for the drone's path and add the result to the checklist
-    checklist[temp_drone_struct.id] = CheckPath(temp_drone_struct.id, temp_drone_struct.position);
+//    spdlog::info("Drone {} updated: {}, {}, {}, {}, {}, {}",
+//                 temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
+//                 temp_drone_struct.position.first, temp_drone_struct.position.second,
+//                 temp_drone_struct.zone_id, temp_drone_struct.charge_needed_to_base);
 
     // Upload the data to the database
     // db.logDroneData(temp_drone_struct, checklist);
@@ -174,6 +180,14 @@ bool DroneControl::CheckPath(int drone_id, std::pair<float, float>& drone_positi
         return true;
     } else {
         return false;
+    }
+}
+
+// Check if the drone has enough charge to go back to the base
+void DroneControl::CheckDroneCharge(int drone_id, float current_charge, float charge_needed) {
+    if (current_charge - (DRONE_CONSUMPTION * 80.0f) <= charge_needed) {
+        redis.set("drone:"+std::to_string(drone_id)+":command", "charge");
+        spdlog::info("TICK {}: Drone {} needs to charge: current chg: {}%, chg needed: {}%", tick_n, drone_id, current_charge, charge_needed);
     }
 }
 }  // namespace drone_control

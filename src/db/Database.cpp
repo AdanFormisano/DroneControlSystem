@@ -42,10 +42,10 @@ void Database::get_DB() {
            "time INT, "
            "drone_id INT NOT NULL, "
            "status VARCHAR(255), "
-           "charge INT, "
+           "charge FLOAT, "
            "zone VARCHAR(255), " // TODO: Change to int
-           "x INT, "
-           "y INT, "
+           "x FLOAT, "
+           "y FLOAT, "
            "checked BOOLEAN, "
            "CONSTRAINT PK_drone_logs PRIMARY KEY (time, drone_id))");
     W.commit();

@@ -33,6 +33,7 @@ private:
 
     void GetDronePaths();
     bool CheckPath(int drone_id, std::pair<float, float>&);
+    void CheckDroneCharge(int drone_id, float charge, float charge_needed);
 };
 } // namespace drone_control
 

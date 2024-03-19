@@ -11,6 +11,8 @@ namespace charge_base {
         return instance;
     }
 
+    ChargeBase::ChargeBase(Redis& redis) : redis(redis){}
+
     void ChargeBase::Run() {
         spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
 
@@ -88,27 +90,33 @@ namespace charge_base {
         temp_drone_struct.base_data.position.first = std::stof(data[3].second);
         temp_drone_struct.base_data.position.second = std::stof(data[4].second);
         temp_drone_struct.base_data.zone_id = std::stoi(data[5].second);
-        temp_drone_struct.charge_rate = getChargeRate();
+        auto charge_rate = getChargeRate();
+        temp_drone_struct.charge_rate = charge_rate;
+
+        spdlog::info("Drone {} charge rate: {}", temp_drone_struct.base_data.id, charge_rate);
+        redis.hset("drone:" + data[0].second, "status", "CHARGING");
 
         // Update the drone unordered set
         charging_drones.push_back(temp_drone_struct);
+        spdlog::info("Drone {} added to the charging list", temp_drone_struct.base_data.id);
     }
 
     void ChargeBase::ChargeDrone() {
         for (auto &drone: charging_drones) {
             if (drone.base_data.charge < 100) {
                 drone.base_data.charge += drone.charge_rate;
+#ifdef DEBUG
+                spdlog::info("TICK {}: Drone {} charge: {}", tick_n, drone.base_data.id, drone.base_data.charge);
+#endif
             } else if (drone.base_data.charge >= 100) {
-                drone.base_data.charge = 100;
                 releaseDrone(drone);
             }
         }
     }
-
     void ChargeBase::releaseDrone(ext_drone_data &drone) {
         // Update the drone's status in Redis
-        redis.set("drone:" + std::to_string(drone.base_data.id) + ":status", "IDLE_IN_BASE");
-        redis.set("drone:" + std::to_string(drone.base_data.id) + ":charge", "100");
+        redis.hset("drone:" + std::to_string(drone.base_data.id), "status", "IDLE_IN_BASE");
+        redis.hset("drone:" + std::to_string(drone.base_data.id), "charge", "100");
     }
 
     void ChargeBase::SetEngine(std::random_device& rd) {
@@ -122,7 +130,9 @@ namespace charge_base {
             return dist(engine);
         }; //GBT FTW
 
-        return generateRandomFloat();
+        auto tick_needed_to_charge =  (generateRandomFloat() * (60*60)) / TICK_TIME_SIMULATED;
+
+        return 100.0f / tick_needed_to_charge;
     }
 }
 

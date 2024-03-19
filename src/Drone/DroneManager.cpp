@@ -18,7 +18,7 @@ void DroneManager::Run() {
 
     // Calculate the zones' vertex_coords
     // TODO: Sono stronzo e l'ordine e' diverso da quello utilizzato per il path
-        CalculateGlobalZoneCoords();
+    CalculateGlobalZoneCoords();
 
     int zone_id = 0; // Needs to be 0 because is used in DroneControl::setDroneData()
 
@@ -100,10 +100,10 @@ DroneZone* DroneManager::CreateDroneZone(std::array<std::pair<int, int>, 4> &zon
     return &drone_zones.back();
 }
 
-void DroneManager::CreateDrone(int zone_id, const DroneZone* dz) {
-    // Create the zone's drone
+// Creates a drone for a zone
+void DroneManager::CreateDrone(int zone_id, DroneZone* dz) {
     int drone_id = zone_id; // TODO: This is a placeholder, use better drone_id
-    auto drone = std::make_shared<Drone>(drone_id, dz);
+    auto drone = std::make_shared<Drone>(drone_id, dz, this);
 
     // Adds the drone to the vector
     drone_vector.push_back(std::move(drone));

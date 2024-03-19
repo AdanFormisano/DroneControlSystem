@@ -9,5 +9,3 @@ cmake-build-debug_light/*
 
 # For now remove build directory
 build/*
-/log.txt
-/log_drone_0.txt
