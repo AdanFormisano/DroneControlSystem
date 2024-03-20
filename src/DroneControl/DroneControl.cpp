@@ -38,10 +38,10 @@ void DroneControl::Run() {
         // Work
         ReadStream();
 
-        //TESTING: Tell drone[tick_n-1] to go to work
+        // TESTING: Tell drone[tick_n-1] to go to work
         if (tick_n > 0) {
             int drone_id = tick_n - 1;
-            redis.set("drone:"+std::to_string(drone_id)+":command", "work");
+            redis.set("drone:" + std::to_string(drone_id) + ":command", "work");
         }
 
         // Check if there is time left in the tick
@@ -77,12 +77,12 @@ void DroneControl::ReadStream() {
         redis.xread("drone_stream", current_stream_id, std::chrono::milliseconds(10), number_items_stream, std::inserter(new_result, new_result.end()));
 
         // Parses the stream
-        for (const auto& item : new_result) {
+        for (const auto &item : new_result) {
             // There is only one pair: stream_key and stream_data
             // item.first is the key of the stream. In this case it is "drone_stream"
 
             // spdlog::info("-----------------Tick {}-----------------", tick_n);
-            for (const auto& stream_drone : item.second) {
+            for (const auto &stream_drone : item.second) {
                 // stream_drone.first is the id of the message in the stream
                 // stream_drone.second is the unordered_map with the data of the drone
 
@@ -95,13 +95,13 @@ void DroneControl::ReadStream() {
         // Trim the stream
         spdlog::info("{} entries read from stream. Trimming the stream.", number_items_stream);
         redis.command<long long>("XTRIM", "drone_stream", "MINID", current_stream_id);
-    } catch (const Error& e) {
+    } catch (const Error &e) {
         spdlog::error("Error reading the stream: {}", e.what());
     }
 }
 
 // Updates the local drone data and executes the check for the drone's path
-void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std::string>>& data) {
+void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std::string>> &data) {
     // The data is structured as a known array
     drone_data temp_drone_struct;
     temp_drone_struct.id = std::stoi(data[0].second);
@@ -121,13 +121,13 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     // Update the drone data array
     drones[temp_drone_struct.id] = temp_drone_struct;
 
-//    spdlog::info("Drone {} updated: {}, {}, {}, {}, {}, {}",
-//                 temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
-//                 temp_drone_struct.position.first, temp_drone_struct.position.second,
-//                 temp_drone_struct.zone_id, temp_drone_struct.charge_needed_to_base);
+    //    spdlog::info("Drone {} updated: {}, {}, {}, {}, {}, {}",
+    //                 temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
+    //                 temp_drone_struct.position.first, temp_drone_struct.position.second,
+    //                 temp_drone_struct.zone_id, temp_drone_struct.charge_needed_to_base);
 
     // Upload the data to the database
-    // db.logDroneData(temp_drone_struct, checklist);
+    db.logDroneData(temp_drone_struct, checklist);
 }
 
 // Gets the local data of a drone
@@ -163,7 +163,7 @@ void DroneControl::GetDronePaths() {
 }
 
 // Check if the drone's path is correct
-bool DroneControl::CheckPath(int drone_id, std::pair<float, float>& drone_position) {
+bool DroneControl::CheckPath(int drone_id, std::pair<float, float> &drone_position) {
     // Get the next point in the path
     auto next_point = drone_paths[drone_id][drone_path_next_index[drone_id]];
 
@@ -180,8 +180,8 @@ bool DroneControl::CheckPath(int drone_id, std::pair<float, float>& drone_positi
 // Check if the drone has enough charge to go back to the base
 void DroneControl::CheckDroneCharge(int drone_id, float current_charge, float charge_needed) {
     if (current_charge - (DRONE_CONSUMPTION * 80.0f) <= charge_needed) {
-        redis.set("drone:"+std::to_string(drone_id)+":command", "charge");
+        redis.set("drone:" + std::to_string(drone_id) + ":command", "charge");
         spdlog::info("TICK {}: Drone {} needs to charge: current chg: {}%, chg needed: {}%", tick_n, drone_id, current_charge, charge_needed);
     }
 }
-}  // namespace drone_control
+} // namespace drone_control
