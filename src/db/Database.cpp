@@ -32,23 +32,67 @@ void Database::connect_to_db(const std::string &dbname,
 }
 
 // Get or create db
+// Old implementation (just conn2db and create tab)
+// void Database::get_DB() {
+//     if (!conn || !conn->is_open()) {
+//         connect_to_db("dcs", "postgres", "admin@123",
+//                       "127.0.0.1", "5432");
+//     }
+//     pqxx::work W(*conn);
+//     W.exec("CREATE TABLE IF NOT EXISTS drone_logs ("
+//            "time INT, "
+//            "drone_id INT NOT NULL, "
+//            "status VARCHAR(255), "
+//            "charge FLOAT, "
+//            "zone VARCHAR(255), " // TODO: Change to int
+//            "x FLOAT, "
+//            "y FLOAT, "
+//            "checked BOOLEAN, "
+//            "CONSTRAINT PK_drone_logs PRIMARY KEY (time, drone_id))");
+//     W.commit();
+// }
+
 void Database::get_DB() {
-    if (!conn || !conn->is_open()) {
-        connect_to_db("dcs", "postgres", "admin@123",
-                      "127.0.0.1", "5432");
+    try {
+        // Connessione al server PostgreSQL (senza specificare un database)
+        pqxx::connection C("user=postgres password=admin@123 hostaddr=127.0.0.1 port=5432");
+
+        // Verificare se il database 'dcs' esiste
+        pqxx::nontransaction N(C);
+        pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'");
+
+        // Se il database non esiste, crearlo
+        if (R.empty()) {
+            pqxx::work W(C);
+            W.exec("CREATE DATABASE dcs");
+            W.commit();
+        }
+
+        // Connettersi al database 'dcs'
+        connect_to_db("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
+
+        // Se la connessione è stata stabilita, sovrascrivere la tabella 'drone_logs'
+        if (conn && conn->is_open()) {
+            pqxx::work W(*conn);
+            // Eliminare la tabella se esiste
+            W.exec("DROP TABLE IF EXISTS drone_logs");
+            // Ricreare la tabella
+            W.exec("CREATE TABLE drone_logs ("
+                   "time INT, "
+                   "drone_id INT NOT NULL, "
+                   "status VARCHAR(255), "
+                   "charge FLOAT, "
+                   "zone VARCHAR(255), " // TODO: Change to int
+                   "x FLOAT, "
+                   "y FLOAT, "
+                   "checked BOOLEAN, "
+                   "CONSTRAINT PK_drone_logs PRIMARY KEY (time, drone_id))");
+            W.commit();
+        }
+    } catch (const std::exception &e) {
+        std::cerr << "Database error: " << e.what() << std::endl;
+        throw;
     }
-    pqxx::work W(*conn);
-    W.exec("CREATE TABLE IF NOT EXISTS drone_logs ("
-           "time INT, "
-           "drone_id INT NOT NULL, "
-           "status VARCHAR(255), "
-           "charge FLOAT, "
-           "zone VARCHAR(255), " // TODO: Change to int
-           "x FLOAT, "
-           "y FLOAT, "
-           "checked BOOLEAN, "
-           "CONSTRAINT PK_drone_logs PRIMARY KEY (time, drone_id))");
-    W.commit();
 }
 
 // Do query
@@ -136,7 +180,7 @@ void Database::prnt_tab_all(const std::string &tableName) {
 }
 
 // Log drone data
-void Database::logDroneData(const drone_data &drone, std::array<bool, 300>& checklist) {
+void Database::logDroneData(const drone_data &drone, std::array<bool, 300> &checklist) {
     if (!conn || !conn->is_open()) {
         std::cerr << "Db connection not established for logging."
                   << std::endl;
@@ -154,7 +198,7 @@ void Database::logDroneData(const drone_data &drone, std::array<bool, 300>& chec
                             W.quote(drone.status) + ", " +
                             W.quote(drone.charge) + ", " +
                             std::to_string(drone.position.first) + ", " +
-                            std::to_string(drone.position.second) +  ", " +
+                            std::to_string(drone.position.second) + ", " +
                             W.quote(check) +
                             ");";
         W.exec(query);
