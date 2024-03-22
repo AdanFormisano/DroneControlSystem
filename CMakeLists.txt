@@ -39,6 +39,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
+find_package(Boost REQUIRED COMPONENTS thread)
+find_package(Boost REQUIRED COMPONENTS chrono)
+find_package(Boost REQUIRED COMPONENTS system)
+
 # <------------ add hiredis dependency --------------->
 find_path(HIREDIS_HEADER hiredis)
 target_include_directories(DroneControlSystem PUBLIC ${HIREDIS_HEADER})
@@ -67,3 +71,10 @@ target_include_directories(DroneControlSystem PUBLIC ${LIBPQXX_HEADER})
 
 find_library(LIBPQXX_LIB pqxx)
 target_link_libraries(DroneControlSystem ${LIBPQXX_LIB})
+
+target_include_directories(DroneControlSystem PUBLIC ${Boost_INCLUDE_DIRS})
+target_link_libraries(DroneControlSystem ${Boost_LIBRARIES})
+target_link_libraries(DroneControlSystem ${Boost_SYSTEM_LIBRARY})
+target_link_libraries(DroneControlSystem ${Boost_THREAD_LIBRARY})
+target_link_libraries(DroneControlSystem ${Boost_CHRONO_LIBRARY})
+

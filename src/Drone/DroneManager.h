@@ -5,6 +5,8 @@
 #include "../../utils/utils.h"
 #include <array>
 #include <thread>
+#include <boost/thread.hpp>
+#include <chrono>
 
 using namespace sw::redis;
 
@@ -20,20 +22,20 @@ public:
     std::array<std::array<std::pair<int, int>, 4>, 300> zones; // Array of all the zones' vertex_coords_sqr, NOT global coords
     std::vector<DroneZone> drone_zones;                        // Vector of all the zones objects
     std::vector<std::shared_ptr<Drone>> drone_vector;          // Vector of all the drones objects
-    std::vector<std::thread> drone_threads;                    // Vector of all the drones threads
+    std::vector<boost::thread> drone_threads;                    // Vector of all the drones threads
 
     int n_data_sent = 0;
 
     explicit DroneManager(Redis &);
-    ~DroneManager();
+     ~DroneManager();
 
     void Run();
     void CalculateGlobalZoneCoords();
 
     // Returns a reference to the vector of drones
-    std::vector<std::shared_ptr<Drone>> &getDroneVector() { return drone_vector; }
+    //std::vector<std::shared_ptr<Drone>> &getDroneVector() { return drone_vector; }
     // Returns a reference to the vector of threads
-    std::vector<std::thread> &getDroneThreads() { return drone_threads; }
+    //std::vector<std::thread> &getDroneThreads() { return drone_threads; }
 
 private:
     int tick_n = 0;
@@ -71,8 +73,9 @@ private:
 class Drone {
 public:
     float drone_charge_to_base;         // Charge needed to go back to the base
+
     Drone(int, DroneZone *, const DroneManager *);
-    void Run();
+    int Run();
 
 private:
     Redis &drone_redis;

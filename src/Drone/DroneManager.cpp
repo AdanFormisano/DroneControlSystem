@@ -34,6 +34,8 @@ void DroneManager::Run() {
 
     utils::SyncWait(shared_redis);
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     CreateThreadBlocks();
 
     // Exists for the duration of the simulation
@@ -45,6 +47,15 @@ void DroneManager::Run() {
             auto tick_start = std::chrono::steady_clock::now();
 
             // Sleep for the remaining time
+            // Work
+            for (auto &thread : drone_threads) {
+                if (thread.try_join_for(boost::chrono::milliseconds(0))) {
+#ifdef DEBUG
+                    std::cout << "Thread " << thread.get_id() << " joined" << std::endl;
+#endif
+                    thread.join();
+                }
+            }
 
             // Check if there is time left in the tick
             auto tick_now = std::chrono::steady_clock::now();

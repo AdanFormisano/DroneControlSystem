@@ -23,7 +23,7 @@ Drone::Drone(int id, DroneZone *drone_zone, const DroneManager *drone_manager) :
 }
 
 // This will be the ran in the threads of each drone
-void Drone::Run() {
+int Drone::Run() {
     tick_n = 0;
     // spdlog::info("Drone {} bound: 1 {},{}, 2 {},{}, 3 {},{}, 4 {},{}",
     // drone_id, dz->vertex_coords_glb[0].first, dz->vertex_coords_glb[0].second,
@@ -57,6 +57,7 @@ void Drone::Run() {
                 }
                 break;
             case drone_state_enum::WORKING:
+                drone_redis.set("zone:" + std::to_string(dz->getZoneId()) + ":working_drone_id", std::to_string(drone_id));
                 Work();
 #ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is working ({} {})", tick_n, drone_id, drone_charge, drone_position.first, drone_position.second);
@@ -84,10 +85,11 @@ void Drone::Run() {
             case drone_state_enum::WAITING_CHARGE:
 #ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is waiting for charge",tick_n, drone_id, drone_charge);
+                std::cout << "Drone " << drone_id << " " << std::this_thread::get_id() << std::endl;
 #endif
                 SendChargeRequest();   // Uploads the drone status to Redis before sleeping
                 drone_state = drone_state_enum::SLEEP;
-                break;
+                return 0;
             case drone_state_enum::TO_ZONE:
                 // Simulate the drone moving to the destination
                 Move(dz->drone_path[0].first, dz->drone_path[0].second);
@@ -138,6 +140,8 @@ void Drone::Run() {
         sim_running = (drone_redis.get("sim_running") == "true");
         ++tick_n;
     }
+        return 0;
+}
 }
 
 void Drone::Work() {
