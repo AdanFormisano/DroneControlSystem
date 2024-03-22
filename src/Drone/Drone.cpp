@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 #include "../../utils/RedisUtils.h"
 #include "DroneManager.h"
 #include "spdlog/spdlog.h"
@@ -11,19 +12,27 @@ Each thread immediately starts running the drone's simulation.
 namespace drones {
 Drone::Drone(int id, DroneZone *drone_zone, const DroneManager *drone_manager) : drone_id(id), dz(drone_zone),
     dm(drone_manager), drone_redis(drone_manager->shared_redis) {
+    // Drone base data initialization
     redis_id = "drone:" + std::to_string(id);
     drone_charge = 100.0f;
     drone_position = {0.0f, 0.0f};
     drone_state = drone_state_enum::IDLE_IN_BASE;
 
-    SetChargeNeededToBase();
+    // Check if the drone exists in the Redis DB
+    if (!Exists()) {
+#ifdef DEBUG
+        spdlog::error("Drone {} does not exist in the Redis DB", drone_id);
+#endif
+        SetChargeNeededToBase();
+    } else {
 
     // Set initial status in Redis
     UploadStatus();
+    }
 }
 
 // This will be the ran in the threads of each drone
-void Drone::Run() {
+int Drone::Run() {
     tick_n = 0;
     // spdlog::info("Drone {} bound: 1 {},{}, 2 {},{}, 3 {},{}, 4 {},{}",
     // drone_id, dz->vertex_coords_glb[0].first, dz->vertex_coords_glb[0].second,
@@ -57,6 +66,7 @@ void Drone::Run() {
                 }
                 break;
             case drone_state_enum::WORKING:
+                drone_redis.set("zone:" + std::to_string(dz->getZoneId()) + ":working_drone_id", std::to_string(drone_id));
                 Work();
 #ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is working ({} {})", tick_n, drone_id, drone_charge, drone_position.first, drone_position.second);
@@ -85,9 +95,10 @@ void Drone::Run() {
 #ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is waiting for charge",tick_n, drone_id, drone_charge);
 #endif
+                std::cout << "Drone " << drone_id << " " << std::this_thread::get_id() << std::endl;
                 SendChargeRequest();   // Uploads the drone status to Redis before sleeping
                 drone_state = drone_state_enum::SLEEP;
-                break;
+                return 0;
             case drone_state_enum::TO_ZONE:
                 // Simulate the drone moving to the destination
                 Move(dz->drone_path[0].first, dz->drone_path[0].second);
@@ -138,6 +149,11 @@ void Drone::Run() {
         sim_running = (drone_redis.get("sim_running") == "true");
         ++tick_n;
     }
+        return 0;
+}
+
+bool Drone::Exists() {
+    return drone_redis.hexists("drone:" + std::to_string(drone_id), "id");
 }
 
 void Drone::Work() {

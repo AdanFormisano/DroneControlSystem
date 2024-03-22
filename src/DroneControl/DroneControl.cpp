@@ -127,7 +127,7 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     //                 temp_drone_struct.zone_id, temp_drone_struct.charge_needed_to_base);
 
     // Upload the data to the database
-    db.logDroneData(temp_drone_struct, checklist);
+    // db.logDroneData(temp_drone_struct, checklist);
 }
 
 // Gets the local data of a drone
@@ -177,11 +177,18 @@ bool DroneControl::CheckPath(int drone_id, std::pair<float, float> &drone_positi
     }
 }
 
-// Check if the drone has enough charge to go back to the base
+// TODO: Check only when the drone is working
+// Check if the drone has enough charge to go back to the base and check when to swap drones
 void DroneControl::CheckDroneCharge(int drone_id, float current_charge, float charge_needed) {
     if (current_charge - (DRONE_CONSUMPTION * 80.0f) <= charge_needed) {
         redis.set("drone:" + std::to_string(drone_id) + ":command", "charge");
+#ifdef DEBUG
         spdlog::info("TICK {}: Drone {} needs to charge: current chg: {}%, chg needed: {}%", tick_n, drone_id, current_charge, charge_needed);
+#endif
+    }
+    if (redis.get("zone:" + std::to_string(drones[drone_id].zone_id) + ":swap") == "none" && (current_charge <= (charge_needed * 2) + 80.0f)) {
+        // Create a redis list of all the zones that need to be switched on
+        redis.rpush("zones_to_swap", std::to_string(drones[drone_id].zone_id));
     }
 }
 } // namespace drone_control

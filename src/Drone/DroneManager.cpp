@@ -34,7 +34,11 @@ void DroneManager::Run() {
 
     utils::SyncWait(shared_redis);
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     CreateThreadBlocks();
+
+    auto it_thread = drone_threads.begin();
 
     // Exists for the duration of the simulation
     try {
@@ -44,7 +48,18 @@ void DroneManager::Run() {
             // Get the time_point
             auto tick_start = std::chrono::steady_clock::now();
 
-            // Sleep for the remaining time
+            // Work
+            for (auto &thread : drone_threads) {
+                if (thread.try_join_for(boost::chrono::milliseconds(0))) {
+#ifdef DEBUG
+                    std::cout << "Thread " << thread.get_id() << " joined" << std::endl;
+#endif
+                    it_thread = std::remove_if(drone_threads.begin(), drone_threads.end(), [&thread](const boost::thread &t) {
+                        return thread.get_id() == t.get_id();
+                    });
+                    thread.join();
+                }
+            }
 
             // Check if there is time left in the tick
             auto tick_now = std::chrono::steady_clock::now();
@@ -119,10 +134,38 @@ void DroneManager::CreateThreadBlocks() {
         for (int y = -75; y <= 75 - height; y += height) {
             // Create the threads
             drone_threads.emplace_back(&Drone::Run, drone_vector[n_drone].get());
+
             ++n_drone;
         }
         std::this_thread::sleep_for(tick_duration_ms * 5);
         spdlog::info("Column of drones created");
     }
 }
+
+// Check if DC asked for new drones
+//void DroneManager::CheckNewDrones() {
+//    std::vector<std::string> zones_to_swap;
+//
+//    // Check if DC asked for new drones
+//    shared_redis.lrange("zones_to_swap", 0, -1, std::back_inserter(zones_to_swap));
+//
+//    // For every zone create a drone object
+//    for (const auto &zone_id : zones_to_swap) {
+//        int z = std::stoi(zone_id);
+//        // Get and available drone from the zone:id:drones list
+//        auto drone_id = shared_redis.lpop("zone:" + zone_id + ":drones");
+//
+//        // Get the zone object
+//        auto dz = &drone_zones[z];
+//
+//        // Create the drone
+//        CreateDrone(z, dz);
+//
+//        // Set the drone to work
+//        shared_redis.set("drone:" + drone_id.value() + ":command", "work");
+//
+//        // Create the thread
+//        drone_threads.emplace_back(&Drone::Run, drone_vector[n_drone].get());
+//    }
+//}
 } // namespace drones

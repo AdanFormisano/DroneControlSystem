@@ -102,6 +102,8 @@ namespace charge_base {
     }
 
     void ChargeBase::ChargeDrone() {
+        auto it = charging_drones.begin();
+
         for (auto &drone: charging_drones) {
             if (drone.base_data.charge < 100) {
                 drone.base_data.charge += drone.charge_rate;
@@ -110,13 +112,21 @@ namespace charge_base {
 #endif
             } else if (drone.base_data.charge >= 100) {
                 releaseDrone(drone);
+                it = std::remove_if(charging_drones.begin(), charging_drones.end(), [&drone](const ext_drone_data &d) {
+                    return d.base_data.id == drone.base_data.id;
+                });
             }
         }
+        charging_drones.erase(it, charging_drones.end());
     }
     void ChargeBase::releaseDrone(ext_drone_data &drone) {
         // Update the drone's status in Redis
         redis.hset("drone:" + std::to_string(drone.base_data.id), "status", "IDLE_IN_BASE");
         redis.hset("drone:" + std::to_string(drone.base_data.id), "charge", "100");
+
+        // Add the drone to the zone's queue of drones
+        redis.rpush("zone:" + std::to_string(drone.base_data.zone_id) + ":drones", std::to_string(drone.base_data.id));
+
     }
 
     void ChargeBase::SetEngine(std::random_device& rd) {
