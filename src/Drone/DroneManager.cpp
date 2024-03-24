@@ -26,8 +26,12 @@ void DroneManager::Run() {
     for (auto &zone : zones) {
         DroneZone* dz = CreateDroneZone(zone, zone_id);
 
+        int drone_id = (zone_id * 10) + new_drones_id[zone_id];
+
         // Create the drone
-        CreateDrone(zone_id, dz);
+        CreateDrone(drone_id, dz);
+
+        new_drones_id[zone_id]++;
         ++zone_id;
     }
     spdlog::info("All zones created");
@@ -82,7 +86,9 @@ void DroneManager::Run() {
     }
 }
 
-DroneManager::DroneManager(Redis &redis) : shared_redis(redis) {}
+DroneManager::DroneManager(Redis &redis) : shared_redis(redis) {
+    new_drones_id.fill(1);
+}
 
 DroneManager::~DroneManager() {
     for (auto &thread : drone_threads) {

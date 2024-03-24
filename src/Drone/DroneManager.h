@@ -25,8 +25,6 @@ public:
     std::vector<std::shared_ptr<Drone>> drone_vector;          // Vector of all the drones objects
     std::vector<boost::thread> drone_threads;                    // Vector of all the drones threads
 
-    int n_data_sent = 0;
-
     explicit DroneManager(Redis &);
      ~DroneManager();
 
@@ -40,11 +38,13 @@ public:
 
 private:
     int tick_n = 0;
+    std::array<int, 300> new_drones_id{};
     // For a set of vertex_coords_sqr creates a DroneZone object
     DroneZone* CreateDroneZone(std::array<std::pair<int, int>, 4> &, int);
+
     void CreateDrone(int, DroneZone*);
     void CreateThreadBlocks();
-    void CheckNewDrones();
+    // void CheckNewDrones();
 };
 
 class DroneZone {

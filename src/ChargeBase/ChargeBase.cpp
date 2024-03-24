@@ -96,28 +96,34 @@ namespace charge_base {
         spdlog::info("Drone {} charge rate: {}", temp_drone_struct.base_data.id, charge_rate);
         redis.hset("drone:" + data[0].second, "status", "CHARGING");
 
-        // Update the drone unordered set
-        charging_drones.push_back(temp_drone_struct);
+        // Update the drone unordered map
+        charging_drones[std::to_string(temp_drone_struct.base_data.id)] = temp_drone_struct;
         spdlog::info("Drone {} added to the charging list", temp_drone_struct.base_data.id);
     }
 
     void ChargeBase::ChargeDrone() {
-        auto it = charging_drones.begin();
+        // List of drones to remove from the charging list
+        std::vector<int> drones_to_remove;
 
-        for (auto &drone: charging_drones) {
-            if (drone.base_data.charge < 100) {
-                drone.base_data.charge += drone.charge_rate;
+        for (auto& drone: charging_drones) {
+            auto& drone_data = drone.second;
+            if ( drone_data.base_data.charge < 100) {
+                drone_data.base_data.charge += drone_data.charge_rate;
 #ifdef DEBUG
-                spdlog::info("TICK {}: Drone {} charge: {}", tick_n, drone.base_data.id, drone.base_data.charge);
+                spdlog::info("TICK {}: Drone {} charge: {}", tick_n, drone_data.base_data.id, drone_data.base_data.charge);
 #endif
-            } else if (drone.base_data.charge >= 100) {
-                releaseDrone(drone);
-                it = std::remove_if(charging_drones.begin(), charging_drones.end(), [&drone](const ext_drone_data &d) {
-                    return d.base_data.id == drone.base_data.id;
-                });
+            } else if (drone_data.base_data.charge >= 100) {
+                releaseDrone(drone_data);
+
+                // Add the drone to the list of drones to remove
+                drones_to_remove.push_back(drone_data.base_data.id);
             }
         }
-        charging_drones.erase(it, charging_drones.end());
+
+        // Remove the drones from the charging list
+        for (auto& drone_id: drones_to_remove) {
+            charging_drones.erase(std::to_string(drone_id));
+        }
     }
     void ChargeBase::releaseDrone(ext_drone_data &drone) {
         // Update the drone's status in Redis
@@ -145,4 +151,3 @@ namespace charge_base {
         return 100.0f / tick_needed_to_charge;
     }
 }
-

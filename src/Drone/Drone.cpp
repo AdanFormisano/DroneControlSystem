@@ -21,7 +21,7 @@ Drone::Drone(int id, DroneZone *drone_zone, const DroneManager *drone_manager) :
     // Check if the drone exists in the Redis DB
     if (!Exists()) {
 #ifdef DEBUG
-        spdlog::error("Drone {} does not exist in the Redis DB", drone_id);
+        spdlog::warn("Drone {} does not exist in the Redis DB", drone_id);
 #endif
         SetChargeNeededToBase();
     } else {

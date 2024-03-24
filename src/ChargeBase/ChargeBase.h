@@ -26,7 +26,7 @@ namespace charge_base {
         std::mt19937 engine;
         Redis& redis;
         std::string current_stream_id = "0-0";
-        std::vector<ext_drone_data> charging_drones;
+        std::unordered_map<std::string, ext_drone_data> charging_drones;
         int tick_n = 0;
 
         ChargeBase(Redis& redis);

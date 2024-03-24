@@ -14,7 +14,8 @@ public:
     explicit DroneControl(Redis &shared_redis);
 
     Redis &redis;
-    drone_data drones[300]; // Array with data of all the drones
+    std::unordered_map<std::string, drone_data> drones;
+
 
     void Run();                                                                      // Run the DroneControl process
     void ReadStream();                                                               // Read the stream of data from Redis
@@ -30,7 +31,7 @@ private:
     Database db;
 
     void GetDronePaths();
-    bool CheckPath(int drone_id, std::pair<float, float>&);
+    bool CheckPath(int zone_id, std::pair<float, float>&position);
     void CheckDroneCharge(int drone_id, float charge, float charge_needed);
 };
 } // namespace drone_control

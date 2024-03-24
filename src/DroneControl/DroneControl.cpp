@@ -114,12 +114,12 @@ void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std
     temp_drone_struct.zone_id = std::stoi(data[5].second);
     temp_drone_struct.charge_needed_to_base = std::stof(data[6].second);
 
-    checklist[temp_drone_struct.id] = CheckPath(temp_drone_struct.id, temp_drone_struct.position);
+    checklist[temp_drone_struct.zone_id] = CheckPath(temp_drone_struct.zone_id, temp_drone_struct.position);
     // Check if the drone's charge is enough to go back to the base
     CheckDroneCharge(temp_drone_struct.id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
 
     // Update the drone data array
-    drones[temp_drone_struct.id] = temp_drone_struct;
+    drones[std::to_string(temp_drone_struct.id)] = temp_drone_struct;
 
     //    spdlog::info("Drone {} updated: {}, {}, {}, {}, {}, {}",
     //                 temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
@@ -163,14 +163,14 @@ void DroneControl::GetDronePaths() {
 }
 
 // Check if the drone's path is correct
-bool DroneControl::CheckPath(int drone_id, std::pair<float, float> &drone_position) {
+bool DroneControl::CheckPath(int zone_id, std::pair<float, float> &drone_position) {
     // Get the next point in the path
-    auto next_point = drone_paths[drone_id][drone_path_next_index[drone_id]];
+    auto next_point = drone_paths[zone_id][drone_path_next_index[zone_id]];
 
     // Check if the drone is in the next point
     if (drone_position == next_point) {
         // Update the next point
-        ++drone_path_next_index[drone_id];
+        ++drone_path_next_index[zone_id];
         return true;
     } else {
         return false;
@@ -186,9 +186,9 @@ void DroneControl::CheckDroneCharge(int drone_id, float current_charge, float ch
         spdlog::info("TICK {}: Drone {} needs to charge: current chg: {}%, chg needed: {}%", tick_n, drone_id, current_charge, charge_needed);
 #endif
     }
-    if (redis.get("zone:" + std::to_string(drones[drone_id].zone_id) + ":swap") == "none" && (current_charge <= (charge_needed * 2) + 80.0f)) {
+    if (redis.get("zone:" + std::to_string(drones[std::to_string(drone_id)].zone_id) + ":swap") == "none" && (current_charge <= (charge_needed * 2) + 80.0f)) {
         // Create a redis list of all the zones that need to be switched on
-        redis.rpush("zones_to_swap", std::to_string(drones[drone_id].zone_id));
+        redis.rpush("zones_to_swap", std::to_string(drones[std::to_string(drone_id)].zone_id));
     }
 }
 } // namespace drone_control
