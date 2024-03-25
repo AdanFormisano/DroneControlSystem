@@ -18,6 +18,9 @@ Drone::Drone(int id, DroneZone *drone_zone, const DroneManager *drone_manager) :
     drone_position = {0.0f, 0.0f};
     drone_state = drone_state_enum::IDLE_IN_BASE;
 
+    // Add the drone to the zone's queue of drones
+    drone_redis.rpush("zone:" + std::to_string(dz->getZoneId()) + ":drones", std::to_string(drone_id));
+
     // Check if the drone exists in the Redis DB
     if (!Exists()) {
 #ifdef DEBUG
@@ -67,7 +70,10 @@ int Drone::Run() {
                 }
                 break;
             case drone_state_enum::WORKING:
+                // Set the working drone id in the zone
                 drone_redis.set("zone:" + std::to_string(dz->getZoneId()) + ":working_drone_id", std::to_string(drone_id));
+                // Remove the drone from the zone's queue
+                drone_redis.lrem("zone:" + std::to_string(dz->getZoneId()) + ":drones", 0, std::to_string(drone_id));
                 Work();
 #ifdef DEBUG
                 spdlog::info("TICK {}: Drone {} [{}%] is working ({} {})", tick_n, drone_id, drone_charge, drone_position.first, drone_position.second);

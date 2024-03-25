@@ -43,9 +43,9 @@ private:
     // For a set of vertex_coords_sqr creates a DroneZone object
     DroneZone* CreateDroneZone(std::array<std::pair<int, int>, 4> &, int);
 
-    void CreateDrone(int, DroneZone*);
+    void CreateDrone(int drone_id, DroneZone* DroneZone);
     void CreateThreadBlocks();
-    // void CheckNewDrones();
+    void CheckNewDrones();
 };
 
 class DroneZone {
