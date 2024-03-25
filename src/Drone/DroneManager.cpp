@@ -15,6 +15,9 @@ void DroneManager::Run() {
     drone_zones.reserve(300);
     drone_vector.reserve(300);
     drone_threads.reserve(300);
+    std::vector<size_t> finishedThreadIndices;
+    int removecounter=0;
+    int checkcounter=0;
 
     // Calculate the zones' vertex_coords
     // TODO: Sono stronzo e l'ordine e' diverso da quello utilizzato per il path
@@ -45,25 +48,71 @@ void DroneManager::Run() {
     auto it_thread = drone_threads.begin();
 
     // Exists for the duration of the simulation
+
     try {
         bool sim_running = (shared_redis.get("sim_running") == "true");
         // Run the simulation
         while (sim_running) {
+
             // Get the time_point
             auto tick_start = std::chrono::steady_clock::now();
 
-            // Work
-            for (auto &thread : drone_threads) {
-                if (thread.try_join_for(boost::chrono::milliseconds(0))) {
+            // Prepare a container for collecting thread IDs to be removed
+
+            // Work and check threads
+            if (checkcounter>50){
+            for (size_t i = 0; i < drone_threads.size(); ++i) {
+                if (drone_threads[i].try_join_for(boost::chrono::milliseconds(0))) {
 #ifdef DEBUG
-                    std::cout << "Thread " << thread.get_id() << " joined" << std::endl;
+                    std::cout << "Thread " << drone_threads[i].get_id() << " joined" << std::endl;
 #endif
-                    it_thread = std::remove_if(drone_threads.begin(), drone_threads.end(), [&thread](const boost::thread &t) {
-                        return thread.get_id() == t.get_id();
-                    });
-                    thread.join();
+                    finishedThreadIndices.push_back(i);
+
+                    removecounter++;
                 }
             }
+            if (removecounter>19) {
+                // Sort indices in descending order to maintain validity upon removal
+                std::sort(finishedThreadIndices.rbegin(), finishedThreadIndices.rend()); // Sort in descending order for safe removal
+                //probably no need for sort here
+
+                spdlog::info("Here {} is the size of finishedbla bla", finishedThreadIndices.size() );
+                for (size_t index : finishedThreadIndices) {
+
+                    spdlog::info("Here {} is being worked on", index );
+                    if (drone_threads[index].joinable()) {
+                        drone_threads[index].join(); // Ensure the thread is joined before removal
+                        spdlog::info("Here {} has been joined", index );
+                    }
+
+                    // Swap-and-pop for drone_threads
+                    if (index != drone_threads.size() - 1) {
+                        std::swap(drone_threads[index], drone_threads.back());
+                    }
+                    spdlog::info("Here Drone thread indexed at {} has been popped", index );
+                    drone_threads.pop_back();
+
+                    // Swap-and-pop for drone_vector
+                    if (index != drone_vector.size() - 1) {
+                        std::swap(drone_vector[index], drone_vector.back());
+                    }
+                    spdlog::info("Here Drone indexed at {} has been popped", index );
+                    drone_vector.pop_back();
+                }
+                //TODO:: search for pop range type thing
+
+                finishedThreadIndices.clear();
+                removecounter=0;
+                spdlog::info("Here Drone threads have been removed thread vector size is {}", drone_threads.size() );
+            }
+
+// Clear the indices for the next batch
+                finishedThreadIndices.clear();
+                checkcounter=0;
+                spdlog::info("Here Heckcounter has reached 50 rmcounter is   {}", removecounter );
+                }
+
+            else{checkcounter++;}
 
             // Check if there is time left in the tick
             auto tick_now = std::chrono::steady_clock::now();
@@ -147,6 +196,8 @@ void DroneManager::CreateThreadBlocks() {
         spdlog::info("Column of drones created");
     }
 }
+
+
 
 // Check if DC asked for new drones
 //void DroneManager::CheckNewDrones() {

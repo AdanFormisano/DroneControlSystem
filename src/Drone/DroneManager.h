@@ -25,6 +25,7 @@ public:
     std::vector<std::shared_ptr<Drone>> drone_vector;          // Vector of all the drones objects
     std::vector<boost::thread> drone_threads;                    // Vector of all the drones threads
 
+
     explicit DroneManager(Redis &);
      ~DroneManager();
 

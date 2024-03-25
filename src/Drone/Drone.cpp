@@ -56,6 +56,7 @@ int Drone::Run() {
         switch (drone_state) {
             case drone_state_enum::IDLE_IN_BASE:
 #ifdef DEBUG
+
                 spdlog::info("TICK {}: Drone {} [{}%] is idle in base", tick_n, drone_id, drone_charge);
 #endif
                 // Must wait for DroneControl to release the drone
