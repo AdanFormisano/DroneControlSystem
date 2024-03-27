@@ -12,22 +12,22 @@ For testing purposes, the right column will be ignored for now.*/
 
 namespace drones {
     // The zone is created with vertex_coords_sqr set.
-DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, DroneManager *drone_manager)
-    : zone_id(zone_id), vertex_coords_sqr(coords), dm(drone_manager) {
-    // Calculate the real global coord needed for the drone path
-    vertex_coords_glb = SqrToGlbCoords();
+    DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, DroneManager *drone_manager)
+        : zone_id(zone_id), vertex_coords_sqr(coords), dm(drone_manager) {
+        // Calculate the real global coord needed for the drone path
+        vertex_coords_glb = SqrToGlbCoords();
 
-    // Create drone path
-    CreateDronePath();
+        // Create drone path
+        CreateDronePath();
 
-    // Uploads the path to the Redis server
-    UploadPathToRedis();
+        // Uploads the path to the Redis server
+        UploadPathToRedis();
 
-    // Upload the zone to the Redis server
-    std::string redis_zone_id = "zone:" + std::to_string(zone_id);
-    dm->shared_redis.set(redis_zone_id + ":id", std::to_string(zone_id));
-    dm->shared_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
-}
+        // Upload the zone to the Redis server
+        std::string redis_zone_id = "zone:" + std::to_string(zone_id);
+        dm->shared_redis.set(redis_zone_id + ":id", std::to_string(zone_id));
+        dm->shared_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
+    }
 
 // Converts the square coordinates to global coordinates used for the drone path
     std::array<std::pair<int, int>, 4> DroneZone::SqrToGlbCoords() {
@@ -48,10 +48,10 @@ DroneZone::DroneZone(int zone_id, std::array<std::pair<int, int>, 4> &coords, Dr
         drone_boundaries[3] = {vertex_coords_glb[0].first + 10, vertex_coords_glb[0].second + 10};
 
         GenerateLoopPath(drone_boundaries, 20);
-}
+    }
 
     // Generates a loop path for the drone
-    void DroneZone::GenerateLoopPath(const std::array<std::pair<int, int>, 4>& drone_boundaries, int step_size) {
+    void DroneZone::GenerateLoopPath(const std::array<std::pair<int, int>, 4> &drone_boundaries, int step_size) {
         using namespace std;
         // From the top left corner to the top right corner
         for (int x = drone_boundaries[0].first; x <= drone_boundaries[1].first; x += step_size) {

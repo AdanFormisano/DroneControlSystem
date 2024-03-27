@@ -4,6 +4,7 @@
 
 #ifndef DRONECONTROLSYSTEM_CHARGEBASE_H
 #define DRONECONTROLSYSTEM_CHARGEBASE_H
+
 #include <vector>
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -24,15 +25,17 @@ namespace charge_base {
         };
 
         std::mt19937 engine;
-        Redis& redis;
+        Redis &redis;
         std::string current_stream_id = "0-0";
         std::unordered_map<std::string, ext_drone_data> charging_drones;
         int tick_n = 0;
 
-        ChargeBase(Redis& redis);
+        ChargeBase(Redis &redis);
 
         void ReadChargeStream();
-        void SetChargeData(const std::vector<std::pair<std::string, std::string>>& data);
+
+        void SetChargeData(const std::vector<std::pair<std::string, std::string>> &data);
+
         float getChargeRate();
 
     public:
@@ -40,11 +43,14 @@ namespace charge_base {
         ChargeBase() = delete;
 
         //not thread safe thought does it really need to be?
-        static ChargeBase* getInstance(Redis& redis);
+        static ChargeBase *getInstance(Redis &redis);
 
-        void SetEngine(std::random_device&);
+        void SetEngine(std::random_device &);
+
         void ChargeDrone();
+
         void releaseDrone(ext_drone_data &);
+
         void Run();
 
         // Destructor

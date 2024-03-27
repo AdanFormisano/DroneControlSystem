@@ -2,16 +2,16 @@
 #include <algorithm>
 
 namespace charge_base {
-    ChargeBase* instance = nullptr;
+    ChargeBase *instance = nullptr;
 
-    ChargeBase* ChargeBase::getInstance(Redis& redis) {
+    ChargeBase *ChargeBase::getInstance(Redis &redis) {
         if (!instance) {
-            instance = new ChargeBase( redis); // Constructor
+            instance = new ChargeBase(redis); // Constructor
         }
         return instance;
     }
 
-    ChargeBase::ChargeBase(Redis& redis) : redis(redis){}
+    ChargeBase::ChargeBase(Redis &redis) : redis(redis) {}
 
     void ChargeBase::Run() {
         spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
@@ -55,15 +55,16 @@ namespace charge_base {
             auto number_items_stream = redis.command<long long>("XLEN", "charge_stream");
 
             // Reads the stream
-            redis.xread("charge_stream", current_stream_id, std::chrono::milliseconds(10), number_items_stream, std::inserter(new_result, new_result.end()));
+            redis.xread("charge_stream", current_stream_id, std::chrono::milliseconds(10), number_items_stream,
+                        std::inserter(new_result, new_result.end()));
 
             // Parses the stream
-            for (const auto& item : new_result) {
+            for (const auto &item: new_result) {
                 // There is only one pair: stream_key and stream_data
                 // item.first is the key of the stream. In this case it is "drone_stream"
 
                 // spdlog::info("-----------------Tick {}-----------------", tick_n);
-                for (const auto& stream_drone : item.second) {
+                for (const auto &stream_drone: item.second) {
                     // stream_drone.first is the id of the message in the stream
                     // stream_drone.second is the unordered_map with the data of the drone
 
@@ -76,12 +77,12 @@ namespace charge_base {
             // Trim the stream
             spdlog::info("{} entries read from charge_stream. Trimming the stream.", number_items_stream);
             redis.command<long long>("XTRIM", "charge_stream", "MINID", current_stream_id);
-        } catch (const Error& e) {
+        } catch (const Error &e) {
             spdlog::error("Error reading the stream: {}", e.what());
         }
     }
 
-    void ChargeBase::SetChargeData(const std::vector<std::pair<std::string, std::string>>& data) {
+    void ChargeBase::SetChargeData(const std::vector<std::pair<std::string, std::string>> &data) {
         // The data is structured as a known array
         ext_drone_data temp_drone_struct;
         temp_drone_struct.base_data.id = std::stoi(data[0].second);
@@ -105,12 +106,13 @@ namespace charge_base {
         // List of drones to remove from the charging list
         std::vector<int> drones_to_remove;
 
-        for (auto& drone: charging_drones) {
-            auto& drone_data = drone.second;
-            if ( drone_data.base_data.charge < 100) {
+        for (auto &drone: charging_drones) {
+            auto &drone_data = drone.second;
+            if (drone_data.base_data.charge < 100) {
                 drone_data.base_data.charge += drone_data.charge_rate;
 #ifdef DEBUG
-                spdlog::info("TICK {}: Drone {} charge: {}", tick_n, drone_data.base_data.id, drone_data.base_data.charge);
+                spdlog::info("TICK {}: Drone {} charge: {}", tick_n, drone_data.base_data.id,
+                             drone_data.base_data.charge);
 #endif
             } else if (drone_data.base_data.charge >= 100) {
                 releaseDrone(drone_data);
@@ -121,10 +123,11 @@ namespace charge_base {
         }
 
         // Remove the drones from the charging list
-        for (auto& drone_id: drones_to_remove) {
+        for (auto &drone_id: drones_to_remove) {
             charging_drones.erase(std::to_string(drone_id));
         }
     }
+
     void ChargeBase::releaseDrone(ext_drone_data &drone) {
         // Update the drone's status in Redis
         redis.hset("drone:" + std::to_string(drone.base_data.id), "status", "IDLE_IN_BASE");
@@ -135,7 +138,7 @@ namespace charge_base {
 
     }
 
-    void ChargeBase::SetEngine(std::random_device& rd) {
+    void ChargeBase::SetEngine(std::random_device &rd) {
         engine = std::mt19937(rd());
     }
 
@@ -146,7 +149,7 @@ namespace charge_base {
             return dist(engine);
         }; //GBT FTW
 
-        auto tick_needed_to_charge =  (generateRandomFloat() * (60*60)) / TICK_TIME_SIMULATED;
+        auto tick_needed_to_charge = (generateRandomFloat() * (60 * 60)) / TICK_TIME_SIMULATED;
 
         return 100.0f / tick_needed_to_charge;
     }

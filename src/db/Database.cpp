@@ -20,8 +20,7 @@ void Database::connect_to_db(const std::string &dbname,
                                    " password=" + password +
                                    " hostaddr=" + hostaddr +
                                    " port=" + port;
-    conn = std::
-        make_shared<pqxx::connection>(connectionString);
+    conn = std::make_shared<pqxx::connection>(connectionString);
 
     if (!conn->is_open()) {
         std::cerr << "DB can't connect" << std::endl;
@@ -96,8 +95,7 @@ void Database::get_DB() {
 }
 
 // Do query
-pqxx::result Database::qry(
-    const std::string &tableName) {
+pqxx::result Database::qry(const std::string &tableName) {
     pqxx::work W(*conn);
     pqxx::result R = W.exec("SELECT * FROM " + tableName);
     W.commit();
@@ -105,16 +103,13 @@ pqxx::result Database::qry(
 }
 
 // Do query and print table
-void Database::qry_prnt(
-    const std::string &tableName) {
+void Database::qry_prnt(const std::string &tableName) {
     pqxx::result R = qry(tableName);
     prnt_tab(tableName, R);
 }
 
 // Handle connection
-void Database::hndl_con(
-    std::unique_ptr<pqxx::connection> &conn,
-    const std::string &tableName) {
+void Database::hndl_con(std::unique_ptr<pqxx::connection> &conn, const std::string &tableName) {
     if (!conn) {
         std::cerr << "Invalid database connection."
                   << std::endl;
@@ -125,9 +120,7 @@ void Database::hndl_con(
 }
 
 // Print table
-void Database::prnt_tab(
-    const std::string &tableName,
-    const pqxx::result &R) {
+void Database::prnt_tab(const std::string &tableName, const pqxx::result &R) {
     int colWidth = 12;
     int tableWidth = R.columns() * colWidth;
     std::string tableTitle = "------> " + tableName + " <------";
@@ -144,7 +137,7 @@ void Database::prnt_tab(
 
     std::cout << std::endl;
 
-    for (const auto &row : R) {
+    for (const auto &row: R) {
         for (int i = 0; i < row.size(); ++i) {
             std::cout << std::left
                       << std::setw(colWidth)
