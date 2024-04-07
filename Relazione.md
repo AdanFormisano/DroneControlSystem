@@ -15,10 +15,11 @@ La seguente è una vista ad alto livello delle componenti del sistema
 
 #### Area da sorvegliare
 (Placeholder)
-![[Pasted image 20240407170721.png]]
+![[Area da sorvegliare]](res/area_view.jpg)
 
 #### Contesto del sistema
-![[Pasted image 20240407170855.png]]
+![[Contesto del sistema]](res/cntxt_view.png)
+
 ## User requirements
 Questi requisiti riflettono le esigenze e le aspettative degli utenti finali del sistema.
 
