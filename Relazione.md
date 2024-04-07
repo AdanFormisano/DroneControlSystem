@@ -7,14 +7,23 @@ Il sistema è sviluppato come progetto d'esame per [Ingegneria del software](htt
 ***
 ## Descrizione generale
 
+### Di cosa si occupa Drone Control System
+Il sistema progettato è basato, come detto in apertura, su una delle tracce di progetto fornite dal prof Tronci. La traccia è la seguente:
+>Si progetti il centro di controllo per una formazione di droni che deve sorvegliare un'area di dati. Ogni drone ha un'autonomia di $30$ minuti di volo ed impiega un tempo di minimo $2h$ e massimo $3h$ per ricaricarsi. Il tempo di ricarica è scelto ad ogni ricarica uniformemente a random nell’intervallo $[2h, 3h]$. Ogni drone si muove alla velocità di $30 Km/h$. L’area da monitorare misura $6\times6$ Km. Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare. Il centro di controllo manda istruzioni ai droni in modo da garantire che per ogni punto dell’area sorvegliata sia verificato almeno ogni $5$ minuti. Un punto è verificato al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10$ m dal punto. Il progetto deve includere i seguenti componenti:
+>1. Un modello (test generator) per i droni
+>2. Un modello per il centro di controllo
+>3. Un DB per i dati (ad esempio, stato di carica dei droni) ed i log
+>4. Monitors per almeno tre proprietà funzionali
+>5. Monitors per almeno due proprietà non-funzionali
+
+
 ### Fini del sistema
-Il sistema di occupa di verificare che ogni punto dell'area sia sorvegliato ogni cinque minuti, e, in caso contrario, segnala eventuali anomalie. Difatti, e con precisione, se allo scoccare dell'ennesimo intervallo suddetto anche solo un punto dell'area non risulta come [checked](sap/crs/ing/checked), nel log del sistema verrà riportato lo stato di `check-failed` relativo a quel punto e all'annesso timestamp di verifica in cui si è verificato il mancato controllo.
+Il sistema si occupa quindi di verificare che ogni punto dell'area sia sorvegliato ogni cinque minuti, e, in caso contrario, segnala eventuali anomalie. Difatti, e con precisione, se allo scoccare dell'ennesimo intervallo suddetto anche solo un punto dell'area non risulta come [checked](sap/crs/ing/checked), nel log del sistema verrà riportato lo stato di `check-failed` relativo a quel punto e all'annesso timestamp di verifica in cui si è verificato il mancato controllo.
 
 ### Schema del sistema
 La seguente è una vista ad alto livello delle componenti del sistema
 
 #### Area da sorvegliare
-(Placeholder)
 ![[Area da sorvegliare]](res/area_view.jpg)
 
 #### Contesto del sistema
