@@ -71,15 +71,15 @@ Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partendo dalle
 In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno il resto dei droni nelle altre zone di ogni colonna.
 
 ### Outsourcing
-Nell'implementazione del sistema abbiamo dato per scontato l'uso di altre tecnologie e soluzioni di cui esso sarebbe inevitabilmente composto nella sua costruzione reale, quali quelle del:
-- drone:
+Nell'implementazione del sistema abbiamo dato per scontato l'uso di altre tecnologie e soluzioni di cui esso sarebbe inevitabilmente e anche composto, quali quelle del:
+- drone
   - sistema di comunicazione a lungo raggio (LTE o 5G): per trasmettere dati e conferme al centro di controllo
   - sistema di ricezione: per ricevere segnali dai sensori a terra
   - sistema di navigazione e posizionamento GPS: per determinare con precisione la posizione del drone
-- punto (sensore a terra)**:
+- punto (sensore a terra)
   - sensore di movimento o RFID a lungo raggio: rileva la presenza del drone e invia un segnale di conferma
   - trasmettitore: Invia segnali di conferma al drone per la verifica
-- centro di controllo:
+- centro di controllo
   - sistema di comunicazione per ricevere dati dai droni: assicura il flusso costante di informazioni dal campo
 
 Sebbene alcune di queste tecnologie e componenti siano parte dell'environment del sistema (come il GPS), ognuna di esse rimane esterna ad esso, ed è naturalmente legata a misure di outsourcing in ogni caso e sì imprescindibili, ma fuori dagli scopi del nostro sistema
