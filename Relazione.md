@@ -9,7 +9,7 @@ Il sistema è sviluppato come progetto d'esame per [Ingegneria del software](htt
 
 ### Di cosa si occupa Drone Control System
 Il sistema progettato è basato, come detto in apertura, su una delle tracce di progetto fornite dal prof Tronci. La traccia è la seguente:
->Si progetti il centro di controllo per una formazione di droni che deve sorvegliare un'area di dati. Ogni drone ha un'autonomia di $30$ minuti di volo ed impiega un tempo di minimo $2h$ e massimo $3h$ per ricaricarsi. Il tempo di ricarica è scelto ad ogni ricarica uniformemente a random nell’intervallo $[2h, 3h]$. Ogni drone si muove alla velocità di $30 Km/h$. L’area da monitorare misura $6\times6$ Km. Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare. Il centro di controllo manda istruzioni ai droni in modo da garantire che per ogni punto dell’area sorvegliata sia verificato almeno ogni $5$ minuti. Un punto è verificato al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10$ m dal punto. Il progetto deve includere i seguenti componenti:
+>Si progetti il centro di controllo per una formazione di droni che deve sorvegliare un'area di dati. Ogni drone ha un'autonomia di $30$ minuti di volo ed impiega un tempo di minimo $2h$ e massimo $3h$ per ricaricarsi. Il tempo di ricarica è scelto ad ogni ricarica uniformemente a random nell'intervallo $[2h, 3h]$. Ogni drone si muove alla velocità di $30 Km/h$. L’area da monitorare misura $6\times6$ Km. Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare. Il centro di controllo manda istruzioni ai droni in modo da garantire che per ogni punto dell’area sorvegliata sia verificato almeno ogni $5$ minuti. Un punto è verificato al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10$ m dal punto. Il progetto deve includere i seguenti componenti:
 >1. Un modello (test generator) per i droni
 >2. Un modello per il centro di controllo
 >3. Un DB per i dati (ad esempio, stato di carica dei droni) ed i log
@@ -46,22 +46,43 @@ Questi requisiti dettagliano le specifiche tecniche e le funzionalità necessari
 - **(2.3) Interfaccia di Controllo e Comando**: Il sistema deve fornire un'interfaccia utente intuitiva e funzionale per permettere agli operatori di controllare e monitorare facilmente tutte le operazioni dei droni, e specie eventuali punti che essi non dovessero riuscire a sorvegliare
 
 ## Implementation
-### Implementazione
+### Implementazione software
 Il sistema è implementato in [C++](https://isocpp.org/), e fa uso di [Redis](https://redis.io/) e di [PostgreSQL](https://www.postgresql.org/).
 Redis è disponibile in C++ come client grazie a [redis-plus-plus](https://github.com/sewenew/redis-plus-plus), ed è quello che è stato usato.
 Redis è stato usato per gestire i flussi di dati dei thread, compresi quelli dei droni, e per la comunicazione col database PostgreSQL.
 
 ### Struttura dell'area sorvegliata
-Il sistema gestisce l'area da sorvegliare dividendola in varie colonne, ognuna delle quali è divisa in zone rettangolari impilate virtualmente una sopra la base superiore dell'altra.
-In ogni zona figurano $124$ celle, ciascuna delle quali rappresenta un'area quadrata di $20\times20$ $\mathrm{m}$ sorvegliata da un drone al suo centro. 
+Il sistema gestisce l'area da sorvegliare dividendola in varie colonne, ognuna delle quali è divisa in zone rettangolari impilate virtualmente una sopra l'altra.
+
+In ogni zona figurano $124$ celle. Ogni *cella* è un quadrato di lato $20$ metri, al centro (ossia nel punto a terra in cui le diagonali del quadrato si incrociano) del quale è posizionato un punto (sensore di movimento) che il drone usa, passandovi sopra in volo a distanza sufficientemente ravvicinata, per effettuare la verifica dell'area delimitata dalla cella. 
+Più celle vanno a formare una _zona_. Più precisamente due file (una sopra l'altra) di $62$ celle adiacenti creano una zona, che quindi è composta da $124$ celle.
+
+Le zone sono in totale $150$ per colonna, e le colonne sono $5$. Le prime $4$ colonne contando da sinistra sono larghe, giustappunto, $62$ celle ciascuna, mentre l'ultima a destra ha larghezza minore di $52$ celle. Considerando che lo spazio rimanente da coprire era di meno, abbiamo scelto di rendere minore la dimensione di una delle colonne ai lati per semplificarci i calcoli sulle logiche di movimento dei droni, evitando di creare un'area piccola centrale (o altrove posta) che si occupasse di recuperare lo spazio non occupato da eventuali colonne tutte uguali ai suoi lati.
 
 ### Droni e verifica dei punti
 Come richiesto dalla traccia del progetto, ogni punto dell'area deve essere _verificato_ almeno ogni $5$ minuti, ed un punto è _verificato_ al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10\,\mathrm{m}$ dal punto.
-Per questa ragione abbiamo pensato di dividere l'area, a livello più basso della nostra astrazione, in celle.
-Ogni *cella* è un quadrato di lato $20$ metri, al centro (ossia nel punto in cui le diagonali del quadrato si incrociano) del quale è posizionato un drone. Il drone, in tale posizione riuscendo a coprire con un sensore a $360°$ l'intera area della cella, verifica la copertura totale di quest'ultima quando passa sul punto e verifica esso.
-Più celle vanno a formare una _zona_. Più precisamente due file (una sopra l'altra) di $62$ celle adiacenti creano una zona, che quindi è composta da $124$ celle.
+Per questa ragione abbiamo pensato di dividere l'area, a livello più basso della nostra astrazione, in celle e in zone dopodiché.
+
+Quando un drone ha raggiunto il punto e si trova su di esso verifica la copertura totale dell'area della cella. Per far ciò transita sul punto per il tempo necessario a:
+1. effettuare una ripresa (col sensore di immagine con capacità di registrazione video a $360$°) completa dell'intera area delimitata dalla cella
+2. scambiare il messaggio di avvenuta verifica del punto ricevendo un input dal sensore posto su quest'ultimo e confermando al centro di controllo, perciò, di averlo effettivamente verificato
+
 Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partendo dalle celle "centrali" (da sinistra: la $32\mathrm{esima}$ per il drone nella fila in alto, e la $30\mathrm{esima}$ per il drone nella fila in basso) attraversano tutte le celle che li separano dalla cella di partenza dell'altro drone nella zona, e raggiungono quindi taluna.
-In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno il resto dei droni nelle altre zone di ogni colonna. Le zone sono in totale $150$ per colonna, e le colonne sono $5$. Le prime $4$ colonne contando da sinistra sono larghe, giustappunto, $62$ celle ciascuna, mentre l'ultima a destra ha dimensione minore. Considerando che lo spazio rimanente da coprire era di meno, abbiamo scelto di rendere minore la dimensione di una delle colonne ai lati per semplificarci i calcoli sulle logiche di movimento dei droni, evitando di creare un'area piccola centrale (o altrove posta) che si occupasse di recuperare lo spazio non occupato da eventuali colonne tutte uguali ai suoi lati.
+In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno il resto dei droni nelle altre zone di ogni colonna.
+
+### Outsourcing
+Nell'implementazione del sistema abbiamo dato per scontato l'uso di altre tecnologie e soluzioni di cui esso sarebbe inevitabilmente composto nella sua costruzione reale, quali quelle del:
+- drone:
+  - sistema di comunicazione a lungo raggio (LTE o 5G): per trasmettere dati e conferme al centro di controllo
+  - sistema di ricezione: per ricevere segnali dai sensori a terra
+  - sistema di navigazione e posizionamento GPS: per determinare con precisione la posizione del drone
+- punto (sensore a terra)**:
+  - sensore di movimento o RFID a lungo raggio: rileva la presenza del drone e invia un segnale di conferma
+  - trasmettitore: Invia segnali di conferma al drone per la verifica
+- centro di controllo:
+  - sistema di comunicazione per ricevere dati dai droni: assicura il flusso costante di informazioni dal campo
+
+Sebbene alcune di queste tecnologie e componenti siano parte dell'environment del sistema (come il GPS), ognuna di esse rimane esterna ad esso, ed è naturalmente legata a misure di outsourcing in ogni caso e sì imprescindibili, ma fuori dagli scopi del nostro sistema
 
 Di [[#Implementation]] manca:
 1. Una descrizione con pseudo-codice per tutte le componenti del sistema.
