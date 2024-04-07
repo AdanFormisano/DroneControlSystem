@@ -13,15 +13,18 @@ Il sistema di occupa di verificare che ogni punto dell'area sia sorvegliato ogni
 ## User requirements
 Questi requisiti riflettono le esigenze e le aspettative degli utenti finali del sistema.
 
-1. **Area di Sorveglianza**: L’area da monitorare misura $6×6\,\mathrm{Km}$.
-2. **Posizione del Centro di Controllo e Ricarica**: Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare.
+1. **(1) Area di Sorveglianza**: L’area da monitorare misura $6×6\,\mathrm{Km}$.
+2. **(2) Posizione del Centro di Controllo e Ricarica**: Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare.
 
 ## System requirements
 Questi requisiti dettagliano le specifiche tecniche e le funzionalità necessarie per implementare il sistema.
 
-1. **Coordinate dei Droni**: Le coordinate dei droni devono essere calcolate utilizzando il centro di controllo/ricarica come punto di origine.
-2. **Autonomia dei Droni**: Ogni drone ha un'autonomia di $30$ minuti di volo.
-3. **Tempo di Ricarica dei Droni**: Ogni drone richiede un tempo di ricarica variabile tra $2$ e $3$ ore.
+1. **(1.1) Sistema di Copertura dell'Area di Sorveglianza**: Il sistema deve programmare e coordinare i percorsi di volo dei droni per garantire una copertura completa e costante dell'area di sorveglianza di 6×6 Km.
+2. **(1.2) Monitoraggio e Verifica del Territorio**: Il sistema deve assicurare che ogni punto dell'area sia verificato almeno una volta ogni 5 minuti, monitorando la posizione e l'attività di ciascun drone.
+3. **(1.3) Gestione Autonoma dei Droni**: Il sistema deve gestire autonomamente l'autonomia di volo di ciascun drone, coordinando i tempi di rientro per la ricarica basandosi sul livello di carica della batteria.
+4. **(2.1) Progettazione e Implementazione del Centro di Controllo**: Il centro di controllo e ricarica deve essere fisicamente situato al centro dell'area da sorvegliare. Il sistema deve essere configurato per utilizzare questa posizione centrale come punto di partenza per la pianificazione delle missioni e per l'ottimizzazione dei percorsi di ritorno per la ricarica.
+5. **(2.2) Posizionamento e Funzionalità del Centro di Controllo**: Il centro di controllo, situato al centro dell'area di sorveglianza, deve gestire tutte le operazioni dei droni, inclusa la pianificazione delle missioni, il monitoraggio in tempo reale e la gestione delle emergenze.
+6. **(2.3) Interfaccia di Controllo e Comando**: Il sistema deve fornire un'interfaccia utente intuitiva e funzionale per permettere agli operatori di controllare e monitorare facilmente tutte le operazioni dei droni, e specie eventuali punti che essi non dovessero riuscire a sorvegliare
 
 ## Implementation
 ### Implementazione
