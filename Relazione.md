@@ -10,6 +10,15 @@ Il sistema è sviluppato come progetto d'esame per [Ingegneria del software](htt
 ### Fini del sistema
 Il sistema di occupa di verificare che ogni punto dell'area sia sorvegliato ogni cinque minuti, e, in caso contrario, segnala eventuali anomalie. Difatti, e con precisione, se allo scoccare dell'ennesimo intervallo suddetto anche solo un punto dell'area non risulta come [checked](sap/crs/ing/checked), nel log del sistema verrà riportato lo stato di `check-failed` relativo a quel punto e all'annesso timestamp di verifica in cui si è verificato il mancato controllo.
 
+### Schema del sistema
+La seguente è una vista ad alto livello delle componenti del sistema
+
+#### Area da sorvegliare
+(Placeholder)
+![[Pasted image 20240407170721.png]]
+
+#### Contesto del sistema
+![[Pasted image 20240407170855.png]]
 ## User requirements
 Questi requisiti riflettono le esigenze e le aspettative degli utenti finali del sistema.
 
