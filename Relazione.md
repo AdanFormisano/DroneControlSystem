@@ -51,6 +51,7 @@ Questi requisiti riflettono le esigenze e le aspettative degli utenti finali del
 
 - **(1) Area di Sorveglianza**: L’area da monitorare misura $6×6\,\mathrm{Km}$.
 - **(2) Posizione del Centro di Controllo e Ricarica**: Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare.
+- **(3) Autonomia e ricarica dei droni**: ogni drone ha 30 minuti di autonomia e deve ricaricarsi in un tempo compreso tra le $[2h, 3h]$
 
 ## [System requirements](#system-requirements)
 Questi requisiti dettagliano le specifiche tecniche e le funzionalità necessarie per implementare il sistema.
@@ -87,19 +88,15 @@ Quando un drone ha raggiunto il punto e si trova su di esso in volo verifica la 
 Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partendo dalle celle "centrali" (da sinistra: la $32\mathrm{esima}$ per il drone nella fila in alto, e la $30\mathrm{esima}$ per il drone nella fila in basso) attraversano tutte le celle che li separano dalla cella di partenza dell'altro drone nella zona, e raggiungono quindi taluna.
 In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno il resto dei droni nelle altre zone di ogni colonna.
 
-### [Outsourcing](#outsourcing)
-Nell'implementazione del sistema abbiamo dato per scontato l'uso di altre tecnologie e soluzioni di cui esso è inevitabilmente e anche composto, quali quelle del:
+### [_Outsourcing_](#outsourcing)
+Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre tecnologie e soluzioni di cui esso è altresì inevitabilmente composto, quali quelle del:
 - drone
-  - sistema di comunicazione a lungo raggio (LTE o 5G): per trasmettere dati e conferme al centro di controllo
-  - sistema di ricezione: per ricevere segnali dai sensori a terra
+  - sistema di comunicazione a lungo raggio: per trasmettere dati e conferme al centro di controllo
   - sistema di navigazione e posizionamento GPS: per determinare con precisione la posizione del drone
-- punto (sensore a terra)
-  - sensore di movimento o RFID a lungo raggio: rileva la presenza del drone e invia un segnale di conferma
-  - trasmettitore: Invia segnali di conferma al drone per la verifica
 - centro di controllo
   - sistema di comunicazione per ricevere dati dai droni: assicura il flusso costante di informazioni dal campo
 
-Sebbene alcune di queste tecnologie e componenti siano parte dell'environment del sistema (come il GPS), ognuna di esse rimane esterna ad esso, ed è naturalmente legata a misure di outsourcing in ogni caso imprescindibili.
+Sebbene alcune di queste tecnologie e componenti siano parte dell'_environment_ del sistema (come il GPS), ognuna di esse rimane esterna ad esso, ed è naturalmente legata a misure di outsourcing in ogni caso imprescindibili.
 
 Di [Implementation](#implementation) manca:
 1. Una descrizione con pseudo-codice per tutte le componenti del sistema.
