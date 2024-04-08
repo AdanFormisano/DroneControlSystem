@@ -1,11 +1,19 @@
 # Drone Control System
-***
-## Drone Control System
+
+## Indice
+1. [Drone Control System](#dcs)
+2. [Descrizione generale](#gen-descr)
+3. [User requirements](#usr-req)
+4. [System requirements](#sys-req)
+5. [Implementation](#implem)
+6. [Risultati Sperimentali](#exp-res)
+
+## [Drone Control System](#dcs)
 Drone Control System è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area di $6\times6\,\mathrm{Km}$.
 
 Il sistema è sviluppato come progetto d'esame per [Ingegneria del software](https://corsidilaurea.uniroma1.it/it/view-course-details/2023/29923/20190322090929/1c0d2a0e-d989-463c-a09a-00b823557edd/8e637351-4a3a-47a1-ab11-dfe4ad47e446/4f7bd2b2-2f8e-4c38-b15f-7f3c310550b6/8bcc378c-9ff1-4263-87b7-04a394485a9f?guid_cv=8e637351-4a3a-47a1-ab11-dfe4ad47e446&current_erogata=1c0d2a0e-d989-463c-a09a-00b823557edd), corso tenuto dal prof [Enrico Tronci](https://corsidilaurea.uniroma1.it/it/users/enricotronciuniroma1it) a [La Sapienza](https://www.uniroma1.it/), ed è basato sul progetto gentilmente proposto dal prof nel main.pdf [qui](https://drive.google.com/drive/folders/15HrKGosqsuBBe8qWCm1qB_PvIbRLohqZ), al punto *4.2 Controllo formazione droni*.
-***
-## Descrizione generale
+
+## [Descrizione generale](#gen-descr)
 
 ### Di cosa si occupa Drone Control System
 Il sistema progettato è basato, come detto in apertura, su una delle tracce di progetto fornite dal prof Tronci. La traccia è la seguente:
@@ -29,13 +37,13 @@ La seguente è una vista ad alto livello delle componenti del sistema
 #### Contesto del sistema
 ![[Contesto del sistema]](res/cntxt_view.png)
 
-## User requirements
+## [User requirements](#usr-req)
 Questi requisiti riflettono le esigenze e le aspettative degli utenti finali del sistema.
 
 - **(1) Area di Sorveglianza**: L’area da monitorare misura $6×6\,\mathrm{Km}$.
 - **(2) Posizione del Centro di Controllo e Ricarica**: Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare.
 
-## System requirements
+## [System requirements](#sys-req)
 Questi requisiti dettagliano le specifiche tecniche e le funzionalità necessarie per implementare il sistema.
 
 - **(1.1) Sistema di Copertura dell'Area di Sorveglianza**: Il sistema deve programmare e coordinare i percorsi di volo dei droni per garantire una copertura completa e costante dell'area di sorveglianza di 6×6 Km.
@@ -45,7 +53,7 @@ Questi requisiti dettagliano le specifiche tecniche e le funzionalità necessari
 - **(2.2) Posizionamento e Funzionalità del Centro di Controllo**: Il centro di controllo, situato al centro dell'area di sorveglianza, deve gestire tutte le operazioni dei droni, inclusa la pianificazione delle missioni, il monitoraggio in tempo reale e la gestione delle emergenze.
 - **(2.3) Interfaccia di Controllo e Comando**: Il sistema deve fornire un'interfaccia utente intuitiva e funzionale per permettere agli operatori di controllare e monitorare facilmente tutte le operazioni dei droni, e specie eventuali punti che essi non dovessero riuscire a sorvegliare
 
-## Implementation
+## [Implementation](#implem)
 ### Implementazione software
 Il sistema è implementato in [C++](https://isocpp.org/), e fa uso di [Redis](https://redis.io/) e di [PostgreSQL](https://www.postgresql.org/).
 Redis è disponibile in C++ come client grazie a [redis-plus-plus](https://github.com/sewenew/redis-plus-plus), ed è quello che è stato usato.
@@ -63,7 +71,7 @@ Le zone sono in totale $150$ per colonna, e le colonne sono $5$. Le prime $4$ co
 Come richiesto dalla traccia del progetto, ogni punto dell'area deve essere _verificato_ almeno ogni $5$ minuti, ed un punto è _verificato_ al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10\,\mathrm{m}$ dal punto.
 Per questa ragione abbiamo pensato di dividere l'area, a livello più basso della nostra astrazione, in celle e in zone dopodiché.
 
-Quando un drone ha raggiunto il punto e si trova su di esso verifica la copertura totale dell'area della cella. Per far ciò transita sul punto per il tempo necessario a:
+Quando un drone ha raggiunto il punto e si trova su di esso in volo verifica la copertura totale dell'area della cella. Per far ciò transita sul punto per il tempo necessario a:
 1. effettuare una ripresa (col sensore di immagine con capacità di registrazione video a $360$°) completa dell'intera area delimitata dalla cella
 2. scambiare il messaggio di avvenuta verifica del punto ricevendo un input dal sensore posto su quest'ultimo e confermando al centro di controllo, perciò, di averlo effettivamente verificato
 
@@ -71,7 +79,7 @@ Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partendo dalle
 In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno il resto dei droni nelle altre zone di ogni colonna.
 
 ### Outsourcing
-Nell'implementazione del sistema abbiamo dato per scontato l'uso di altre tecnologie e soluzioni di cui esso sarebbe inevitabilmente e anche composto, quali quelle del:
+Nell'implementazione del sistema abbiamo dato per scontato l'uso di altre tecnologie e soluzioni di cui esso è inevitabilmente e anche composto, quali quelle del:
 - drone
   - sistema di comunicazione a lungo raggio (LTE o 5G): per trasmettere dati e conferme al centro di controllo
   - sistema di ricezione: per ricevere segnali dai sensori a terra
@@ -82,12 +90,12 @@ Nell'implementazione del sistema abbiamo dato per scontato l'uso di altre tecnol
 - centro di controllo
   - sistema di comunicazione per ricevere dati dai droni: assicura il flusso costante di informazioni dal campo
 
-Sebbene alcune di queste tecnologie e componenti siano parte dell'environment del sistema (come il GPS), ognuna di esse rimane esterna ad esso, ed è naturalmente legata a misure di outsourcing in ogni caso e sì imprescindibili, ma fuori dagli scopi del nostro sistema
+Sebbene alcune di queste tecnologie e componenti siano parte dell'environment del sistema (come il GPS), ognuna di esse rimane esterna ad esso, ed è naturalmente legata a misure di outsourcing in ogni caso imprescindibili.
 
-Di [[#Implementation]] manca:
+Di [Implementation](#implem) manca:
 1. Una descrizione con pseudo-codice per tutte le componenti del sistema.
 2. Lo schema del (o dei) DB usati.
 3. Una descrizione delle connessioni con Redis.
 
-### Risultati Sperimentali
+### [Risultati Sperimentali](#exp-res)
 Descrivere i risultati ottenuti dalla simulazione del sistema.
