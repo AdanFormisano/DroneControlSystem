@@ -90,8 +90,12 @@ Redis è stato usato per gestire i flussi di dati dei thread, compresi quelli de
 ### [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
 Il sistema gestisce l'area da sorvegliare dividendola in varie colonne, ognuna delle quali è divisa in zone rettangolari impilate virtualmente una sopra l'altra.
 
-In ogni zona figurano $124$ celle. Ogni *cella* è un quadrato di lato $20$ metri, al centro (ossia nel punto a terra in cui le diagonali del quadrato si incrociano) del quale è posizionato un punto (sensore di movimento) che il drone usa, passandovi sopra in volo a distanza sufficientemente ravvicinata, per effettuare la verifica dell'area delimitata dalla cella. 
-Più celle vanno a formare una _zona_. Più precisamente due file (una sopra l'altra) di $62$ celle adiacenti creano una zona, che quindi è composta da $124$ celle.
+A partire dalla richiesta nella traccia del progetto è possibile individuare _celle_ i quali punti condividono l'istante di tempo $t$ in cui vengono coperti dal drone.
+
+In ogni zona figurano $124$ celle. Ogni *cella* è un quadrato di lato $20$ metri.
+Più celle vanno dunque a formare una _zona_. Più precisamente due file (una sopra l'altra) di $62$ celle adiacenti creano una zona, che quindi è composta da $124$ celle.
+
+Procedendo ad una velocità di $30\ km/h$ il drone è in grado di coprire almeno $124$ celle mantenendo soddisfatto il requisito che ogni punto sia verificato almeno ogni $5$ minuti.
 
 Le zone sono in totale $150$ per colonna, e le colonne sono $5$. Le prime $4$ colonne contando da sinistra sono larghe, giustappunto, $62$ celle ciascuna, mentre l'ultima a destra ha larghezza minore di $52$ celle. Considerando che lo spazio rimanente da coprire era di meno, abbiamo scelto di rendere minore la dimensione di una delle colonne ai lati per semplificarci i calcoli sulle logiche di movimento dei droni, evitando di creare un'area piccola centrale (o altrove posta) che si occupasse di recuperare lo spazio non occupato da eventuali colonne tutte uguali ai suoi lati.
 
@@ -99,12 +103,14 @@ Le zone sono in totale $150$ per colonna, e le colonne sono $5$. Le prime $4$ co
 Come richiesto dalla traccia del progetto, ogni punto dell'area deve essere _verificato_ almeno ogni $5$ minuti, ed un punto è _verificato_ al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10\,\mathrm{m}$ dal punto.
 Per questa ragione abbiamo pensato di dividere l'area, a livello più basso della nostra astrazione, in celle e in zone dopodiché.
 
-Quando un drone ha raggiunto il punto e si trova su di esso in volo verifica la copertura totale dell'area della cella. Per far ciò transita sul punto per il tempo necessario a:
-1. effettuare una ripresa (col sensore di immagine con capacità di registrazione video a $360$°) completa dell'intera area delimitata dalla cella
-2. scambiare il messaggio di avvenuta verifica del punto ricevendo un input dal sensore posto su quest'ultimo e confermando al centro di controllo, perciò, di averlo effettivamente verificato
-
-Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partendo dalle celle "centrali" (da sinistra: la $32\mathrm{esima}$ per il drone nella fila in alto, e la $30\mathrm{esima}$ per il drone nella fila in basso) attraversano tutte le celle che li separano dalla cella di partenza dell'altro drone nella zona, e raggiungono quindi taluna.
+Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partono rispettivamente (guardando da sinistra) dalla $1\mathrm{ª}$ cella per il drone nella fila in alto, e della $62\mathrm{ª}$ per il drone nella fila in basso) attraversano tutte le celle che li separano dalla cella di partenza dell'altro drone nella zona, e raggiungono quindi taluna.
 In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno il resto dei droni nelle altre zone di ogni colonna.
+
+Una determinata zona è sorvegliata da un drone che parte dalla prima cella della zona più in alto a sinistra. Il drone attraversa in senso orario tutte le celle della zona fino a tornare alla cella di partenza &mdash; completanto tale ciclo in $5$ minuti.
+Il sistema, possedendo in ogni zona dei checkpoint coincidenti con le coordinate del punto centrale di ogni cella, monitorando le coordinate del movimento del drone, controlla se le coordinate coincidono con quelle che il drone avrebbe dovuto sorvolare.
+
+Il centro di controllo conserva dei checkpoint per il cammino di ogni drone. Questi ultimi sono usati per verificare la copertura della zona. Le coordinate ricevute dai droni in volo lungo il loro percorso vengono confrontate con quelle dei checkpoint. Se le coordinate dal drone non coincidono con quelle del checkpoint di turno, viene segnalata la mancata copertura della cella. Di conseguenza tutta l'area risulta non verificata.
+
 
 ### [_Outsourcing_](#outsourcing)
 Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre tecnologie e soluzioni di cui esso è altresì inevitabilmente composto, quali quelle del:
