@@ -1,21 +1,21 @@
 # Drone Control System
 
 ## Indice
-1. [Drone Control System](#drone-control-system)
-2. [Descrizione generale](#descrizione-generale)
-   2.1 [Di cosa si occupa Drone Control System](#di-cosa-si-occupa-drone-control-system)
-   2.2 [Fini del sistema](#fini-del-sistema)
-   2.3 [Schema del sistema](#schema-del-sistema)
-       2.3.1 [Area da sorvegliare](#area-da-sorvegliare)
-       2.3.2 [Contesto del sistema](#contesto-del-sistema)
-3. [User requirements](#user-requirements)
-4. [System requirements](#system-requirements)
-5. [Implementation](#implementation)
-   5.1 [Implementazione software](#implementazione-software)
-   5.2 [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
-   5.3 [Droni e verifica dei punti](#droni-e-verifica-dei-punti)
-   5.4 [Outsourcing](#outsourcing)
-6. [Risultati Sperimentali](#risultati-sperimentali)
+- [Drone Control System](#drone-control-system)
+- [Descrizione generale](#descrizione-generale)<br>
+   - [Di cosa si occupa Drone Control System](#di-cosa-si-occupa-drone-control-system)<br>
+   - [Fini del sistema](#fini-del-sistema)<br>
+   - [Schema del sistema](#schema-del-sistema)<br>
+       - [Area da sorvegliare](#area-da-sorvegliare)<br>
+       - [Contesto del sistema](#contesto-del-sistema)<br>
+- [User requirements](#user-requirements)
+- [System requirements](#system-requirements)
+- [Implementation](#implementation)
+   - [Implementazione software](#implementazione-software)
+   - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
+   - [Droni e verifica dei punti](#droni-e-verifica-dei-punti)
+   - [Outsourcing](#outsourcing)
+- [Risultati Sperimentali](#risultati-sperimentali)
 
 ## [Drone Control System](#drone-control-system)
 Drone Control System è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area di $6\times6\,\mathrm{Km}$.
