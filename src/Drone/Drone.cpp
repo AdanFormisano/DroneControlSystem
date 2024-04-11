@@ -21,7 +21,7 @@ namespace drones {
             {"X",                     std::to_string(drone_position.first)},
             {"Y",                     std::to_string(drone_position.second)},
             {"zone_id",               std::to_string(dz.getZoneId())},
-            {"charge_needed_to_base", std::to_string(dz.drone_path_charge[0])}
+            {"charge_needed_to_base", std::to_string(0)}
         };
 
         // Add the drone to the zone's queue of drones
@@ -175,7 +175,7 @@ namespace drones {
             FollowPath();
 
             // Calculate and update charge needed to go back to the base
-            drone_data[6].second = std::to_string(dz.drone_path_charge[path_index]);
+//            drone_data[6].second = std::to_string(dz.drone_path_charge[path_index]);
 
             UploadStatusOnStream();
         } catch (const std::exception &e) {
@@ -287,8 +287,8 @@ namespace drones {
 // Calculate the charge needed to go back to the base
     void Drone::SetChargeNeededToBase() {
         // Coords of the working zone
-        float dx = dz.drone_path[0].first;
-        float dy = dz.drone_path[0].second;
+        float dx = dz.path_furthest_point.first;
+        float dy = dz.path_furthest_point.second;
 
         // Calculate the distance in meters between the current point and the target
         float distance = std::sqrt(dx * dx + dy * dy);
