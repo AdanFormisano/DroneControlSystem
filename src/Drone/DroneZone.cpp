@@ -50,11 +50,25 @@ namespace drones {
                 auto number_of_drones = drones.size();
                 for (auto &drone: drones) {
                     drone->Run();
-                    if (drone->isDestroyed()) {
-                        spdlog::info("Drone {} destroyed", drone->getDroneId());
-                        // Remove drone from the zone's vector
-                        drone.reset();
-                    }
+                }
+
+                if (swap) {
+                    // Set the new drone to working
+//                    drone_working.reset(drones[1].get());
+                    spdlog::info("Drone {} is now working", drones[1]->getDroneId());
+                    // Set the drone to working
+                    drones[1]->SetDroneState(drone_state_enum::WORKING);
+
+                    swap = false;
+                }
+
+                if (destroy_drone) {
+                    // Remove the drone from the vector
+                    drones.erase(std::remove_if(drones.begin(), drones.end(), [](const std::shared_ptr<Drone> &drone) {
+                        return drone->getDroneId() == 0;
+                    }), drones.end());
+
+                    destroy_drone = false;
                 }
 
                 // Check if there is time left in the tick
@@ -75,6 +89,10 @@ namespace drones {
             }
         }
         spdlog::info("DroneZone {} finished", zone_id);
+    }
+
+    void DroneZone::SpawnThread() {
+        zone_thread = boost::thread(&DroneZone::Run, this);
     }
 
     void DroneZone::CreateDrone(int drone_id) {

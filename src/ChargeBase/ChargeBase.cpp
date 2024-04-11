@@ -17,6 +17,7 @@ namespace charge_base {
         spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
 
         bool sim_running = (redis.get("sim_running") == "true");
+
         while (sim_running) {
             // Get the time_point
             auto tick_start = std::chrono::steady_clock::now();

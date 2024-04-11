@@ -33,28 +33,22 @@ namespace charge_base {
         ChargeBase(Redis &redis);
 
         void ReadChargeStream();
-
         void SetChargeData(const std::vector<std::pair<std::string, std::string>> &data);
-
         float getChargeRate();
 
     public:
         // Prevent copy construction and assignment
         ChargeBase() = delete;
+        // Destructor
+        ~ChargeBase() = default;
 
         //not thread safe thought does it really need to be?
         static ChargeBase *getInstance(Redis &redis);
-
         void SetEngine(std::random_device &);
-
         void ChargeDrone();
-
         void releaseDrone(ext_drone_data &);
 
         void Run();
-
-        // Destructor
-        ~ChargeBase() = default;
     };
 }
 #endif //DRONECONTROLSYSTEM_CHARGEBASE_H

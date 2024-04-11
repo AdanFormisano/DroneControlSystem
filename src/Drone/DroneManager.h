@@ -37,6 +37,7 @@ namespace drones {
 
     private:
         int tick_n = 0;
+        int column_n = 0;
 
         void CreateZones();                                                   // Creates the zones_vertex and drones objects
         void CreateZoneThreads();                                               // Creates the threads for the zones_vertex
@@ -45,14 +46,16 @@ namespace drones {
 
     class DroneZone {
     public:
+        int tick_n = 0;
         Redis &zone_redis;
         std::array<std::pair<float, float>, 4> vertex_coords;   // Global coords that define the zone
         std::pair<float, float> path_furthest_point;
         std::vector<std::shared_ptr<Drone>> drones;              // Vector of drones owned by the zone
         std::array<std::pair<float, float>, 124> drone_path;
         int drone_path_index = 0;
-        std::array<float, 124> drone_path_charge;
+        std::array<float, 124> drone_path_charge{};
         std::shared_ptr<Drone> drone_working;
+
 
         DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &zone_coords, Redis &redis);
         ~DroneZone() = default;
@@ -60,14 +63,19 @@ namespace drones {
         [[nodiscard]] int getZoneId() const { return zone_id; }
         [[nodiscard]] int getNewDroneId() const { return new_drone_id; }
 
+        void SetSwap() { swap = true; }
+        void SetDestroyDrone() { destroy_drone = true; }
         void Run();
         void CreateDrone(int drone_id);     // Creates a new drone
         void CreateNewDrone();                                                          // Creates a new drone
+        void SpawnThread();                                                            // Spawns the zone thread
 
     private:
         const int zone_id;
-        int tick_n = 0;
         int new_drone_id = 1;
+        bool swap = false;
+        bool destroy_drone = false;
+        boost::thread zone_thread;
 
         void CreateDronePath();                                                         // Creates the drone path for the zone using global coords
         static float CalculateChargeNeeded(std::pair<float, float> coords);                                                  // Calculates the charge needed to go back to the base
@@ -81,9 +89,10 @@ namespace drones {
 
         Drone(int, DroneZone &);
 
-        [[nodiscard]] bool isDestroyed() const { return drone_destroy; }
         [[nodiscard]] int getDroneId() const { return drone_id; }
         [[nodiscard]] std::pair<float, float> getDronePosition() const { return drone_position; }
+
+        void SetDroneState(drone_state_enum state);
 
         void Run();
 
@@ -93,7 +102,6 @@ namespace drones {
         std::string redis_id;
         DroneZone &dz;
         int path_index = 0;                         // Index of the current position in the drone_path
-        bool drone_destroy = false;                 // Flag to destroy the drone
 
         // Drone data
         const int drone_id;

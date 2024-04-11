@@ -1,11 +1,10 @@
 #include <iostream>
-#include <thread>
 #include "../../utils/RedisUtils.h"
 #include "DroneManager.h"
 #include "spdlog/spdlog.h"
 
 /* Drones are created by their zone, but its thread is created after the system has ended the initialization process.
-The drones' threads are created in groups, where every group is a "collumn" of the zone. This is done to avoid overloading the system.
+The drones' threads are created in groups, where every group is a "column" of the zone. This is done to avoid overloading the system.
 Each thread immediately starts running the drone's simulation.
 */
 
@@ -43,7 +42,7 @@ namespace drones {
     void Drone::Run() {
         try {
             std::optional<std::string> cmd;     // Command received from the Redis DB
-            std::optional<std::string> d_info;  // Drone info received from the Redis DB
+            tick_n = dz.tick_n;
 
             // Run the drone's state machine
             switch (drone_state) {
@@ -94,7 +93,10 @@ namespace drones {
                 case drone_state_enum::TO_ZONE_FOLLOWING:
                     // Move to the zone
                     Move(dz.drone_path[0].first, dz.drone_path[0].second);
-
+#ifdef DEBUG
+                    spdlog::info("TICK {}: Drone {} [{}%] is moving to zone (following) {} {}", tick_n, drone_id, drone_charge,
+                                 drone_position.first, drone_position.second);
+#endif
                     if (drone_position.first == dz.drone_path[0].first && drone_position.second == dz.drone_path[0].second) {
                         // Arrived to the zone
                         drone_data[1].second = utils::CaccaPupu(drone_state_enum::FOLLOWING);
@@ -104,16 +106,10 @@ namespace drones {
 
                 case drone_state_enum::FOLLOWING:
                     // Swap has started: the drone must follow the working drone (zone:id:swap is "started")
-
-                    // Check if this drone is the working drone
-                    if (dz.drone_working->getDroneId() == drone_id) {
-                        // The drone is the working drone
-                        drone_data[1].second = utils::CaccaPupu(drone_state_enum::WORKING);
-                        drone_state = drone_state_enum::WORKING;
-                    } else {
-                        // The drone is following the working drone
-                        FollowDrone();  // TESTING
-                    }
+#ifdef DEBUG
+                    spdlog::info("TICK {}: Drone {} [{}%] is following Drone {}", tick_n, drone_id, drone_charge, dz.drone_working->getDroneId());
+#endif
+                    FollowDrone();
                     break;
 
                 case drone_state_enum::WORKING:
@@ -122,13 +118,13 @@ namespace drones {
                     if (cmd == "charge") {
                         drone_redis.set("drone:" + std::to_string(drone_id) + ":command", "none");
                         drone_redis.hset(redis_id, "status", "TO_BASE");
+                        dz.SetSwap();
                         drone_data[1].second = utils::CaccaPupu(drone_state_enum::TO_BASE);
                         drone_state = drone_state_enum::TO_BASE;
 #ifdef DEBUG
                         spdlog::info("Drone {} [{}%] received charge command", drone_id, drone_charge);
 #endif
                     }
-
                     Work();
 #ifdef DEBUG
                     spdlog::info("TICK {}: Drone {} [{}%] is working ({} {})", tick_n, drone_id, drone_charge,
@@ -155,12 +151,11 @@ namespace drones {
                     spdlog::info("TICK {}: Drone {} [{}%] is waiting for charge", tick_n, drone_id, drone_charge);
 #endif
                     SendChargeRequest();   // Uploads the drone status to Redis before sleeping
-                    drone_destroy = true;
+                    dz.SetDestroyDrone();
 
                 case drone_state_enum::TOTAL:
                     break;
             }
-            tick_n++;
         } catch (const std::exception &e) {
             spdlog::error("Drone {} tick {} error: {}", drone_id, tick_n, e.what());
         }
@@ -241,6 +236,7 @@ namespace drones {
 // The drone will follow the path of the working drone
     void Drone::FollowDrone() {
         drone_position = dz.drone_working->getDronePosition();
+        path_index = dz.drone_path_index;
         UseCharge(20.0f);
         drone_data[3].second = std::to_string(drone_position.first);
         drone_data[4].second = std::to_string(drone_position.second);
@@ -271,12 +267,11 @@ namespace drones {
 
 // Upload the drone status and send a charge request using a stream
     void Drone::SendChargeRequest() {
-        auto charge_data = drone_data;
-        charge_data.pop_back();  // Remove the charge_needed_to_base field
-
         try {
+            auto charge_data = drone_data;
+            charge_data.pop_back();  // Remove the charge_needed_to_base field
             // Upload the drone status to redis
-            drone_redis.hmset("drone:" + std::to_string(drone_id), charge_data.begin(), charge_data.end());
+//            drone_redis.hmset("drone:" + std::to_string(drone_id), charge_data.begin(), charge_data.end());
             // Add to charge_stream the drone id
             drone_redis.xadd("charge_stream", "*", charge_data.begin(), charge_data.end());
         } catch (const sw::redis::IoError &e) {
@@ -302,5 +297,9 @@ namespace drones {
 
     void Drone::UseCharge(float move_distance) {
         drone_charge -= DRONE_CONSUMPTION * move_distance;
+    }
+
+    void Drone::SetDroneState(drone_state_enum state) {
+        drone_state = state;
     }
 }  // namespace drones
