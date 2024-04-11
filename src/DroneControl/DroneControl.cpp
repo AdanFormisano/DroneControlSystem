@@ -10,9 +10,6 @@
 #include <chrono>
 #include <iostream>
 
-#include "../../utils/RedisUtils.h"
-#include "spdlog/spdlog.h"
-
 namespace drone_control {
     DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis) {
         db.get_DB();
@@ -20,6 +17,7 @@ namespace drone_control {
 
 // Run the DroneControl process
     void DroneControl::Run() {
+        // Initial setup
         spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
         spdlog::info("DroneControl process starting");
 
@@ -28,8 +26,6 @@ namespace drone_control {
         // First thing to do is to get all the drone paths from the Redis server
         GetDronePaths();
         spdlog::info("Drone paths loaded");
-
-        // std::this_thread::sleep_for(std::chrono::milliseconds (10));
 
         // TODO: Implement as a thread
         bool sim_running = (redis.get("sim_running") == "true");
@@ -77,14 +73,12 @@ namespace drone_control {
             for (const auto &item: new_result) {
                 // There is only one pair: stream_key and stream_data
                 // item.first is the key of the stream. In this case it is "drone_stream"
-
-                // spdlog::info("-----------------Tick {}-----------------", tick_n);
                 for (const auto &stream_drone: item.second) {
                     // stream_drone.first is the id of the message in the stream
                     // stream_drone.second is the unordered_map with the data of the drone
 
                     // Update the local drone data
-                    new_setDroneData(stream_drone.second);
+                    ParseStreamData(stream_drone.second);
                 }
                 // FollowPath the start_id to the last item read
                 current_stream_id = item.second.back().first;
@@ -98,12 +92,10 @@ namespace drone_control {
     }
 
 // Updates the local drone data and executes the check for the drone's path
-    void DroneControl::new_setDroneData(const std::vector<std::pair<std::string, std::string>> &data) {
+    void DroneControl::ParseStreamData(const std::vector<std::pair<std::string, std::string>> &data) {
         // The data is structured as a known array
         drone_data temp_drone_struct;
         temp_drone_struct.id = std::stoi(data[0].second);
-        // Make the check for the drone's path and add the result to the checklist
-
         temp_drone_struct.status = data[1].second;
         temp_drone_struct.charge = std::stof(data[2].second);
         temp_drone_struct.position.first = std::stof(data[3].second);
@@ -112,28 +104,16 @@ namespace drone_control {
         temp_drone_struct.charge_needed_to_base = std::stof(data[6].second);
 
         checklist[temp_drone_struct.zone_id] = CheckPath(temp_drone_struct.zone_id, temp_drone_struct.position);
-        // Check if the drone's charge is enough to go back to the base
+
+        // Check if the drone's charge is enough to go back to the base and check when to swap drones
         CheckDroneCharge(temp_drone_struct.id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
+        CheckForSwap(temp_drone_struct.zone_id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
 
         // Update the drone data array
         drones[std::to_string(temp_drone_struct.id)] = temp_drone_struct;
 
-        //    spdlog::info("Drone {} updated: {}, {}, {}, {}, {}, {}",
-        //                 temp_drone_struct.id, temp_drone_struct.status, temp_drone_struct.charge,
-        //                 temp_drone_struct.position.first, temp_drone_struct.position.second,
-        //                 temp_drone_struct.zone_id, temp_drone_struct.charge_needed_to_base);
-
         // Upload the data to the database
         // db.logDroneData(temp_drone_struct, checklist);
-    }
-
-// Gets the local data of a drone
-    std::unordered_map<std::string, std::string> DroneControl::getData(int drone_id) {
-        std::string drone_key = "drone:" + std::to_string(drone_id);
-        std::unordered_map<std::string, std::string> redis_data;
-        redis.hgetall(drone_key, std::inserter(redis_data, redis_data.begin()));
-
-        return redis_data;
     }
 
 // Get all the drone paths from the Redis server. Each index is a specific drone ID. This is for faster access.
@@ -171,23 +151,24 @@ namespace drone_control {
         }
     }
 
-// TODO: Check only when the drone is working
 //       Check if the drone has enough charge to go back to the base and check when to swap drones
 //       Create variable instead of converting/getting the value each time
     void DroneControl::CheckDroneCharge(int drone_id, float current_charge, float charge_needed) {
         if ((redis.hget("drone:" + std::to_string(drone_id), "status") == "WORKING") &&
-            (current_charge - (DRONE_CONSUMPTION * 80.0f) <= charge_needed)) {
+            (current_charge - (DRONE_CONSUMPTION * 80.0f) <= charge_needed) &&
+            (redis.get("drone:" + std::to_string(drone_id) + ":command") != "charge")) {
             redis.set("drone:" + std::to_string(drone_id) + ":command", "charge");
-#ifdef DEBUG
+
             spdlog::info("TICK {}: Drone {} needs to charge: current chg: {}%, chg needed: {}%", tick_n, drone_id,
                          current_charge, charge_needed);
-#endif
         }
-        if ((redis.get("zone:" + std::to_string(drones[std::to_string(drone_id)].zone_id) + ":swap") != "started") &&
+    }
+
+    void DroneControl::CheckForSwap(int zone_id, float current_charge, float charge_needed) {
+        if ((redis.get("zone:" + std::to_string(zone_id) + ":swap") != "started") &&
             (current_charge <= ((charge_needed * 2) + (40.0f * DRONE_CONSUMPTION)))) {
             // Create a redis list of all the zones_vertex that need to be switched on
-            spdlog::info("Zone {} needs to swap", drones[std::to_string(drone_id)].zone_id);
-            redis.sadd("zones_to_swap", std::to_string(drones[std::to_string(drone_id)].zone_id));
+            redis.sadd("zones_to_swap", std::to_string(zone_id));
         }
     }
 } // namespace drone_control
