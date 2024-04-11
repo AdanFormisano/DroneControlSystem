@@ -21,7 +21,7 @@ namespace drones {
             {"X",                     std::to_string(drone_position.first)},
             {"Y",                     std::to_string(drone_position.second)},
             {"zone_id",               std::to_string(dz.getZoneId())},
-            {"charge_needed_to_base", std::to_string(CalculateChargeNeeded())}
+            {"charge_needed_to_base", std::to_string(dz.drone_path_charge[0])}
         };
 
         // Add the drone to the zone's queue of drones
@@ -53,6 +53,7 @@ namespace drones {
 #endif
                     // Must wait for DroneControl to release the drone
                     cmd = drone_redis.get("drone:" + std::to_string(drone_id) + ":command");
+
                     if (cmd == "work") {
                         // Remove the drone from the queue of zone drones
                         drone_redis.lpop("zone:" + std::to_string(dz.getZoneId()) + ":drones");
@@ -172,6 +173,10 @@ namespace drones {
     void Drone::Work() {
         try {
             FollowPath();
+
+            // Calculate and update charge needed to go back to the base
+            drone_data[6].second = std::to_string(dz.drone_path_charge[path_index]);
+
             UploadStatusOnStream();
         } catch (const std::exception &e) {
             spdlog::error("Drone {} failed to move: {}", drone_id, e.what());
@@ -297,12 +302,5 @@ namespace drones {
 
     void Drone::UseCharge(float move_distance) {
         drone_charge -= DRONE_CONSUMPTION * move_distance;
-    }
-
-    float Drone::CalculateChargeNeeded() const {
-        // Get the distance from the drone to the base
-        float distance = std::sqrt(drone_position.first * drone_position.first +
-                                   drone_position.second * drone_position.second);
-        return distance * DRONE_CONSUMPTION;
     }
 }  // namespace drones

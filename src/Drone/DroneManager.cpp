@@ -32,8 +32,6 @@ namespace drones {
         // Run the simulation
         while (sim_running) {
             try {
-                spdlog::info("DRONE MANAGER TICK {}", tick_n);
-
                 // Get the time_point
                 auto tick_start = std::chrono::steady_clock::now();
 
@@ -101,7 +99,7 @@ namespace drones {
             for (int y = -150; y <= 150 - height; y += height) {
                 zones_vertex[i][0] = {x * 20, (y + height) * 20};              // Top left
                 zones_vertex[i][1] = {(x + width) * 20, (y + height) * 20};    // Top right
-                zones_vertex[i][2] = {(x + width), y * 20};                    // Bottom right
+                zones_vertex[i][2] = {(x + width) * 20, y * 20};                    // Bottom right
                 zones_vertex[i][3] = {x * 20, y * 20};                         // Bottom left
                 ++i;
             }
@@ -115,11 +113,12 @@ namespace drones {
 
         // Check if DC asked for new drones
         if (list_len == 0) {
-            std::cout << "List len: " << list_len << std::endl;
             return;
         } else {
             // Drones to swap have been requested
-            std::cout << "Zones to swap: " << list_len << std::endl;
+            spdlog::info("{} zones to swap", list_len);
+
+            std::vector<std::string> ids;
 
             // For every zone create a drone object
             for (int i = 0; i < list_len; ++i) {
@@ -127,7 +126,7 @@ namespace drones {
 
                 // Check if the zone_id is valid
                 if (zone_id) {
-                    std::cout << "ID zone to swap: " << zone_id.value() << std::endl;
+                    ids.emplace_back(zone_id.value());
                     int z = std::stoi(zone_id.value());
 
                     // Get and available drone from the zone:id:drones list
@@ -135,7 +134,7 @@ namespace drones {
 
                     // If there is a fully charged drone available in base
                     if (drone_id) {
-                        spdlog::info("Drone ID: {} fully available", drone_id.value());
+                        spdlog::info("Drone {} fully available", drone_id.value());
 
                         // Create the drone object
                         zones[z]->CreateDrone(std::stoi(drone_id.value()));
@@ -144,22 +143,25 @@ namespace drones {
                         shared_redis.set("drone:" + drone_id.value() + ":command", "follow");
                     } else {
                         // If there are no drones available, create a new drone for that zone
-                        spdlog::info("No drones available in zone {}, creating a new one", z);
 
                         // Create the drone
-                        auto new_drone_id = zones[z]->getNewDroneId();
-                        spdlog::info("Creating new Drone {} for swap", new_drone_id);
+                        auto new_drone_id = zones[z]->getNewDroneId() + z * 10;
+                        spdlog::info("No drones available in zone {}, creating Drone {}", z, new_drone_id);
                         zones[z]->CreateDrone(new_drone_id);
-                        spdlog::info("Drone created");
 
                         // Set the drone to work
                         shared_redis.set("drone:" + std::to_string(new_drone_id) + ":command", "follow");
-                        spdlog::info("Command set");
                     }
                     // Update zone swap status
                     shared_redis.set("zone:" + zone_id.value() + ":swap", "started");
                 }
             }
+            std::ostringstream oss;
+            for(const auto& val : ids) {
+                oss << val << " ";
+            }
+
+            spdlog::info("Zones swapped: {}", oss.str());
         }
     }
 

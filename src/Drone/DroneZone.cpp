@@ -1,6 +1,7 @@
 #include "DroneManager.h"
 #include <spdlog/spdlog.h>
 #include <utility>
+#include <iostream>
 
 /* The 6x6 km area is divided into zones_vertex of 62x2 squares, each square is 20x20 meters. The subdivision is not
 perfect: there is enough space for 4 zones_vertex in the x-axis and 150 zone in the y-axis. This creates a right "column"
@@ -39,18 +40,16 @@ namespace drones {
 
         // Get sim_running from Redis
         bool sim_running = (zone_redis.get("sim_running") == "true");
-        spdlog::info("DroneZone {} sim value: {}", zone_id, sim_running);
 
         // Simulate until sim_running is false
         while (sim_running) {
             try {
-                spdlog::info("DroneZone {} tick {}", zone_id, tick_n);
                 auto tick_start = std::chrono::steady_clock::now();
 
                 // Execute each drone in the zone
+                auto number_of_drones = drones.size();
                 for (auto &drone: drones) {
                     drone->Run();
-                    spdlog::info("Drone {} executed", drone->getDroneId());
                     if (drone->isDestroyed()) {
                         spdlog::info("Drone {} destroyed", drone->getDroneId());
                         // Remove drone from the zone's vector
@@ -60,11 +59,10 @@ namespace drones {
 
                 // Check if there is time left in the tick
                 auto tick_now = std::chrono::steady_clock::now();
-                if (tick_now < tick_start + tick_duration_ms) {
-                    spdlog::info("DroneZone {} going to sleep", zone_id);
+                if (tick_now < tick_start + (tick_duration_ms * number_of_drones)) {
                     // Sleep for the remaining time
                     std::this_thread::sleep_for(tick_start + tick_duration_ms - tick_now);
-                } else if (tick_now > tick_start + tick_duration_ms) {
+                } else if (tick_now > tick_start + (tick_duration_ms * number_of_drones)) {
                     // Log if the tick took too long
                     spdlog::warn("DroneZone {} tick took too long", zone_id);
                     break;
@@ -81,6 +79,7 @@ namespace drones {
 
     void DroneZone::CreateDrone(int drone_id) {
         drones.emplace_back(std::make_shared<Drone>(drone_id, *this));
+        spdlog::info("Drone {} created in zone {}", drone_id, zone_id);
     }
 
     void DroneZone::CreateNewDrone() {
@@ -91,27 +90,37 @@ namespace drones {
 
     // Creates the drone path for the zone using global coords
     void DroneZone::CreateDronePath() {
+        // Determine the boundaries of the drone path
         std::array<std::pair<float, float>, 4> drone_boundaries;
         drone_boundaries[0] = {vertex_coords[0].first + 10, vertex_coords[0].second - 10};
         drone_boundaries[1] = {vertex_coords[1].first - 10, vertex_coords[1].second - 10};
         drone_boundaries[2] = {vertex_coords[2].first - 10, vertex_coords[2].second + 10};
         drone_boundaries[3] = {vertex_coords[3].first + 10, vertex_coords[3].second + 10};
 
-        GenerateLoopPath(drone_boundaries, 20.0f);
-    }
+        auto step_size = 20.0f;
+        int i = 0;
 
-    // Generates a loop path for the drone
-    void DroneZone::GenerateLoopPath(const std::array<std::pair<float, float>, 4> &drone_boundaries, float step_size) {
         using namespace std;
 
         // From the top left corner to the top right corner
         for (float x = drone_boundaries[0].first; x <= drone_boundaries[1].first; x += step_size) {
-            drone_path.emplace_back(x, drone_boundaries[0].second);
+            drone_path[i] = {x, drone_boundaries[0].second};
+            drone_path_charge[i] = CalculateChargeNeeded(drone_path[i]);
+            ++i;
         }
         // From the bottom right corner to the bottom left corner
         for (float x = drone_boundaries[2].first; x >= drone_boundaries[3].first; x -= step_size) {
-            drone_path.emplace_back(x, drone_boundaries[2].second);
+            drone_path[i] = {x, drone_boundaries[2].second};
+            drone_path_charge[i] = CalculateChargeNeeded(drone_path[i]);
+            ++i;
         }
+    }
+
+    float DroneZone::CalculateChargeNeeded(std::pair<float, float> path_position) {
+        // Get the distance from the drone to the base
+        float distance = std::sqrt(path_position.first * path_position.first +
+                                      path_position.second * path_position.second);
+        return distance * DRONE_CONSUMPTION;
     }
 
     // Calculates the furthest point of the drone path from the base
@@ -133,6 +142,9 @@ namespace drones {
     // Uploads the path to the Redis server
     void DroneZone::UploadPathToRedis() {
         std::string redis_path_id = "path:" + std::to_string(zone_id);
-        zone_redis.rpush(redis_path_id, drone_path.begin(), drone_path.end());
+        // Convert the path array to a vector
+        std::vector<std::pair<float, float>> drone_path_v(drone_path.begin(), drone_path.end());
+
+        zone_redis.rpush(redis_path_id, drone_path_v.begin(), drone_path_v.end());
     }
 } // namespace drones

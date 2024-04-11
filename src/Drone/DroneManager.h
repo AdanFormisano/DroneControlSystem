@@ -49,8 +49,9 @@ namespace drones {
         std::array<std::pair<float, float>, 4> vertex_coords;   // Global coords that define the zone
         std::pair<float, float> path_furthest_point;
         std::vector<std::shared_ptr<Drone>> drones;              // Vector of drones owned by the zone
-        std::vector<std::pair<float, float>> drone_path;         // Path that the drone will follow
+        std::array<std::pair<float, float>, 124> drone_path;
         int drone_path_index = 0;
+        std::array<float, 124> drone_path_charge;
         std::shared_ptr<Drone> drone_working;
 
         DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &zone_coords, Redis &redis);
@@ -69,7 +70,7 @@ namespace drones {
         int new_drone_id = 1;
 
         void CreateDronePath();                                                         // Creates the drone path for the zone using global coords
-        void GenerateLoopPath(const std::array<std::pair<float, float>, 4> &, float);   // Generates a loop path for the drone
+        static float CalculateChargeNeeded(std::pair<float, float> coords);                                                  // Calculates the charge needed to go back to the base
         void UploadPathToRedis();                                                       // Uploads the path to the Redis server
         std::pair<float, float> CalculateFurthestPoint();                               // Calculates the furthest point of the drone path
     };
@@ -99,7 +100,6 @@ namespace drones {
         drone_state_enum drone_state = drone_state_enum::IDLE_IN_BASE;
         float drone_charge = 100.0f;                // Drone charge in percentage
         std::pair<float, float> drone_position ={0, 0};   // Drone position in global coords
-
         std::vector<std::pair<std::string, std::string>> drone_data;
 
         void SetChargeNeededToBase();               // Sets the charge needed to go back to the base
@@ -111,10 +111,7 @@ namespace drones {
         void UploadStatusOnStream();                // FIXME: This is a placeholder for the status update function
         void UploadStatus();                        // Uploads the drone status to the Redis server
         void SendChargeRequest();                   // Sends a charge request to the base
-        float CalculateChargeNeeded() const;              // Calculates the charge needed to go back to the base
-
         bool Exists();
-        // TODO: Add the last time the drone was updated
     };
 } // namespace drones
 
