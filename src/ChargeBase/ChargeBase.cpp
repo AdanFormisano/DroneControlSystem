@@ -134,7 +134,7 @@ namespace charge_base {
         redis.hset("drone:" + std::to_string(drone.base_data.id), "charge", "100");
 
         // Add the drone to the zone's queue of drones
-        redis.rpush("zone:" + std::to_string(drone.base_data.zone_id) + ":drones", std::to_string(drone.base_data.id));
+        redis.rpush("zone:" + std::to_string(drone.base_data.zone_id) + ":charged_drones", std::to_string(drone.base_data.id));
 
     }
 

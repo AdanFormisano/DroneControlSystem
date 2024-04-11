@@ -8,121 +8,110 @@
 #include <thread>
 #include <queue>
 #include <boost/thread.hpp>
+#include <boost/thread/lockable_adapter.hpp>
 #include <chrono>
 #include <vector>
+#include <cmath>
+#include <algorithm>
 
 using namespace sw::redis;
 
 namespace drones {
     class DroneZone;
+
     class Drone;
-} // namespace drones
+}
 
 namespace drones {
     class DroneManager {
     public:
         Redis &shared_redis;
-        std::array<std::array<std::pair<int, int>, 4>, 300> zones; // Array of all the zones' vertex_coords_sqr, NOT global coords
-        std::vector<DroneZone> drone_zones;                        // Vector of all the zones objects
-        std::vector<std::shared_ptr<Drone>> drone_vector;          // Vector of all the drones objects
-        std::vector<boost::thread> drone_threads;                    // Vector of all the drones threads
-
+        std::array<std::array<std::pair<float, float>, 4>, ZONE_NUMBER> zones_vertex;  // Array of all the zones_vertex' vertex_coords_sqr, NOT global coords
+        std::unordered_map<int, std::shared_ptr<DroneZone>> zones;                                     // Vector of all the zones_vertex objects
+        std::vector<boost::thread> zone_threads;                                // Vector of all the drones threads
 
         explicit DroneManager(Redis &);
 
-        ~DroneManager();
-
         void Run();
-
         void CalculateGlobalZoneCoords();
-
-        // Returns a reference to the vector of drones
-        //std::vector<std::shared_ptr<Drone>> &getDroneVector() { return drone_vector; }
-        // Returns a reference to the vector of threads
-        //std::vector<std::thread> &getDroneThreads() { return drone_threads; }
 
     private:
         int tick_n = 0;
-        std::array<int, 300> new_drones_id{};   // Array with the id to be used on the next drone creation
-        // For a set of vertex_coords_sqr creates a DroneZone object
-        DroneZone *CreateDroneZone(std::array<std::pair<int, int>, 4> &, int);
 
-        void CreateDrone(int drone_id, DroneZone *DroneZone);
-
-        void CreateThreadBlocks();
-
-        void CheckNewDrones(std::unordered_set<std::string> &zones_to_swap);
-
-        size_t EraseJoinableThread();
-
-        size_t EraseDestroyedDrones();
+        void CreateZones();                                                   // Creates the zones_vertex and drones objects
+        void CreateZoneThreads();                                               // Creates the threads for the zones_vertex
+        void CheckNewDrones();    // Checks if there are new drones to be created
     };
 
     class DroneZone {
     public:
-        int zone_width = 62;                                    // In #squares
-        int zone_height = 2;                                    // In #squares
-        std::shared_ptr<DroneManager> dm;
-        std::array<std::pair<int, int>, 4> vertex_coords_sqr;   // Coords of the "squares" that define the zone
-        std::array<std::pair<int, int>, 4> vertex_coords_glb;   // Global coords that define the zone
-        // TODO: Use list of pairs instead of vector
-        std::vector<std::pair<int, int>> drone_path;            // Path that the drone will follow
+        Redis &zone_redis;
+        std::array<std::pair<float, float>, 4> vertex_coords;   // Global coords that define the zone
+        std::pair<float, float> path_furthest_point;
+        std::vector<std::shared_ptr<Drone>> drones;              // Vector of drones owned by the zone
+        std::vector<std::pair<float, float>> drone_path;         // Path that the drone will follow
         int drone_path_index = 0;
+        std::shared_ptr<Drone> drone_working;
 
-        DroneZone(int, std::array<std::pair<int, int>, 4> &, DroneManager *);
-
+        DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &zone_coords, Redis &redis);
         ~DroneZone() = default;
 
-        int getZoneId() const { return zone_id; }
+        [[nodiscard]] int getZoneId() const { return zone_id; }
+        [[nodiscard]] int getNewDroneId() const { return new_drone_id; }
+
+        void Run();
+        void CreateDrone(int drone_id);     // Creates a new drone
+        void CreateNewDrone();                                                          // Creates a new drone
 
     private:
         const int zone_id;
-        std::shared_ptr<Drone> drone_ptr; // Pointer to its drone
+        int tick_n = 0;
+        int new_drone_id = 1;
 
-        std::array<std::pair<int, int>, 4>
-        SqrToGlbCoords();                    // Converts the sqr verteces to global coords
-        void CreateDronePath();                                                 // Creates the drone path for the zone using global coords
-        void GenerateLoopPath(const std::array<std::pair<int, int>, 4> &, int);// Generates a loop path for the drone
-        void UploadPathToRedis();                                               // Uploads the path to the Redis server
+        void CreateDronePath();                                                         // Creates the drone path for the zone using global coords
+        void GenerateLoopPath(const std::array<std::pair<float, float>, 4> &, float);   // Generates a loop path for the drone
+        void UploadPathToRedis();                                                       // Uploads the path to the Redis server
+        std::pair<float, float> CalculateFurthestPoint();                               // Calculates the furthest point of the drone path
     };
 
     class Drone {
     public:
-        float drone_charge_to_base;         // Charge needed to go back to the base
+        float drone_charge_to_base = 0.0f;         // Charge needed to go back to the base
 
-        Drone(int, DroneZone *, const DroneManager *);
+        Drone(int, DroneZone &);
 
-        bool isDestroyed() const { return drone_destroy; }
+        [[nodiscard]] bool isDestroyed() const { return drone_destroy; }
+        [[nodiscard]] int getDroneId() const { return drone_id; }
+        [[nodiscard]] std::pair<float, float> getDronePosition() const { return drone_position; }
 
-        int Run();
+        void Run();
 
     private:
+        int tick_n = 0;
         Redis &drone_redis;
         std::string redis_id;
-        DroneZone *dz;
-        const DroneManager *dm;
-        int path_index;         // Index of the current position in the drone_path
-        bool drone_destroy = false;     // Flag to destroy the drone
+        DroneZone &dz;
+        int path_index = 0;                         // Index of the current position in the drone_path
+        bool drone_destroy = false;                 // Flag to destroy the drone
 
         // Drone data
-        const int drone_id;       // TODO: It should be generated by the system
-        drone_state_enum drone_state;
-        float drone_charge;
-        std::pair<float, float> drone_position;
-        int tick_n;
+        const int drone_id;
+        drone_state_enum drone_state = drone_state_enum::IDLE_IN_BASE;
+        float drone_charge = 100.0f;                // Drone charge in percentage
+        std::pair<float, float> drone_position ={0, 0};   // Drone position in global coords
 
-        void SetChargeNeededToBase();   // Sets the charge needed to go back to the base
-        void Work();
+        std::vector<std::pair<std::string, std::string>> drone_data;
 
-        void Move(float, float);
-
-        void UseCharge(float distance_in_meters);  // Uses the charge of the drone
-        void FollowPath();              // Moves the drone following the drone_path
-        void UploadStatusOnStream();    // FIXME: This is a placeholder for the status update function
-        void UploadStatus();
-
-        void SendChargeRequest();       // Sends a charge request to the base
-        float CalculateChargeNeeded();
+        void SetChargeNeededToBase();               // Sets the charge needed to go back to the base
+        void Work();                                // Drone work
+        void Move(float, float);                    // Moves the drone
+        void UseCharge(float distance_in_meters);   // Uses the charge of the drone
+        void FollowPath();                          // Moves the drone following the drone_path
+        void FollowDrone();                         // Moves the drone following another drone's path
+        void UploadStatusOnStream();                // FIXME: This is a placeholder for the status update function
+        void UploadStatus();                        // Uploads the drone status to the Redis server
+        void SendChargeRequest();                   // Sends a charge request to the base
+        float CalculateChargeNeeded() const;              // Calculates the charge needed to go back to the base
 
         bool Exists();
         // TODO: Add the last time the drone was updated

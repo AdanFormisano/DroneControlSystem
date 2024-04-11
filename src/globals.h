@@ -7,6 +7,7 @@
 
 #define DRONE_CONSUMPTION 0.00672f
 #define TICK_TIME_SIMULATED 2.42f
+#define ZONE_NUMBER 600
 
 // Variables used for synchronization of processes
 extern std::string sync_counter_key;

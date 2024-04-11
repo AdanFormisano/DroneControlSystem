@@ -3,109 +3,52 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 
-/* The coords used for the zones indicates the "square" that the drone is going to cover: it's not a real coordinate.
-The real global coordinates are needed for the drone path. They are going to be calculated when the zones are created.
+/* The coords used for the zones_vertex indicates the "square" that the drone is going to cover: it's not a real coordinate.
+The real global coordinates are needed for the drone path. They are going to be calculated when the zones_vertex are created.
 */
 
 namespace drones {
     void DroneManager::Run() {
+        // Initial setup
         spdlog::set_pattern("[%T.%e][%^%l%$][Drone] %v");
         spdlog::info("Initializing Drone process");
 
-        drone_zones.reserve(300);
-        // drone_vector.reserve(300);
-        // drone_threads.reserve(300);
+        bool threads_created = false;
 
-        std::unordered_set<std::string> zones_to_swap;
-        int removecounter = 0;
-        int checkcounter = 0;
-
-        // Calculate the zones' vertex_coords
-        // TODO: Sono stronzo e l'ordine e' diverso da quello utilizzato per il path
+        // Calculate the zones_vertex' vertex_coords
         CalculateGlobalZoneCoords();
 
-        int zone_id = 0; // Needs to be 0 because is used in DroneControl::setDroneData()
+        // Create the Zones objects for every zone calculated
+        CreateZones();
 
-        // Create the DroneZones objects for every zone calculated
-        for (auto &zone: zones) {
-            DroneZone *dz = CreateDroneZone(zone, zone_id);
-
-            int drone_id = (zone_id * 10) + new_drones_id[zone_id];
-
-            // Create the drone
-            CreateDrone(drone_id, dz);
-
-            new_drones_id[zone_id]++;
-            ++zone_id;
-        }
-        spdlog::info("All zones created");
-
+        // Wait for all the processes to be ready
         utils::SyncWait(shared_redis);
-
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        CreateThreadBlocks();
-
-        auto it_thread = drone_threads.begin();
-
         // Exists for the duration of the simulation
-        try {
-            bool sim_running = (shared_redis.get("sim_running") == "true");
-            // Run the simulation
-            while (sim_running) {
+        bool sim_running = (shared_redis.get("sim_running") == "true");
+        spdlog::info("DroneManager sim value: {}", sim_running);
+
+        // Run the simulation
+        while (sim_running) {
+            try {
+                spdlog::info("DRONE MANAGER TICK {}", tick_n);
+
                 // Get the time_point
                 auto tick_start = std::chrono::steady_clock::now();
 
-                CheckNewDrones(zones_to_swap);
+                // Create the threads for the zones_vertex every 5 ticks
+                if (!threads_created && tick_n < 20 && tick_n % 5 == 0) {
+                    CreateZoneThreads();
 
-                // Prepare a container for collecting thread IDs to be removed
-
-                // Work and check threads
-                if ((tick_n % 50 == 0) && (tick_n > 200)) {
-                    auto n_joined_threads = EraseJoinableThread();    // TODO: Add debug print
-                    auto n_destroyed_drones = EraseDestroyedDrones();   // TODO: Add debug print
-
-                    spdlog::info("TICK {}: Joined {} threads, Destroyed {} drones", tick_n, n_joined_threads,
-                                 n_destroyed_drones);
+                    // Check if all the threads were created
+                    if (zone_threads.size() == ZONE_NUMBER) {
+                        threads_created = true;
+                    }
                 }
 
-//            if (finishedThreadIndices.size() > 19) {
-//                // Sort indices in descending order to maintain validity upon removal
-//                // std::sort(finishedThreadIndices.rbegin(), finishedThreadIndices.rend()); // Sort in descending order for safe removal
-//                //probably no need for sort here
-//
-//                spdlog::info("Here {} is the size of finishedbla bla", finishedThreadIndices.size());
-//                for (size_t index : finishedThreadIndices) {
-//
-//                    spdlog::info("Here {} is being worked on", index);
-//                    // TODO: maybe not needed redundant check
-//                    if (drone_threads[index].joinable()) {
-//                        drone_threads[index].join(); // Ensure the thread is joined before removal
-//                        spdlog::info("Here {} has been joined", index);
-//                    }
-//
-//                    // Swap-and-pop for drone_threads
-//                    if (index != drone_threads.size() - 1) {
-//                        std::swap(drone_threads[index], drone_threads.back());
-//                    }
-//                    spdlog::info("Here Drone thread indexed at {} has been popped", index);
-//                    drone_threads.pop_back();
-//
-//                    // Swap-and-pop for drone_vector
-//                    if (index != drone_vector.size() - 1) {
-//                        std::swap(drone_vector[index], drone_vector.back());
-//                    }
-//                    spdlog::info("Here Drone indexed at {} has been popped", index);
-//                    drone_vector.pop_back();
-//                }
-//                //TODO:: search for pop range type thing
-//
-//                finishedThreadIndices.clear();
-//                removecounter=0;
-//                spdlog::info("Here Drone threads have been removed thread vector size is {}", drone_threads.size());
-//            } else {
-//                checkcounter++;
-//            }
+                // Check if DC asked for new drones
+                CheckNewDrones();
 
                 // Check if there is time left in the tick
                 auto tick_now = std::chrono::steady_clock::now();
@@ -118,160 +61,115 @@ namespace drones {
                     break;
                 }
 
-                // std::cout << n_data_sent << " data sent" << std::endl;
                 // Get sim_running from Redis
                 sim_running = (shared_redis.get("sim_running") == "true");
                 ++tick_n;
+            } catch (const sw::redis::IoError &e) {
+                spdlog::error("Couldn't get sim_running: {}", e.what());
+            } catch (const std::exception &e) {
+                spdlog::error("Error in DroneManager: {}", e.what());
             }
-        } catch (const sw::redis::IoError &e) {
-            spdlog::error("Couldn't get sim_running: {}", e.what());
         }
     }
 
     DroneManager::DroneManager(Redis &redis) : shared_redis(redis) {
-        new_drones_id.fill(1);
     }
 
-    DroneManager::~DroneManager() {
-        for (auto &thread: drone_threads) {
-            if (thread.joinable()) {
-                thread.join();
-            }
+    // For every zone calculated create a Zone object
+    void DroneManager::CreateZones() {
+        int zone_id = 0;
+
+        for (auto &zone: zones_vertex) {
+            // Create Zone object
+            auto z = std::make_shared<DroneZone>(zone_id, zone, shared_redis);
+            z->CreateNewDrone();
+
+            // Move the zone object to the zones map
+            zones[zone_id] = std::move(z);
+
+            ++zone_id;
         }
     }
 
-// Erases all threads that are joinable after joining them
-    size_t DroneManager::EraseJoinableThread() {
-        auto erased = std::erase_if(drone_threads, [](auto &thread) {
-            if (thread.joinable()) {
-                thread.join();
-                return true;
-            } else {
-                return false;
-            }
-        });
-
-        return erased;
-    }
-
-    size_t DroneManager::EraseDestroyedDrones() {
-        auto erased = std::erase_if(drone_vector, [](auto &drone) {
-            if (drone->isDestroyed()) {
-                return true;
-            } else {
-                return false;
-            }
-        });
-
-        return erased;
-    }
-
-// Creates the zones' global vertex_coords
+    // Creates the zones_vertex' global vertex_coords
     void DroneManager::CalculateGlobalZoneCoords() {
         int i = 0;
         int width = 62;
         int height = 2;
 
         for (int x = -124; x <= 124 - width; x += width) {
-            for (int y = -75; y <= 75 - height; y += height) {
-                zones[i][0] = {x, y};                   // Bottom left
-                zones[i][1] = {x + width, y};           // Bottom right
-                zones[i][2] = {x + width, y + height};  // Top right
-                zones[i][3] = {x, y + height};          // Top left
+            for (int y = -150; y <= 150 - height; y += height) {
+                zones_vertex[i][0] = {x * 20, (y + height) * 20};              // Top left
+                zones_vertex[i][1] = {(x + width) * 20, (y + height) * 20};    // Top right
+                zones_vertex[i][2] = {(x + width), y * 20};                    // Bottom right
+                zones_vertex[i][3] = {x * 20, y * 20};                         // Bottom left
                 ++i;
             }
         }
     }
 
-// For a set of vertex_coords creates a DroneZone object
-    DroneZone *DroneManager::CreateDroneZone(std::array<std::pair<int, int>, 4> &zone, int zone_id) {
-        drone_zones.emplace_back(zone_id, zone, this);
-        return &drone_zones.back();
-    }
+    // Check if DC asked for new drones and create them
+    void DroneManager::CheckNewDrones() {
+        std::unordered_set<std::string> zones_to_swap;
+        long long list_len = shared_redis.scard("zones_to_swap");   // Get the number of zones_vertex to swap from Redis
 
-// Creates a drone for a zone
-    void DroneManager::CreateDrone(int drone_id, DroneZone *dz) {
-        auto drone = std::make_shared<Drone>(drone_id, dz, this);
+        // Check if DC asked for new drones
+        if (list_len == 0) {
+            std::cout << "List len: " << list_len << std::endl;
+            return;
+        } else {
+            // Drones to swap have been requested
+            std::cout << "Zones to swap: " << list_len << std::endl;
 
-        // Adds the drone to the vector
-        drone_vector.push_back(std::move(drone));
-    }
+            // For every zone create a drone object
+            for (int i = 0; i < list_len; ++i) {
+                auto zone_id = shared_redis.spop("zones_to_swap");
 
-    void DroneManager::CreateThreadBlocks() {
-        // For every "block" of zones, create the threads
-        int width = 62;
-        int height = 2;
-        int n_drone = 0;
-        for (int x = -124; x <= 124 - width; x += width) {
-            // Creates threads for a column of zones
-            for (int y = -75; y <= 75 - height; y += height) {
-                // Create the threads
-                drone_threads.emplace_back(&Drone::Run, drone_vector[n_drone].get());
+                // Check if the zone_id is valid
+                if (zone_id) {
+                    std::cout << "ID zone to swap: " << zone_id.value() << std::endl;
+                    int z = std::stoi(zone_id.value());
 
-                ++n_drone;
+                    // Get and available drone from the zone:id:drones list
+                    auto drone_id = shared_redis.lpop("zone:" + zone_id.value() + ":charged_drones");
+
+                    // If there is a fully charged drone available in base
+                    if (drone_id) {
+                        spdlog::info("Drone ID: {} fully available", drone_id.value());
+
+                        // Create the drone object
+                        zones[z]->CreateDrone(std::stoi(drone_id.value()));
+
+                        // Set the drone to work
+                        shared_redis.set("drone:" + drone_id.value() + ":command", "follow");
+                    } else {
+                        // If there are no drones available, create a new drone for that zone
+                        spdlog::info("No drones available in zone {}, creating a new one", z);
+
+                        // Create the drone
+                        auto new_drone_id = zones[z]->getNewDroneId();
+                        spdlog::info("Creating new Drone {} for swap", new_drone_id);
+                        zones[z]->CreateDrone(new_drone_id);
+                        spdlog::info("Drone created");
+
+                        // Set the drone to work
+                        shared_redis.set("drone:" + std::to_string(new_drone_id) + ":command", "follow");
+                        spdlog::info("Command set");
+                    }
+                    // Update zone swap status
+                    shared_redis.set("zone:" + zone_id.value() + ":swap", "started");
+                }
             }
-            std::this_thread::sleep_for(tick_duration_ms * 5);
-            spdlog::info("Column of drones created");
         }
     }
 
-// Check if DC asked for new drones and create them
-    void DroneManager::CheckNewDrones(std::unordered_set<std::string> &zones_to_swap) {
-        auto list_len = shared_redis.llen("zones_to_swap");
-        // Check if DC asked for new drones
-        if (list_len == 0) {
-            return;
-        } else {
-            shared_redis.lrange("zones_to_swap", 0, -1, std::inserter(zones_to_swap, zones_to_swap.end()));
+    // Creates a column of 150 threads
+    void DroneManager::CreateZoneThreads() {
+        size_t zone_threads_size = zone_threads.size();
 
-            // TODO: Use set
-
-            // For every zone create a drone object
-            for (const auto &zone_id: zones_to_swap) {
-                int z = std::stoi(zone_id);
-                // Get and available drone from the zone:id:drones list
-                auto drone_id = shared_redis.lpop("zone:" + zone_id + ":drones");
-
-                // If there is a fully charged drone available in base
-                if (drone_id.has_value()) {
-                    // Get the zone object
-                    auto dz = &drone_zones[z];
-
-                    // Create the drone
-                    CreateDrone(std::stoi(drone_id.value()), dz);
-
-                    // Set the drone to work
-                    shared_redis.set("drone:" + drone_id.value() + ":command", "work");
-
-                    // Create the thread
-                    drone_threads.emplace_back(&Drone::Run, drone_vector.back().get());
-                } else {
-#ifdef DEBUG
-                    spdlog::info("No drones available in zone {}", z);
-#endif
-                    // If there are no drones available, create a new drone for that zone
-
-                    // Get the zone object
-                    auto dz = &drone_zones[z];
-
-                    // Create the drone
-                    int new_drone_id = (z * 10) + new_drones_id[z];
-#ifdef DEBUG
-                    spdlog::info("Creating new Drone {} for swap", new_drone_id);
-#endif
-                    CreateDrone(new_drone_id, dz);
-
-                    // Set the drone to work
-                    shared_redis.set("drone:" + drone_id.value() + ":command", "work");
-
-                    // Create the thread
-                    drone_threads.emplace_back(&Drone::Run, drone_vector.back().get());
-
-                    new_drones_id[z]++;
-                }
-            }
-            zones_to_swap.clear();
-            // shared_redis.ltrim("zones_to_swap", list_len, -1);
+        // Loops for the next 150 zones_vertex starting from the last zone thread created
+        for (size_t i = zone_threads_size; i < zone_threads_size + 150; ++i) {
+            zone_threads.emplace_back(&DroneZone::Run, zones[static_cast<int>(i)]);
         }
     }
 } // namespace drones

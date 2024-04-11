@@ -20,7 +20,7 @@ public:
     // void logDroneData(
     //     const std::map<std::string, std::string> &droneData);
 
-    void logDroneData(const drone_data &drone, std::array<bool, 300> &);
+    void logDroneData(const drone_data &drone, std::array<bool, ZONE_NUMBER> &);
 
 private:
     std::shared_ptr<pqxx::connection> conn;

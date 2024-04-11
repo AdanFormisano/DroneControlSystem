@@ -2,5 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="//wsl.localhost/Ubuntu/home/adan/Sapienza/DroneControlSystem" vcs="Git" />
   </component>
 </project>

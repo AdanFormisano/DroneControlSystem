@@ -27,8 +27,9 @@ namespace drone_control {
 
         // First thing to do is to get all the drone paths from the Redis server
         GetDronePaths();
+        spdlog::info("Drone paths loaded");
 
-        // std::this_thread::sleep_for(std::chrono::milliseconds (100));
+        // std::this_thread::sleep_for(std::chrono::milliseconds (10));
 
         // TODO: Implement as a thread
         bool sim_running = (redis.get("sim_running") == "true");
@@ -38,12 +39,6 @@ namespace drone_control {
 
             // Work
             ReadStream();
-
-            // TESTING: Tell drone[tick_n-1] to go to work
-            if (tick_n % 10) {
-                int drone_id = tick_n - 1;
-                redis.set("drone:" + std::to_string(drone_id) + ":command", "work");
-            }
 
             // Check if there is time left in the tick
             auto tick_now = std::chrono::steady_clock::now();
@@ -144,22 +139,19 @@ namespace drone_control {
 // Get all the drone paths from the Redis server. Each index is a specific drone ID. This is for faster access.
     void DroneControl::GetDronePaths() {
         // Loop for every drone path in the Redis server
-        for (int i = 0; i < 300; ++i) {
+        for (int i = 0; i < ZONE_NUMBER; ++i) {
             std::string path_id = "path:" + std::to_string(i);
             auto path_length = redis.llen(path_id);
-            // Loop for every entry in the path-loop
-            for (int j = 0; j < 124; ++j) {
-                auto temp_x = redis.lpop(path_id);
-                auto temp_y = redis.lpop(path_id);
-                if (temp_x.has_value() && temp_y.has_value()) {
-                    std::string x = temp_x.value();
-                    std::string y = temp_y.value();
-
-                    drone_paths[i][j].first = std::stof(x);
-                    drone_paths[i][j].second = std::stof(y);
-                } else {
-                    spdlog::error("Error getting the drone {} path from Redis", i);
-                }
+            std::vector<std::string> out;
+            redis.lrange(path_id, 0, -1, std::back_inserter(out));
+#ifdef DEBUG
+            spdlog::info("Path on redis {} has {} entries", i, path_length);
+            spdlog::info("Path local {} has {} entries", i, out.size());
+#endif
+            for (size_t j = 0; j < path_length; j += 2) {
+                float x = std::stof(out[j]);
+                float y = std::stof(out[j + 1]);
+                drone_paths[i].emplace_back(std::make_pair(x, y));
             }
         }
     }
@@ -180,19 +172,22 @@ namespace drone_control {
     }
 
 // TODO: Check only when the drone is working
-// Check if the drone has enough charge to go back to the base and check when to swap drones
+//       Check if the drone has enough charge to go back to the base and check when to swap drones
+//       Create variable instead of converting/getting the value each time
     void DroneControl::CheckDroneCharge(int drone_id, float current_charge, float charge_needed) {
-        if (current_charge - (DRONE_CONSUMPTION * 80.0f) <= charge_needed) {
+        if ((redis.hget("drone:" + std::to_string(drone_id), "status") == "WORKING") &&
+            (current_charge - (DRONE_CONSUMPTION * 80.0f) <= charge_needed)) {
             redis.set("drone:" + std::to_string(drone_id) + ":command", "charge");
 #ifdef DEBUG
             spdlog::info("TICK {}: Drone {} needs to charge: current chg: {}%, chg needed: {}%", tick_n, drone_id,
                          current_charge, charge_needed);
 #endif
         }
-        if ((redis.get("zone:" + std::to_string(drones[std::to_string(drone_id)].zone_id) + ":swap") == "none") &&
+        if ((redis.get("zone:" + std::to_string(drones[std::to_string(drone_id)].zone_id) + ":swap") != "started") &&
             (current_charge <= ((charge_needed * 2) + (40.0f * DRONE_CONSUMPTION)))) {
-            // Create a redis list of all the zones that need to be switched on
-            redis.rpush("zones_to_swap", std::to_string(drones[std::to_string(drone_id)].zone_id));
+            // Create a redis list of all the zones_vertex that need to be switched on
+            spdlog::info("Zone {} needs to swap", drones[std::to_string(drone_id)].zone_id);
+            redis.sadd("zones_to_swap", std::to_string(drones[std::to_string(drone_id)].zone_id));
         }
     }
 } // namespace drone_control

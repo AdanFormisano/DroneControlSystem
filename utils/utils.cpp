@@ -10,7 +10,9 @@ float generateRandomFloat() {
 }
 
 namespace utils {
-    const char* CaccaPupu(drone_state_enum state) {
+    const char *CaccaPupu(drone_state_enum state) {
         return drone_state_str[static_cast<std::size_t>(state)];
     };
+
+
 }

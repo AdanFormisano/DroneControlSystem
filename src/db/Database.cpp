@@ -173,7 +173,7 @@ void Database::prnt_tab_all(const std::string &tableName) {
 }
 
 // Log drone data
-void Database::logDroneData(const drone_data &drone, std::array<bool, 300> &checklist) {
+void Database::logDroneData(const drone_data &drone, std::array<bool, ZONE_NUMBER> &checklist) {
     if (!conn || !conn->is_open()) {
         std::cerr << "Db connection not established for logging."
                   << std::endl;
