@@ -29,4 +29,4 @@ Il documento ufficiale da cui è tratta la [Traccia progetto](#traccia-progetto)
 
 ## Relazione progetto
 
-La relazione del progetto sarà scritta qui, o altrove. In tal caso sarà comunque redatta al più presto
+La relazione del progetto segue le indicazioni di stesura fornite dal prof, ed è [qui](res/doc/Relazione.md)
