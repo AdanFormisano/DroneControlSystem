@@ -356,7 +356,7 @@ Sottoscrivi a Canali:
 
 ### Schema del Database
 
-Analizziamo ora lo schema del database e le connessioni Redis effettivamente utilizzate nel progetto. Questo ci permetterà di fornire una descrizione dettagliata di come i dati vengono memorizzati e come le componenti del sistema interagiscono tra loro in tempo reale.
+Analizziamo ora lo schema del database. Questo ci permetterà di fornire una descrizione dettagliata di come i dati vengono memorizzati.
 
 Drone Control System utilizza un database PostgreSQL per memorizzare e gestire i dati relativi all'attività e allo stato dei droni durante le missioni di sorveglianza. La gestione del database è implementata nel file `Database.cpp`, specificamente nella funzione `get_DB()`, che si occupa di stabilire la connessione al database e di configurare lo schema necessario.
 
