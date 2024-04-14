@@ -50,7 +50,7 @@ La seguente è una vista ad alto livello delle componenti del sistema
 
 #### Area da sorvegliare
 
-![[Area da sorvegliare]](../img/area_view.jpg)
+![[Area da sorvegliare]](../img/drone_area.png)
 
 #### Contesto del sistema
 
