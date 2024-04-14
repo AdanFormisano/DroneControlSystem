@@ -29,7 +29,7 @@ namespace drones {
 
         // Upload the zone to the Redis server
         std::string redis_zone_id = "zone:" + std::to_string(zone_id);
-        zone_redis.set(redis_zone_id + ":id", std::to_string(zone_id));
+        zone_redis.set(redis_zone_id + ":id", std::to_string(zone_id)); // TODO: Maybe remove this
         zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
     }
 
@@ -54,20 +54,23 @@ namespace drones {
 
                 if (swap) {
                     // Set the new drone to working
-//                    drone_working.reset(drones[1].get());
                     spdlog::info("Drone {} is now working", drones[1]->getDroneId());
                     // Set the drone to working
+                    drones[1]->SetDronePathIndex(drone_path_index);
+                    spdlog::info("Drone {} is now on path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
                     drones[1]->SetDroneState(drone_state_enum::WORKING);
+                    zone_redis.hset("drone:" + std::to_string(drones[1]->getDroneId()), "status", "WORKING");
+                    zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
 
                     swap = false;
                 }
 
                 if (destroy_drone) {
+                    spdlog::info("Drone {} getting destroyed", drones[0]->getDroneId());
                     // Remove the drone from the vector
-                    drones.erase(std::remove_if(drones.begin(), drones.end(), [](const std::shared_ptr<Drone> &drone) {
-                        return drone->getDroneId() == 0;
-                    }), drones.end());
+                    drones.erase(drones.begin());
 
+                    spdlog::info("DroneZone {} now has {} drones", zone_id, drones.size());
                     destroy_drone = false;
                 }
 
@@ -103,6 +106,7 @@ namespace drones {
     void DroneZone::CreateNewDrone() {
         auto drone_id = new_drone_id + zone_id * 10;
         drones.emplace_back(std::make_shared<Drone>(drone_id, *this));
+        zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(new_drone_id));
         ++new_drone_id;
     }
 

@@ -119,7 +119,11 @@ namespace drones {
                         drone_redis.set("drone:" + std::to_string(drone_id) + ":command", "none");
                         drone_redis.hset(redis_id, "status", "TO_BASE");
                         dz.SetSwap();
+                        dz.drone_path_index = path_index;
                         drone_data[1].second = utils::CaccaPupu(drone_state_enum::TO_BASE);
+                        // Remove the old drones from the active drones in redis
+                        drone_redis.srem("zone:" + std::to_string(dz.getZoneId()) + ":drones_active",
+                                        std::to_string(drone_id));
                         drone_state = drone_state_enum::TO_BASE;
 #ifdef DEBUG
                         spdlog::info("Drone {} [{}%] received charge command", drone_id, drone_charge);

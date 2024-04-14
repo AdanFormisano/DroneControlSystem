@@ -32,7 +32,7 @@ namespace drone_control {
         void GetDronePaths();
         bool CheckPath(int zone_id, std::pair<float, float> &position);
         void CheckDroneCharge(int drone_id, float charge, float charge_needed);
-        void CheckForSwap(int zone_id, float current_charge, float charge_needed);
+        void CheckForSwap(int zone_id, int drone_id, float current_charge, float charge_needed);
     };
 } // namespace drone_control
 

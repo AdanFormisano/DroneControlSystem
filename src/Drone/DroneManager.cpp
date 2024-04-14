@@ -132,7 +132,8 @@ namespace drones {
                         zones[z]->CreateDrone(std::stoi(drone_id.value()));
 
                         // Set the drone to work
-                        shared_redis.set("drone:" + drone_id.value() + ":command", "follow");
+                        zones[z]->drones[1]->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
+                        shared_redis.sadd("zone:" + zone_id.value() + ":drones_active", drone_id.value());
                     } else {
                         // If there are no drones available, create a new drone for that zone
 
@@ -143,6 +144,7 @@ namespace drones {
 
                         // Set the drone to work
                         zones[z]->drones[1]->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
+                        shared_redis.sadd("zone:" + zone_id.value() + ":drones_active", std::to_string(new_drone_id));
                     }
                     // Update zone swap status
                     shared_redis.set("zone:" + zone_id.value() + ":swap", "started");

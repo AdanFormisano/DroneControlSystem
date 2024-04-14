@@ -107,10 +107,10 @@ namespace drone_control {
 
         // Check if the drone's charge is enough to go back to the base and check when to swap drones
         CheckDroneCharge(temp_drone_struct.id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
-        CheckForSwap(temp_drone_struct.zone_id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
+        CheckForSwap(temp_drone_struct.zone_id, temp_drone_struct.id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
 
         // Update the drone data array
-        drones[std::to_string(temp_drone_struct.id)] = temp_drone_struct;
+        // drones[std::to_string(temp_drone_struct.id)] = temp_drone_struct;
 
         // Upload the data to the database
         // db.logDroneData(temp_drone_struct, checklist);
@@ -164,8 +164,9 @@ namespace drone_control {
         }
     }
 
-    void DroneControl::CheckForSwap(int zone_id, float current_charge, float charge_needed) {
-        if ((redis.get("zone:" + std::to_string(zone_id) + ":swap") != "started") &&
+    void DroneControl::CheckForSwap(int zone_id, int drone_id, float current_charge, float charge_needed) {
+        if ((redis.sismember("zone:" + std::to_string(zone_id) + "drones_active", std::to_string(drone_id))) &&
+            (redis.get("zone:" + std::to_string(zone_id) + ":swap") != "started") &&
             (current_charge <= ((charge_needed * 2) + (40.0f * DRONE_CONSUMPTION)))) {
             // Create a redis list of all the zones_vertex that need to be switched on
             redis.sadd("zones_to_swap", std::to_string(zone_id));

@@ -93,6 +93,8 @@ namespace drones {
         [[nodiscard]] std::pair<float, float> getDronePosition() const { return drone_position; }
 
         void SetDroneState(drone_state_enum state);
+        int GetDronePathIndex() const { return path_index; }
+        void SetDronePathIndex(int index) { path_index = index; }
 
         void Run();
 
