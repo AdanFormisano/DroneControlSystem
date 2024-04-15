@@ -107,7 +107,6 @@ namespace drones {
             return;
         } else {
             // Drones to swap have been requested
-            spdlog::info("{} zones to swap", list_len);
 
             std::unordered_set<std::string> zones_to_swap;
             std::vector<std::string> ids;
@@ -132,19 +131,19 @@ namespace drones {
                         zones[z]->CreateDrone(std::stoi(drone_id.value()));
 
                         // Set the drone to work
-                        zones[z]->drones[1]->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
+                        zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
                         shared_redis.sadd("zone:" + zone_id.value() + ":drones_active", drone_id.value());
                     } else {
                         // If there are no drones available, create a new drone for that zone
 
                         // Create the drone
-                        auto new_drone_id = zones[z]->getNewDroneId() + z * 10;
-                        spdlog::info("No drones available in zone {}, creating Drone {}", z, new_drone_id);
-                        zones[z]->CreateDrone(new_drone_id);
+#ifdef DEBUG
+                        spdlog::info("No drones available in DroneZone {}, creating new drone", z);
+#endif
+                        zones[z]->CreateNewDrone();
 
                         // Set the drone to work
-                        zones[z]->drones[1]->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
-                        shared_redis.sadd("zone:" + zone_id.value() + ":drones_active", std::to_string(new_drone_id));
+                        zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
                     }
                     // Update zone swap status
                     shared_redis.set("zone:" + zone_id.value() + ":swap", "started");

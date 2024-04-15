@@ -63,6 +63,7 @@ namespace drones {
                         // Remove the drone from the queue of zone drones
                         drone_redis.lpop("zone:" + std::to_string(dz.getZoneId()) + ":drones");
                         drone_redis.set("drone:" + std::to_string(drone_id) + ":command", "none");
+                        drone_redis.hset(redis_id, "status", "TO_ZONE_FOLLOWING");
                         drone_data[1].second = utils::CaccaPupu(drone_state_enum::TO_ZONE_FOLLOWING);
                         drone_state = drone_state_enum::TO_ZONE_FOLLOWING;
                     }
@@ -100,6 +101,7 @@ namespace drones {
                     if (drone_position.first == dz.drone_path[0].first && drone_position.second == dz.drone_path[0].second) {
                         // Arrived to the zone
                         drone_data[1].second = utils::CaccaPupu(drone_state_enum::FOLLOWING);
+                        drone_redis.hset(redis_id, "status", "FOLLOWING");
                         drone_state = drone_state_enum::FOLLOWING;
                     }
                     break;
@@ -118,7 +120,7 @@ namespace drones {
                     if (cmd == "charge") {
                         drone_redis.set("drone:" + std::to_string(drone_id) + ":command", "none");
                         drone_redis.hset(redis_id, "status", "TO_BASE");
-                        dz.SetSwap();
+                        swap = true;
                         dz.drone_path_index = path_index;
                         drone_data[1].second = utils::CaccaPupu(drone_state_enum::TO_BASE);
                         // Remove the old drones from the active drones in redis
@@ -155,7 +157,7 @@ namespace drones {
                     spdlog::info("TICK {}: Drone {} [{}%] is waiting for charge", tick_n, drone_id, drone_charge);
 #endif
                     SendChargeRequest();   // Uploads the drone status to Redis before sleeping
-                    dz.SetDestroyDrone();
+                    destroy = true;
 
                 case drone_state_enum::TOTAL:
                     break;

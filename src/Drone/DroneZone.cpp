@@ -37,7 +37,6 @@ namespace drones {
     void DroneZone::Run() {
         // Set initial drone to working
         zone_redis.set("drone:" + std::to_string(drones[0]->getDroneId()) + ":command", "work");
-
         // Get sim_running from Redis
         bool sim_running = (zone_redis.get("sim_running") == "true");
 
@@ -52,7 +51,7 @@ namespace drones {
                     drone->Run();
                 }
 
-                if (swap) {
+                if (drones[0]->getSwap()) {
                     // Set the new drone to working
                     spdlog::info("Drone {} is now working", drones[1]->getDroneId());
                     // Set the drone to working
@@ -62,16 +61,15 @@ namespace drones {
                     zone_redis.hset("drone:" + std::to_string(drones[1]->getDroneId()), "status", "WORKING");
                     zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
 
-                    swap = false;
+                    drones[0]->setSwap(false);
                 }
 
-                if (destroy_drone) {
+                if (drones[0]->getDestroy()) {
                     spdlog::info("Drone {} getting destroyed", drones[0]->getDroneId());
                     // Remove the drone from the vector
                     drones.erase(drones.begin());
 
                     spdlog::info("DroneZone {} now has {} drones", zone_id, drones.size());
-                    destroy_drone = false;
                 }
 
                 // Check if there is time left in the tick
@@ -106,7 +104,7 @@ namespace drones {
     void DroneZone::CreateNewDrone() {
         auto drone_id = new_drone_id + zone_id * 10;
         drones.emplace_back(std::make_shared<Drone>(drone_id, *this));
-        zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(new_drone_id));
+        zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(drone_id));
         ++new_drone_id;
     }
 

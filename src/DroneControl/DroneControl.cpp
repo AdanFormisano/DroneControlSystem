@@ -165,7 +165,9 @@ namespace drone_control {
     }
 
     void DroneControl::CheckForSwap(int zone_id, int drone_id, float current_charge, float charge_needed) {
-        if ((redis.sismember("zone:" + std::to_string(zone_id) + "drones_active", std::to_string(drone_id))) &&
+        auto cmd = redis.command<OptionalLongLong>("sismember", "zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(drone_id));
+        int is_member = static_cast<int>(cmd.value_or(0));
+        if (is_member &&
             (redis.get("zone:" + std::to_string(zone_id) + ":swap") != "started") &&
             (current_charge <= ((charge_needed * 2) + (40.0f * DRONE_CONSUMPTION)))) {
             // Create a redis list of all the zones_vertex that need to be switched on

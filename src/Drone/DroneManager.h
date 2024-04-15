@@ -95,6 +95,9 @@ namespace drones {
         void SetDroneState(drone_state_enum state);
         int GetDronePathIndex() const { return path_index; }
         void SetDronePathIndex(int index) { path_index = index; }
+        bool getDestroy() const { return destroy; }
+        bool getSwap() const { return swap; }
+        void setSwap(bool value) { swap = value; }
 
         void Run();
 
@@ -104,6 +107,8 @@ namespace drones {
         std::string redis_id;
         DroneZone &dz;
         int path_index = 0;                         // Index of the current position in the drone_path
+        bool swap = false;                          // Flag to swap the drone
+        bool destroy = false;                       // Flag to destroy the drone
 
         // Drone data
         const int drone_id;
