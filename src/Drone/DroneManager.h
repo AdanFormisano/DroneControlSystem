@@ -54,7 +54,6 @@ namespace drones {
         std::array<std::pair<float, float>, 124> drone_path;
         int drone_path_index = 0;
         std::array<float, 124> drone_path_charge{};
-        std::shared_ptr<Drone> drone_working;
 
 
         DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &zone_coords, Redis &redis);
@@ -92,14 +91,15 @@ namespace drones {
         [[nodiscard]] int getDroneId() const { return drone_id; }
         [[nodiscard]] std::pair<float, float> getDronePosition() const { return drone_position; }
 
-        void SetDroneState(drone_state_enum state);
         int GetDronePathIndex() const { return path_index; }
-        void SetDronePathIndex(int index) { path_index = index; }
         bool getDestroy() const { return destroy; }
         bool getSwap() const { return swap; }
+        void SetDronePathIndex(int index) { path_index = index; }
+        void SetDroneState(drone_state_enum state);
         void setSwap(bool value) { swap = value; }
 
         void Run();
+        void CalculateSwapFinalCoords();            // Calculates the final coords of the swap
 
     private:
         int tick_n = 0;
@@ -109,6 +109,7 @@ namespace drones {
         int path_index = 0;                         // Index of the current position in the drone_path
         bool swap = false;                          // Flag to swap the drone
         bool destroy = false;                       // Flag to destroy the drone
+        std::pair<float, float> swap_final_coords;  // Final coords of the swap
 
         // Drone data
         const int drone_id;

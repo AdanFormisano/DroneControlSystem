@@ -53,10 +53,11 @@ namespace drones {
 
                 if (drones[0]->getSwap()) {
                     // Set the new drone to working
-                    spdlog::info("Drone {} is now working", drones[1]->getDroneId());
                     // Set the drone to working
                     drones[1]->SetDronePathIndex(drone_path_index);
-                    spdlog::info("Drone {} is now on path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
+#ifdef DEBUG
+                    spdlog::info("Drone {} is now working: path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
+#endif
                     drones[1]->SetDroneState(drone_state_enum::WORKING);
                     zone_redis.hset("drone:" + std::to_string(drones[1]->getDroneId()), "status", "WORKING");
                     zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");

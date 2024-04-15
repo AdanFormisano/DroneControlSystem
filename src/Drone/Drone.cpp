@@ -79,7 +79,6 @@ namespace drones {
                     if (drone_position.first == dz.drone_path[0].first &&
                         drone_position.second == dz.drone_path[0].second) {
                         // Set the drone as the working drone in DroneZone
-                        dz.drone_working.reset(this);
                         drone_redis.hset(redis_id, "status", "WORKING");
 
                         // Set the working drone id in the zone
@@ -93,12 +92,12 @@ namespace drones {
 
                 case drone_state_enum::TO_ZONE_FOLLOWING:
                     // Move to the zone
-                    Move(dz.drone_path[0].first, dz.drone_path[0].second);
+                    Move(swap_final_coords.first, swap_final_coords.second);
 #ifdef DEBUG
                     spdlog::info("TICK {}: Drone {} [{}%] is moving to zone (following) {} {}", tick_n, drone_id, drone_charge,
                                  drone_position.first, drone_position.second);
 #endif
-                    if (drone_position.first == dz.drone_path[0].first && drone_position.second == dz.drone_path[0].second) {
+                    if (drone_position.first == swap_final_coords.first && drone_position.second == swap_final_coords.second) {
                         // Arrived to the zone
                         drone_data[1].second = utils::CaccaPupu(drone_state_enum::FOLLOWING);
                         drone_redis.hset(redis_id, "status", "FOLLOWING");
@@ -107,11 +106,20 @@ namespace drones {
                     break;
 
                 case drone_state_enum::FOLLOWING:
+                    // TODO: The drone should still upload to redis its status
                     // Swap has started: the drone must follow the working drone (zone:id:swap is "started")
+
+                    // If the working drone still hasn't arrived to the swapping drone's position wait for it
+                    if (drone_position != dz.drones[0]->getDronePosition()) {
 #ifdef DEBUG
-                    spdlog::info("TICK {}: Drone {} [{}%] is following Drone {}", tick_n, drone_id, drone_charge, dz.drone_working->getDroneId());
+                        spdlog::info("TICK {}: Drone {} [{}%] is waiting for Drone {}", tick_n, drone_id, drone_charge, dz.drones[0]->getDroneId());
+                        spdlog::info("Drone {} is at {} {}", dz.drones[0]->getDroneId(), dz.drones[0]->getDronePosition().first, dz.drones[0]->getDronePosition().second);
+                        spdlog::info("Drone {} is at {} {}", drone_id, drone_position.first, drone_position.second);
 #endif
-                    FollowDrone();
+                        UseCharge(20.0f);
+                        drone_data[3].second = std::to_string(drone_position.first);
+                        break;
+                    }
                     break;
 
                 case drone_state_enum::WORKING:
@@ -241,7 +249,7 @@ namespace drones {
 
 // The drone will follow the path of the working drone
     void Drone::FollowDrone() {
-        drone_position = dz.drone_working->getDronePosition();
+        drone_position = dz.drones[0]->getDronePosition();
         path_index = dz.drone_path_index;
         UseCharge(20.0f);
         drone_data[3].second = std::to_string(drone_position.first);
@@ -307,5 +315,22 @@ namespace drones {
 
     void Drone::SetDroneState(drone_state_enum state) {
         drone_state = state;
+    }
+
+    // Calculate where the swapping drone needs to move in the zone, this will optimize the swapping process
+    void Drone::CalculateSwapFinalCoords() {
+        // Calculate the # ticks needed to reach the furthest point of the zone
+        auto [dx, dy] = dz.path_furthest_point;
+        auto distance_to_furthest_point = std::sqrt(dx * dx + dy * dy);
+        int ticks_needed = static_cast<int>(distance_to_furthest_point / DRONE_STEP_SIZE);
+
+        // Calculate where in the path the working drone will be after # ticks
+        int current_index = dz.drone_path_index;    // Current index of the working drone
+        int new_index = (current_index + ticks_needed) % static_cast<int>(dz.drone_path.size());
+
+        // Calculate the final coords of the swap
+        auto [fx, fy] = dz.drone_path[new_index];
+        // Set the final coords of the swap
+        swap_final_coords = {fx, fy};
     }
 }  // namespace drones

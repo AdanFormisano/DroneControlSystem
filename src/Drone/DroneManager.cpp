@@ -143,6 +143,7 @@ namespace drones {
                         zones[z]->CreateNewDrone();
 
                         // Set the drone to work
+                        zones[z]->drones.back()->CalculateSwapFinalCoords();
                         zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
                     }
                     // Update zone swap status

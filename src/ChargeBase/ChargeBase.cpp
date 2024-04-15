@@ -100,7 +100,6 @@ namespace charge_base {
 
         // Update the drone unordered map
         charging_drones[std::to_string(temp_drone_struct.base_data.id)] = temp_drone_struct;
-        spdlog::info("Drone {} added to the charging list", temp_drone_struct.base_data.id);
     }
 
     void ChargeBase::ChargeDrone() {
@@ -111,10 +110,6 @@ namespace charge_base {
             auto &drone_data = drone.second;
             if (drone_data.base_data.charge < 100) {
                 drone_data.base_data.charge += drone_data.charge_rate;
-#ifdef DEBUG
-                spdlog::info("TICK {}: Drone {} charge: {}", tick_n, drone_data.base_data.id,
-                             drone_data.base_data.charge);
-#endif
             } else if (drone_data.base_data.charge >= 100) {
                 releaseDrone(drone_data);
 
@@ -137,6 +132,7 @@ namespace charge_base {
         // Add the drone to the zone's queue of drones
         redis.rpush("zone:" + std::to_string(drone.base_data.zone_id) + ":charged_drones", std::to_string(drone.base_data.id));
 
+        spdlog::info("Drone {} charged to 100%", drone.base_data.id);
     }
 
     void ChargeBase::SetEngine(std::random_device &rd) {
