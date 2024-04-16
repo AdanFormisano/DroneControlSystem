@@ -62,8 +62,9 @@ namespace drones {
         [[nodiscard]] int getZoneId() const { return zone_id; }
         [[nodiscard]] int getNewDroneId() const { return new_drone_id; }
 
-        void SetSwap() { swap = true; }
-        void SetDestroyDrone() { destroy_drone = true; }
+        bool getIsDroneWorking() const { return drone_is_working; }
+        void setIsDroneWorking(bool value) { drone_is_working = value; }
+
         void Run();
         void CreateDrone(int drone_id);     // Creates a new drone
         void CreateNewDrone();                                                          // Creates a new drone
@@ -72,14 +73,15 @@ namespace drones {
     private:
         const int zone_id;
         int new_drone_id = 1;
-        bool swap = false;
-        bool destroy_drone = false;
+        bool drone_is_working = false;
+        int drone_working_id = 0;
         boost::thread zone_thread;
 
         void CreateDronePath();                                                         // Creates the drone path for the zone using global coords
         static float CalculateChargeNeeded(std::pair<float, float> coords);                                                  // Calculates the charge needed to go back to the base
         void UploadPathToRedis();                                                       // Uploads the path to the Redis server
         std::pair<float, float> CalculateFurthestPoint();                               // Calculates the furthest point of the drone path
+        void CheckDroneWorking();                                                       // Checks if the drone is working
     };
 
     class Drone {
@@ -94,6 +96,7 @@ namespace drones {
         int GetDronePathIndex() const { return path_index; }
         bool getDestroy() const { return destroy; }
         bool getSwap() const { return swap; }
+        drone_state_enum getDroneState() const { return drone_state; }
         void SetDronePathIndex(int index) { path_index = index; }
         void SetDroneState(drone_state_enum state);
         void setSwap(bool value) { swap = value; }

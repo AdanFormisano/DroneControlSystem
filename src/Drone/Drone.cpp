@@ -82,8 +82,9 @@ namespace drones {
                         drone_redis.hset(redis_id, "status", "WORKING");
 
                         // Set the working drone id in the zone
-                        drone_redis.set("zone:" + std::to_string(dz.getZoneId()) + ":working_drone_id",
+                        drone_redis.set("zone:" + std::to_string(dz.getZoneId()) + ":working_drone",
                                         std::to_string(drone_id));
+
                         path_index = dz.drone_path_index;
                         drone_data[1].second = utils::CaccaPupu(drone_state_enum::WORKING);
                         drone_state = drone_state_enum::WORKING;
@@ -315,6 +316,7 @@ namespace drones {
 
     void Drone::SetDroneState(drone_state_enum state) {
         drone_state = state;
+        drone_data[1].second = utils::CaccaPupu(state);
     }
 
     // Calculate where the swapping drone needs to move in the zone, this will optimize the swapping process

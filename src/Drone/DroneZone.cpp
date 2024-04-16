@@ -45,6 +45,9 @@ namespace drones {
             try {
                 auto tick_start = std::chrono::steady_clock::now();
 
+                // Check if a drone is working
+                // CheckDroneWorking();
+
                 // Execute each drone in the zone
                 auto number_of_drones = drones.size();
                 for (auto &drone: drones) {
@@ -55,12 +58,13 @@ namespace drones {
                     // Set the new drone to working
                     // Set the drone to working
                     drones[1]->SetDronePathIndex(drone_path_index);
-#ifdef DEBUG
-                    spdlog::info("Drone {} is now working: path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
-#endif
                     drones[1]->SetDroneState(drone_state_enum::WORKING);
                     zone_redis.hset("drone:" + std::to_string(drones[1]->getDroneId()), "status", "WORKING");
                     zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
+                    zone_redis.set("zone:" + std::to_string(zone_id) + ":working_drone", std::to_string(drones[1]->getDroneId()));
+#ifdef DEBUG
+                    spdlog::info("Drone {} is now working: path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
+#endif
 
                     drones[0]->setSwap(false);
                 }
@@ -167,5 +171,25 @@ namespace drones {
         std::vector<std::pair<float, float>> drone_path_v(drone_path.begin(), drone_path.end());
 
         zone_redis.rpush(redis_path_id, drone_path_v.begin(), drone_path_v.end());
+    }
+
+    void DroneZone::CheckDroneWorking() {
+        // Check if the state has changed
+        auto current_val = drones[0]->getDroneState() == drone_state_enum::WORKING ? true : false;
+        if (drone_is_working != current_val) {
+            // The state has changed
+            if (current_val) {
+                drone_is_working = true;
+                if (drone_working_id != drones[0]->getDroneId()) {
+                    drone_working_id = drones[0]->getDroneId();
+                    // The key for the zone:id:working_drone is set by the working drone itself
+                }
+            } else {
+                drone_is_working = false;
+                drone_working_id = 0;
+                zone_redis.set("zone:" + std::to_string(zone_id) + ":working_drone", "none");
+                spdlog::warn("DroneZone {} has no working drones", zone_id);
+            }
+        }
     }
 } // namespace drones
