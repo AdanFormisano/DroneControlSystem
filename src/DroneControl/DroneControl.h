@@ -1,10 +1,11 @@
 #ifndef DRONECONTROLSYSTEM_DRONECONTROL_H
 #define DRONECONTROLSYSTEM_DRONECONTROL_H
-
 #include "../globals.h"
-#include "../db/Database.h"
+#include "../db/Buffer.h"
+#include "../../utils/RedisUtils.h"
 #include <sw/redis++/redis++.h>
 #include <vector>
+#include <spdlog/spdlog.h>
 
 using namespace sw::redis;
 
@@ -28,12 +29,15 @@ namespace drone_control {
         std::array<int, ZONE_NUMBER> drone_path_next_index{};                       // Array with the index of the last point of the path of all the drones
         std::array<bool, ZONE_NUMBER> checklist{};                                    // Array with bool values to check if the drone is following the path
         Database db;
+        Buffer buffer;
+        std::map<int, std::shared_ptr<MiniBuffer>> mini_buffers;
 
         void GetDronePaths();
         bool CheckPath(int zone_id, std::pair<float, float> &position);
         void CheckDroneCharge(int drone_id, float charge, float charge_needed);
         void CheckForSwap(int zone_id, int drone_id, float current_charge, float charge_needed);
     };
+
 } // namespace drone_control
 
 #endif  // DRONECONTROLSYSTEM_DRONECONTROL_H

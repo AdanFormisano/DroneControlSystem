@@ -10,6 +10,7 @@ namespace utils {
     // Check if the connection to Redis is successful
     int RedisConnectionCheck(sw::redis::Redis& redis, std::string clientName);
     long long RedisGetClientID(sw::redis::Redis& redis);
+    bool getSimStatus(sw::redis::Redis& redis);
 
     // Used for synchronization of processes
     void SyncWait(Redis& redis);

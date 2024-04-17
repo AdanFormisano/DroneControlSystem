@@ -21,6 +21,8 @@ add_executable(DroneControlSystem
         utils/RedisUtils.h
         utils/utils.cpp
         utils/utils.h
+        src/db/Buffer.h
+        src/db/Buffer.cpp
 )
 
 option(DEBUG "Enable debug mode" OFF)

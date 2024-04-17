@@ -5,13 +5,12 @@
  */
 
 #include "DroneControl.h"
-#include "../../utils/RedisUtils.h"
-#include "spdlog/spdlog.h"
 #include <chrono>
 #include <iostream>
 
 namespace drone_control {
     DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis) {
+        // Initialize the database
         db.get_DB();
     };
 
@@ -21,14 +20,23 @@ namespace drone_control {
         spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
         spdlog::info("DroneControl process starting");
 
+        // Init the buffers
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         utils::SyncWait(redis);
 
         // First thing to do is to get all the drone paths from the Redis server
         GetDronePaths();
         spdlog::info("Drone paths loaded");
 
+        // Launch the thread to dispatch the drone data to the mini buffers
+        boost::thread dispatch_thread(DispatchDroneData, std::ref(buffer), std::ref(mini_buffers));
+        boost::thread write_thread(WriteToDB, std::ref(mini_buffers), std::ref(db));
+//        spdlog::info("Threads started");
+
         // TODO: Implement as a thread
-        bool sim_running = (redis.get("sim_running") == "true");
+        auto sim_running = utils::getSimStatus(redis);
+//        spdlog::info("Sim status: {}", sim_running);
         while (sim_running) {
             // Get the time_point
             auto tick_start = std::chrono::steady_clock::now();
@@ -44,7 +52,7 @@ namespace drone_control {
             } else if (tick_now > tick_start + tick_duration_ms) {
                 // Log if the tick took too long
                 spdlog::warn("DroneControl tick {} took too long", tick_n);
-                break;
+                // break;
             }
             // Get sim_running from Redis
             sim_running = (redis.get("sim_running") == "true");
@@ -114,6 +122,7 @@ namespace drone_control {
 
         // Upload the data to the database
         // db.logDroneData(temp_drone_struct, checklist);
+        buffer.WriteToBuffer(temp_drone_struct, checklist[temp_drone_struct.zone_id], tick_n);
     }
 
 // Get all the drone paths from the Redis server. Each index is a specific drone ID. This is for faster access.

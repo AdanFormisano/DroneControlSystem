@@ -31,6 +31,20 @@ namespace utils {
         }
     }
 
+    bool getSimStatus(Redis &redis) {
+        spdlog::info("Getting sim status from Redis");
+        auto r = redis.get("sim_running");
+//        auto r = redis.command<OptionalString>("get", "sim_running");
+
+        if (r.has_value()) {
+            spdlog::info("Sim status: {}", r.value());
+            return r.value() == "true";
+        } else {
+            spdlog::error("Couldn't get sim status");
+            return false;
+        }
+    }
+
     void SyncWait(Redis& redis) {
         bool sync_done = false;
         // Decrement the counter when process is ready
