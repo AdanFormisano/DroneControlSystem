@@ -22,7 +22,7 @@ namespace drone_control {
 
         // Init the buffers
 
-        std::this_thread::sleep_for(std::chrono::milliseconds (500));
+//        std::this_thread::sleep_for(std::chrono::milliseconds(200));
 //      utils::SyncWait(redis);
         utils::NamedSyncWait(redis, "DroneControl");
 
@@ -31,8 +31,8 @@ namespace drone_control {
         spdlog::info("Drone paths loaded");
 
         // Launch the thread to dispatch the drone data to the mini buffers
-        boost::thread dispatch_thread(DispatchDroneData, std::ref(buffer), std::ref(mini_buffers));
-        boost::thread write_thread(WriteToDB, std::ref(mini_buffers), std::ref(db));
+        boost::thread dispatch_thread(DispatchDroneData, std::ref(buffer), std::ref(mini_buffer_container));
+        boost::thread write_thread(WriteToDB, std::ref(mini_buffer_container), std::ref(db));
 //        spdlog::info("Threads started");
 
         // TODO: Implement as a thread
@@ -63,6 +63,7 @@ namespace drone_control {
 
 // Reads the stream of data from Redis and updates the drones' data
     void DroneControl::ReadStream() {
+//        std::cout << "Creating stream data structure" << std::endl;
         using new_Attrs = std::vector<std::pair<std::string, std::string>>; // This NEEDS to be a vector for xread to work
         using new_Item = std::pair<std::string, new_Attrs>;
         using new_ItemStream = std::vector<new_Item>;
@@ -73,11 +74,11 @@ namespace drone_control {
             // TODO: Check of number_items_stream is necessary
             // Gets the number of items in the stream
             auto number_items_stream = redis.command<long long>("XLEN", "drone_stream");
-
+//            std::cout << number_items_stream << " elements in stream" << std::endl;
             // Reads the stream
             redis.xread("drone_stream", current_stream_id, std::chrono::milliseconds(10), number_items_stream,
                         std::inserter(new_result, new_result.end()));
-
+//            std::cout << "Stream read" << std::endl;
             // Parses the stream
             for (const auto &item: new_result) {
                 // There is only one pair: stream_key and stream_data
@@ -111,7 +112,9 @@ namespace drone_control {
         temp_drone_struct.data.position.second = std::stof(data[4].second);
         temp_drone_struct.data.zone_id = std::stoi(data[5].second);
         temp_drone_struct.data.charge_needed_to_base = std::stof(data[6].second);
-        temp_drone_struct.tick_n = tick_n;
+        temp_drone_struct.tick_n = std::stoi(data[7].second);;
+
+//        spdlog::info("Drone {} at tick {}", temp_drone_struct.data.id, temp_drone_struct.tick_n);
 
         auto check = CheckPath(temp_drone_struct.data.zone_id, temp_drone_struct.data.position);
         checklist[temp_drone_struct.data.zone_id] = check;

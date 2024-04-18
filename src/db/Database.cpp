@@ -75,7 +75,7 @@ void Database::ExecuteQuery(const std::string &query) {
         return;
     }
 
-    spdlog::info("Executing query: {}", query);
+//    spdlog::info("Executing query: {}", query);
     pqxx::work W(*conn);
     W.exec(query);
     W.commit();

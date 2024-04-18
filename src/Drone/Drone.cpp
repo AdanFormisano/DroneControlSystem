@@ -15,7 +15,7 @@ namespace drones {
 
         drone_data = {
             {"id",                    std::to_string(drone_id)},
-            {"status",                utils::CaccaPupu(drone_state)},  // FIXME: name
+            {"status",                utils::CaccaPupu(drone_state)},  // FIXME: name of function
             {"charge",                std::to_string(drone_charge)},
             {"X",                     std::to_string(drone_position.first)},
             {"Y",                     std::to_string(drone_position.second)},
@@ -54,6 +54,8 @@ namespace drones {
 #endif
                     // Must wait for DroneControl to release the drone
                     cmd = drone_redis.get("drone:" + std::to_string(drone_id) + ":command");
+
+                    UploadStatusOnStream();
 
                     if (cmd == "work") {
                         // Remove the drone from the queue of zone drones

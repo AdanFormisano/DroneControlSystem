@@ -21,6 +21,7 @@ public:
 
     void WriteToBuffer(drone_data_ext &data);
     drone_data_ext ReadFromBuffer();
+    void ClearBuffer();
 
     size_t getSize();
 
@@ -40,6 +41,12 @@ private:
     int id;
 };
 
-void DispatchDroneData(Buffer &buffer, std::map<int, std::shared_ptr<MiniBuffer>> &mini_buffers);
-void WriteToDB(std::map<int, std::shared_ptr<MiniBuffer>> &mini_buffers, Database &db);
+class MiniBufferContainer : public boost::basic_lockable_adapter<boost::mutex> {
+public:
+    std::map<int, std::shared_ptr<MiniBuffer>> mini_buffers;
+    boost::condition_variable cv;
+};
+
+void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers);
+void WriteToDB(MiniBufferContainer &mini_buffers, Database &db);
 #endif //DRONECONTROLSYSTEM_BUFFER_H

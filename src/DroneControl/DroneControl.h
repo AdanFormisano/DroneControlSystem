@@ -30,7 +30,8 @@ namespace drone_control {
         std::array<bool, ZONE_NUMBER> checklist{};                                    // Array with bool values to check if the drone is following the path
         Database db;
         Buffer buffer;
-        std::map<int, std::shared_ptr<MiniBuffer>> mini_buffers;
+//        std::map<int, std::shared_ptr<MiniBuffer>> mini_buffers;
+        MiniBufferContainer mini_buffer_container;
 
         void GetDronePaths();
         bool CheckPath(int zone_id, std::pair<float, float> &position);
