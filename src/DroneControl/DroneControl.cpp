@@ -11,19 +11,20 @@
 namespace drone_control {
     DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis) {
         // Initialize the database
+
         db.get_DB();
     };
 
 // Run the DroneControl process
     void DroneControl::Run() {
         // Initial setup
-        spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
         spdlog::info("DroneControl process starting");
 
         // Init the buffers
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        utils::SyncWait(redis);
+        std::this_thread::sleep_for(std::chrono::milliseconds (500));
+//      utils::SyncWait(redis);
+        utils::NamedSyncWait(redis, "DroneControl");
 
         // First thing to do is to get all the drone paths from the Redis server
         GetDronePaths();
@@ -102,27 +103,30 @@ namespace drone_control {
 // Updates the local drone data and executes the check for the drone's path
     void DroneControl::ParseStreamData(const std::vector<std::pair<std::string, std::string>> &data) {
         // The data is structured as a known array
-        drone_data temp_drone_struct;
-        temp_drone_struct.id = std::stoi(data[0].second);
-        temp_drone_struct.status = data[1].second;
-        temp_drone_struct.charge = std::stof(data[2].second);
-        temp_drone_struct.position.first = std::stof(data[3].second);
-        temp_drone_struct.position.second = std::stof(data[4].second);
-        temp_drone_struct.zone_id = std::stoi(data[5].second);
-        temp_drone_struct.charge_needed_to_base = std::stof(data[6].second);
+        drone_data_ext temp_drone_struct;
+        temp_drone_struct.data.id = std::stoi(data[0].second);
+        temp_drone_struct.data.status = data[1].second;
+        temp_drone_struct.data.charge = std::stof(data[2].second);
+        temp_drone_struct.data.position.first = std::stof(data[3].second);
+        temp_drone_struct.data.position.second = std::stof(data[4].second);
+        temp_drone_struct.data.zone_id = std::stoi(data[5].second);
+        temp_drone_struct.data.charge_needed_to_base = std::stof(data[6].second);
+        temp_drone_struct.tick_n = tick_n;
 
-        checklist[temp_drone_struct.zone_id] = CheckPath(temp_drone_struct.zone_id, temp_drone_struct.position);
+        auto check = CheckPath(temp_drone_struct.data.zone_id, temp_drone_struct.data.position);
+        checklist[temp_drone_struct.data.zone_id] = check;
+        temp_drone_struct.check = check;
 
         // Check if the drone's charge is enough to go back to the base and check when to swap drones
-        CheckDroneCharge(temp_drone_struct.id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
-        CheckForSwap(temp_drone_struct.zone_id, temp_drone_struct.id, temp_drone_struct.charge, temp_drone_struct.charge_needed_to_base);
+        CheckDroneCharge(temp_drone_struct.data.id, temp_drone_struct.data.charge, temp_drone_struct.data.charge_needed_to_base);
+        CheckForSwap(temp_drone_struct.data.zone_id, temp_drone_struct.data.id, temp_drone_struct.data.charge, temp_drone_struct.data.charge_needed_to_base);
 
         // Update the drone data array
         // drones[std::to_string(temp_drone_struct.id)] = temp_drone_struct;
 
         // Upload the data to the database
         // db.logDroneData(temp_drone_struct, checklist);
-        buffer.WriteToBuffer(temp_drone_struct, checklist[temp_drone_struct.zone_id], tick_n);
+        buffer.WriteToBuffer(temp_drone_struct);
     }
 
 // Get all the drone paths from the Redis server. Each index is a specific drone ID. This is for faster access.

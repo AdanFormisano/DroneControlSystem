@@ -65,7 +65,6 @@ namespace drones {
 #ifdef DEBUG
                     spdlog::info("Drone {} is now working: path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
 #endif
-
                     drones[0]->setSwap(false);
                 }
 

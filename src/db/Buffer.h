@@ -19,7 +19,7 @@ class Buffer : public boost::basic_lockable_adapter<boost::mutex> {
 public:
     ~Buffer();
 
-    void WriteToBuffer(drone_data &drone, bool &check, int tick_n);
+    void WriteToBuffer(drone_data_ext &data);
     drone_data_ext ReadFromBuffer();
 
     size_t getSize();

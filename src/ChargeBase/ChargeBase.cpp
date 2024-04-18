@@ -11,11 +11,12 @@ namespace charge_base {
         return instance;
     }
 
-    ChargeBase::ChargeBase(Redis &redis) : redis(redis) {}
+    ChargeBase::ChargeBase(Redis &redis) : redis(redis) {
+        spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
+        spdlog::info("ChargeBase process starting");
+    }
 
     void ChargeBase::Run() {
-        spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
-
         bool sim_running = (redis.get("sim_running") == "true");
 
         while (sim_running) {

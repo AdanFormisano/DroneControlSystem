@@ -20,7 +20,8 @@ namespace drones {
             {"X",                     std::to_string(drone_position.first)},
             {"Y",                     std::to_string(drone_position.second)},
             {"zone_id",               std::to_string(dz.getZoneId())},
-            {"charge_needed_to_base", std::to_string(0)}
+            {"charge_needed_to_base", std::to_string(0)},
+            {"tick_n",                std::to_string(tick_n)}
         };
 
         // Add the drone to the zone's queue of drones
@@ -42,7 +43,7 @@ namespace drones {
     void Drone::Run() {
         try {
             std::optional<std::string> cmd;     // Command received from the Redis DB
-            tick_n = dz.tick_n;
+            drone_data[7].second = std::to_string(tick_n);
 
             // Run the drone's state machine
             switch (drone_state) {

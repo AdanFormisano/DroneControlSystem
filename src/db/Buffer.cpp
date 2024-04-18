@@ -5,10 +5,10 @@ Buffer::~Buffer() {
     std::queue<drone_data_ext>().swap(buffer);
 }
 
-void Buffer::WriteToBuffer(drone_data &drone, bool &check, int tick_n) {
+void Buffer::WriteToBuffer(drone_data_ext &data) {
     try {
         boost::lock_guard<Buffer> write_lock(*this);
-        buffer.push({drone, check, tick_n});
+        buffer.push({data});
 //        spdlog::info("Wrote to buffer Drone {} at tick {}", drone.id, tick_n);
     } catch (const std::exception &e) {
         spdlog::error("Error writing to the buffer: {}", e.what());
@@ -95,12 +95,12 @@ void DispatchDroneData(Buffer &buffer, std::map<int, std::shared_ptr<MiniBuffer>
                 // Check if the minibuffer already exists
                 if (mini_buffers.contains(data.tick_n)) {
                     // mini_buffers[data.tick_n].WriteToBuffer(data.data, data.check, data.tick_n);
-                    mini_buffers[data.tick_n]->WriteToBuffer(data.data, data.check, data.tick_n);
+                    mini_buffers[data.tick_n]->WriteToBuffer(data);
                 } else {
                     // MiniBuffer mini_bffr(data.tick_n);
                     // mini_buffers[index] = mini_bffr;
                     mini_buffers[data.tick_n] = std::make_shared<MiniBuffer>(data.tick_n);
-                    mini_buffers[data.tick_n]->WriteToBuffer(data.data, data.check, data.tick_n);
+                    mini_buffers[data.tick_n]->WriteToBuffer(data);
                 }
             }
         }

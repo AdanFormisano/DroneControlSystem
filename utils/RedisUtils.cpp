@@ -45,6 +45,79 @@ namespace utils {
         }
     }
 
+    void AddThisProcessToSyncCounter(Redis& redis, const std::string& process_name) {
+        redis.sadd(sync_counter_key, process_name);
+    }
+
+    int NamedSyncWait(Redis& redis, const std::string& process_name) {
+        try {
+            bool sync_done = false;
+            // Decrement the counter when process is ready
+//        redis.decr(sync_counter_key);
+//        auto value = redis.get(sync_counter_key);
+            // Check if the process is in the set
+            auto cmd = redis.command<OptionalLongLong>("sismember", sync_counter_key, process_name);
+            int is_member = static_cast<int>(cmd.value_or(0));
+            if (!is_member) {
+                spdlog::error("Process {} not in the set", process_name);
+                return 1;
+            } else {
+                redis.srem(sync_counter_key, process_name);
+            }
+
+            // Get the current count
+            auto count = redis.scard(sync_counter_key);
+
+            // If the counter is 0 all processes are ready
+            if (count == 0) {
+                // Start the simulation
+                redis.set("sim_running", "true");
+                spdlog::info("----SIMULATION STARTED----");
+
+                // Notify all processes that they can continue and sync is done
+                redis.publish(sync_channel, "SYNC_DONE");
+                spdlog::info("SYNC IS DONE!");
+
+            } else {
+                // If the counter is not 0, there are still processes working, wait for the SYNC_DONE message
+                auto sub = redis.subscriber();
+                sub.subscribe(sync_channel);
+
+                // Wait for the SYNC_DONE message
+                sub.on_message([&sub, &sync_done](const std::string &channel, const std::string &msg) {
+                    if (msg == "SYNC_DONE") {
+                        // spdlog::info("SYNC_DONE received");
+                        sync_done = true;
+                        sub.unsubscribe(sync_channel);
+                    } else {
+                        spdlog::error("Unknown message: {}", msg);
+                    }
+                });
+
+                while (!sync_done) {
+                    try {
+                        // This will block the process until a message is received
+                        sub.consume();
+                    } catch (const Error &err) {
+                        spdlog::error("Error consuming messages");
+                    }
+                }
+
+            }
+
+            return 0;
+        } catch (const std::invalid_argument& e) {
+            spdlog::error("Invalid argument: {}", e.what());
+            return 1;
+        } catch (const std::out_of_range& e) {
+            spdlog::error("Out of range: {}", e.what());
+            return 1;
+        } catch (const Error& e) {
+            spdlog::error("Error: {}", e.what());
+            return 1;
+        }
+    }
+
     void SyncWait(Redis& redis) {
         bool sync_done = false;
         // Decrement the counter when process is ready

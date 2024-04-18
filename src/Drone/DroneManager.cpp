@@ -11,7 +11,7 @@ namespace drones {
     void DroneManager::Run() {
         // Initial setup
         spdlog::set_pattern("[%T.%e][%^%l%$][Drone] %v");
-        spdlog::info("Initializing Drone process");
+        spdlog::info("Drone process starting");
 
         // Calculate the zones_vertex' vertex_coords
         CalculateGlobalZoneCoords();
@@ -20,7 +20,8 @@ namespace drones {
         CreateZones();
 
         // Wait for all the processes to be ready
-        utils::SyncWait(shared_redis);
+//        utils::SyncWait(shared_redis);
+        utils::NamedSyncWait(shared_redis, "Drone");
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         // Exists for the duration of the simulation

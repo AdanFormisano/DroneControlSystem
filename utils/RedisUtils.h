@@ -13,7 +13,9 @@ namespace utils {
     bool getSimStatus(sw::redis::Redis& redis);
 
     // Used for synchronization of processes
+    void AddThisProcessToSyncCounter(Redis& redis, const std::string& process_name);
     void SyncWait(Redis& redis);
+    int NamedSyncWait(Redis& redis, const std::string& process_name);
 }
 
 #endif //DRONECONTROLSYSTEM_REDISUTILS_H
