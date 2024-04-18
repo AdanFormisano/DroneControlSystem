@@ -15,9 +15,11 @@ namespace drones {
 
         // Calculate the zones_vertex' vertex_coords
         CalculateGlobalZoneCoords();
+        spdlog::info("Global zone coords calculated");
 
         // Create the Zones objects for every zone calculated
         CreateZones();
+        spdlog::info("Zones created");
 
         // Wait for all the processes to be ready
 //        utils::SyncWait(shared_redis);

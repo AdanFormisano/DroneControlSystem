@@ -43,6 +43,7 @@ namespace drones {
     void Drone::Run() {
         try {
             std::optional<std::string> cmd;     // Command received from the Redis DB
+            tick_n = dz.tick_n;
             drone_data[7].second = std::to_string(tick_n);
 
             // Run the drone's state machine

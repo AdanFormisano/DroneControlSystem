@@ -105,7 +105,7 @@ namespace drones {
         void CalculateSwapFinalCoords();            // Calculates the final coords of the swap
 
     private:
-        int tick_n = dz.tick_n;
+        int tick_n = 0;
         Redis &drone_redis;
         std::string redis_id;
         DroneZone &dz;
