@@ -3,9 +3,9 @@
 #include "../globals.h"
 #include "Database.h"
 #include <boost/thread.hpp>
+#include <boost/thread/lockable_adapter.hpp>
 #include <condition_variable>
 #include <pqxx/pqxx>
-#include <boost/thread/lockable_adapter.hpp>
 
 struct drone_data_ext {
     drone_data data;
@@ -43,10 +43,12 @@ private:
 
 class MiniBufferContainer : public boost::basic_lockable_adapter<boost::mutex> {
 public:
+    boost::mutex mutex; // Mutex to protect access to the container
+
     std::map<int, std::shared_ptr<MiniBuffer>> mini_buffers;
     boost::condition_variable cv;
 };
 
 void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers);
 void WriteToDB(MiniBufferContainer &mini_buffers, Database &db);
-#endif //DRONECONTROLSYSTEM_BUFFER_H
+#endif // DRONECONTROLSYSTEM_BUFFER_H
