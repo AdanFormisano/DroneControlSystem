@@ -119,7 +119,9 @@ void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers) {
             }
             spdlog::info("{} elements read from BIG BUFFER", data_vector.size());
 
-            boost::lock_guard<MiniBufferContainer> mini_lock(mini_buffers);
+            boost::unique_lock<boost::mutex> mini_lock(mini_buffers.mutex);
+            // boost::lock_guard<MiniBufferContainer> mini_lock(mini_buffers);
+
             for (auto &data : data_vector) {
                 //                spdlog::info("Reading Drone {} at tick {} from buffer", data.data.id, data.tick_n);
 
@@ -135,6 +137,7 @@ void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers) {
                     mini_buffers.mini_buffers[data.tick_n]->WriteToBuffer(data);
                 }
             }
+            mini_lock.unlock();
             mini_buffers.cv.notify_all();
         }
         boost::this_thread::sleep_for(boost::chrono::milliseconds(5));
@@ -148,7 +151,8 @@ void WriteToDB(MiniBufferContainer &mini_buffers, Database &db) {
         //        spdlog::info("Numbers of mini buffers: {}", mini_buffers.size());
         // Create boost guard
         boost::unique_lock<boost::mutex> mini_lock(mini_buffers.mutex);
-        mini_buffers.cv.wait(mini_lock, [&mini_buffers] { return !mini_buffers.mini_buffers.empty(); });
+        // boost::lock_guard<MiniBufferContainer> mini_lock(mini_buffers);
+        mini_buffers.cv.wait(mini_lock);
         // Check if the first mini buffer is full
         //            int tick = mini_buffers.mini_buffers.begin()->first;
         //            int max_size = static_cast<int>(std::floor(tick / 5)+1) * 150;
@@ -177,6 +181,7 @@ void WriteToDB(MiniBufferContainer &mini_buffers, Database &db) {
                 // Minibuffer is now empty and can be deleted
                 mini_buffers.mini_buffers.erase(mini_buffers.mini_buffers.begin());
             }
+            mini_lock.unlock();
             boost::this_thread::sleep_for(boost::chrono::milliseconds(200));
         }
     }
