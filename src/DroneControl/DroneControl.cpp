@@ -31,8 +31,8 @@ namespace drone_control {
         spdlog::info("Drone paths loaded");
 
         // Launch the thread to dispatch the drone data to the mini buffers
-        boost::thread dispatch_thread(DispatchDroneData, std::ref(buffer), std::ref(mini_buffer_container));
-        boost::thread write_thread(WriteToDB, std::ref(mini_buffer_container), std::ref(db));
+        boost::thread dispatch_thread(DispatchDroneData, std::ref(buffer), std::ref(mini_buffer_container), std::ref(redis));
+        boost::thread write_thread(WriteToDB, std::ref(mini_buffer_container), std::ref(db), std::ref(redis));
 //        spdlog::info("Threads started");
 
         // TODO: Implement as a thread

@@ -15,7 +15,6 @@ namespace drones {
     // The zone is created with vertex_coords_sqr set.
     DroneZone::DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &coords, Redis &redis)
             : zone_id(zone_id), vertex_coords(coords), zone_redis(redis) {
-
         // Create drone path
         CreateDronePath();
         UploadPathToRedis();
@@ -96,7 +95,8 @@ namespace drones {
         spdlog::info("DroneZone {} finished", zone_id);
     }
 
-    void DroneZone::SpawnThread() {
+    void DroneZone::SpawnThread(int tick_n_dm) {
+        tick_n = tick_n_dm;
         zone_thread = boost::thread(&DroneZone::Run, this);
     }
 

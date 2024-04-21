@@ -68,7 +68,7 @@ namespace drones {
         void Run();
         void CreateDrone(int drone_id);     // Creates a new drone
         void CreateNewDrone();                                                          // Creates a new drone
-        void SpawnThread();                                                            // Spawns the zone thread
+        void SpawnThread(int tick_n_drone_manager);                                                            // Spawns the zone thread
 
     private:
         const int zone_id;
@@ -105,7 +105,7 @@ namespace drones {
         void CalculateSwapFinalCoords();            // Calculates the final coords of the swap
 
     private:
-        int tick_n = 0;
+        int tick_n;
         Redis &drone_redis;
         std::string redis_id;
         DroneZone &dz;

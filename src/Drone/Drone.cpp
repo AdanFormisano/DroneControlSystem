@@ -45,6 +45,7 @@ namespace drones {
             std::optional<std::string> cmd;     // Command received from the Redis DB
             tick_n = dz.tick_n;
             drone_data[7].second = std::to_string(tick_n);
+            drone_redis.hincrby("zone:" + std::to_string(dz.getZoneId()) + ":drones_alive_history", std::to_string(tick_n), 1);
 
             // Run the drone's state machine
             switch (drone_state) {

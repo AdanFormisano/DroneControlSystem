@@ -6,6 +6,9 @@
 #include <boost/thread/lockable_adapter.hpp>
 #include <condition_variable>
 #include <pqxx/pqxx>
+#include "sw/redis++/redis++.h"
+
+using namespace sw::redis;
 
 struct drone_data_ext {
     drone_data data;
@@ -49,6 +52,6 @@ public:
     boost::condition_variable cv;
 };
 
-void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers);
-void WriteToDB(MiniBufferContainer &mini_buffers, Database &db);
+void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers, Redis &redis);
+void WriteToDB(MiniBufferContainer &mini_buffers, Database &db, Redis &redis);
 #endif // DRONECONTROLSYSTEM_BUFFER_H

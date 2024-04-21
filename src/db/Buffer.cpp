@@ -49,7 +49,7 @@ void Buffer::ClearBuffer() {
 void MiniBuffer::WriteBlockToDB(Database &db, int size) {
     try {
         // Base query string
-        std::string sql = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, x, y, checked) VALUES ";
+        std::string sql = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, zone, x, y, checked) VALUES ";
 
         // Creates the entire query string
         for (size_t _ = 0; _ < size; ++_) {
@@ -62,6 +62,7 @@ void MiniBuffer::WriteBlockToDB(Database &db, int size) {
                    std::to_string(data.data.id) + ", '" +
                    data.data.status + "', '" +
                    std::to_string(data.data.charge) + "', " +
+                   std::to_string(data.data.zone_id) + ", " +
                    std::to_string(data.data.position.first) + ", " +
                    std::to_string(data.data.position.second) + ", '" +
                    (data.check ? "true" : "false") + "')";
@@ -105,7 +106,7 @@ void MiniBuffer::WriteBlockToDB(Database &db, int size) {
 // }
 
 // Function ran by the thread to dispatch the drone data to the mini buffers
-void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers) {
+void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers, Redis &redis) {
     // TODO: Add better sync mechanism: DroneControl needs to have the priority on the buffer
     while (true) {
         auto buffer_size = buffer.getSize();
@@ -118,6 +119,10 @@ void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers) {
                 data_vector.push_back(buffer.ReadFromBuffer());
             }
             spdlog::info("{} elements read from BIG BUFFER", data_vector.size());
+//            spdlog::info("BIG BUFFER size {}:\n0: {}, {}\n1: {}, {}\n2: {}, {}", buffer_size,
+//                         data_vector[0].tick_n, data_vector[0].data.id,
+//                         data_vector[1].tick_n, data_vector[1].data.id,
+//                         data_vector[2].tick_n, data_vector[2].data.id);
 
             boost::unique_lock<boost::mutex> mini_lock(mini_buffers.mutex);
             // boost::lock_guard<MiniBufferContainer> mini_lock(mini_buffers);
@@ -145,19 +150,18 @@ void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers) {
 };
 
 // Function ran by the thread to write the mini buffer to the database
-void WriteToDB(MiniBufferContainer &mini_buffers, Database &db) {
+void WriteToDB(MiniBufferContainer &mini_buffers, Database &db, Redis &redis) {
     // TODO: Execute while the program is running but before the program ends, write the remaining mini buffers
+
+    // Map to store the number of elements needed to write to the database for each mini buffer
+     std::pair<int, int> mini_buffers_elements = {-1, 0};
+
     while (true) {
         //        spdlog::info("Numbers of mini buffers: {}", mini_buffers.size());
         // Create boost guard
         boost::unique_lock<boost::mutex> mini_lock(mini_buffers.mutex);
-        // boost::lock_guard<MiniBufferContainer> mini_lock(mini_buffers);
         mini_buffers.cv.wait(mini_lock);
-        // Check if the first mini buffer is full
-        //            int tick = mini_buffers.mini_buffers.begin()->first;
-        //            int max_size = static_cast<int>(std::floor(tick / 5)+1) * 150;
-        //
-        //            return !mini_buffers.mini_buffers.empty();
+
         auto mini_b = mini_buffers.mini_buffers.begin()->second;
 
         if (mini_b == nullptr) {
@@ -168,19 +172,37 @@ void WriteToDB(MiniBufferContainer &mini_buffers, Database &db) {
             int tick = mini_buffers.mini_buffers.begin()->first;
             int max_size = static_cast<int>(std::floor(tick / 5) + 1) * 150;
             spdlog::info("Mini buffer {} is size: {}", mini_buffers.mini_buffers.begin()->first, mini_b->getSize());
-            if (mini_b->getSize() == max_size && tick < 20) {
-                spdlog::info("Writing minibuffer {} of size {} to db", mini_buffers.mini_buffers.begin()->first, mini_b->getSize());
-                mini_b->WriteBlockToDB(db, max_size);
 
-                // Minibuffer is now empty and can be deleted
-                mini_buffers.mini_buffers.erase(mini_buffers.mini_buffers.begin());
-            } else if (mini_b->getSize() == ZONE_NUMBER && tick >= 20) {
-                mini_b->WriteBlockToDB(db, ZONE_NUMBER);
-                spdlog::info("Writing minibuffer {} of size {} to db", mini_buffers.mini_buffers.begin()->first, mini_b->getSize());
+            // Check if first time checking the "current" mini buffer
+            if (mini_buffers_elements.first != mini_b->getID()) {
+                // Get the number of elements needed
+                int n_elements = 0;
 
-                // Minibuffer is now empty and can be deleted
-                mini_buffers.mini_buffers.erase(mini_buffers.mini_buffers.begin());
+                for (int i = 0; i < ZONE_NUMBER; ++i) {
+                    auto n_alive_drones = redis.hget("zone:" + std::to_string(i) + ":drones_alive_history", std::to_string(mini_b->getID()));
+                    if (n_alive_drones.has_value()) {
+                        n_elements += std::stoi(n_alive_drones.value());
+                    }
+                }
+                mini_buffers_elements = {mini_b->getID(), n_elements};
             }
+
+            // Get the number of elements in the current mini buffer
+
+            spdlog::info("Minibuffer {} has {} n_elements", mini_b->getID(), mini_buffers_elements.second);
+            if (mini_b->getSize() == mini_buffers_elements.second) {
+                spdlog::info("Writing Minibuffer {} of size {} to db", mini_buffers.mini_buffers.begin()->first, mini_b->getSize());
+                mini_b->WriteBlockToDB(db, mini_buffers_elements.second);
+
+                // Minibuffer is now empty and can be deleted
+                mini_buffers.mini_buffers.erase(mini_buffers.mini_buffers.begin());
+
+                // Remove from redis the number of drones alive for the current tick
+                for (int i = 0; i < ZONE_NUMBER; ++i) {
+                    redis.hdel("zone:" + std::to_string(i) + ":drones_alive_history", std::to_string(mini_b->getID()));
+                }
+            }
+
             mini_lock.unlock();
             boost::this_thread::sleep_for(boost::chrono::milliseconds(200));
         }

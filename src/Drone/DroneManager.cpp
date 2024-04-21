@@ -135,6 +135,7 @@ namespace drones {
 
                         // Set the drone to work
                         zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
+                        // TODO: move this somewhere consistent with the other calls
                         shared_redis.sadd("zone:" + zone_id.value() + ":drones_active", drone_id.value());
                     } else {
                         // If there are no drones available, create a new drone for that zone
@@ -167,7 +168,7 @@ namespace drones {
     // Creates a column of 150 threads
     void DroneManager::CreateZoneThreads() {
         for (int i = column_n; i < column_n + 150; ++i) {
-            zones[i]->SpawnThread();
+            zones[i]->SpawnThread(tick_n);
         }
         column_n += 150;
     }
