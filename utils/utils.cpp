@@ -14,5 +14,11 @@ namespace utils {
         return drone_state_str[static_cast<std::size_t>(state)];
     };
 
-
+// Signal handler function
+    void signalHandler(int signal, siginfo_t *si, void *unused) {
+        std::cout << "Caught signal: " << signal << std::endl;
+        // Optionally, you can perform cleanup here
+        // and then exit the program gracefully
+        std::exit(signal);
+    }
 }

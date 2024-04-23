@@ -118,7 +118,7 @@ void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers, Redis 
                 //                spdlog::info("Reading tick_n {} from BIG BUFFER", data.tick_n);
                 data_vector.push_back(buffer.ReadFromBuffer());
             }
-            spdlog::info("{} elements read from BIG BUFFER", data_vector.size());
+//            spdlog::info("{} elements read from BIG BUFFER", data_vector.size());
 //            spdlog::info("BIG BUFFER size {}:\n0: {}, {}\n1: {}, {}\n2: {}, {}", buffer_size,
 //                         data_vector[0].tick_n, data_vector[0].data.id,
 //                         data_vector[1].tick_n, data_vector[1].data.id,
@@ -171,7 +171,7 @@ void WriteToDB(MiniBufferContainer &mini_buffers, Database &db, Redis &redis) {
             // Check if the first mini buffer is full
             int tick = mini_buffers.mini_buffers.begin()->first;
             int max_size = static_cast<int>(std::floor(tick / 5) + 1) * 150;
-            spdlog::info("Mini buffer {} is size: {}", mini_buffers.mini_buffers.begin()->first, mini_b->getSize());
+//            spdlog::info("Mini buffer {} is size: {}", mini_buffers.mini_buffers.begin()->first, mini_b->getSize());
 
             // Check if first time checking the "current" mini buffer
             if (mini_buffers_elements.first != mini_b->getID()) {
@@ -189,7 +189,7 @@ void WriteToDB(MiniBufferContainer &mini_buffers, Database &db, Redis &redis) {
 
             // Get the number of elements in the current mini buffer
 
-            spdlog::info("Minibuffer {} has {} n_elements", mini_b->getID(), mini_buffers_elements.second);
+            spdlog::info("Minibuffer {} needs {} n_elements, it has {} elements", mini_b->getID(), mini_buffers_elements.second, mini_b->getSize());
             if (mini_b->getSize() == mini_buffers_elements.second) {
                 spdlog::info("Writing Minibuffer {} of size {} to db", mini_buffers.mini_buffers.begin()->first, mini_b->getSize());
                 mini_b->WriteBlockToDB(db, mini_buffers_elements.second);

@@ -36,6 +36,7 @@ namespace drones {
         }
 
         // Set initial status in Redis
+//        tick_n = dz.tick_n;
         UploadStatus();
     }
 
@@ -114,6 +115,7 @@ namespace drones {
                 case drone_state_enum::FOLLOWING:
                     // TODO: The drone should still upload to redis its status
                     // Swap has started: the drone must follow the working drone (zone:id:swap is "started")
+                        UseCharge(20.0f);
 
                     // If the working drone still hasn't arrived to the swapping drone's position wait for it
                     if (drone_position != dz.drones[0]->getDronePosition()) {
@@ -122,9 +124,18 @@ namespace drones {
                         spdlog::info("Drone {} is at {} {}", dz.drones[0]->getDroneId(), dz.drones[0]->getDronePosition().first, dz.drones[0]->getDronePosition().second);
                         spdlog::info("Drone {} is at {} {}", drone_id, drone_position.first, drone_position.second);
 #endif
-                        UseCharge(20.0f);
+                        drone_data[2].second = std::to_string(drone_charge);
                         drone_data[3].second = std::to_string(drone_position.first);
-                        break;
+                        drone_data[4].second = std::to_string(drone_position.second);
+                        UploadStatusOnStream();
+                    } else {
+                        // The working drone has arrived to the swapping drone's position
+//                        drone_data[1].second = utils::CaccaPupu(drone_state_enum::SWAPPING);
+                        drone_data[2].second = std::to_string(drone_charge);
+                        drone_data[3].second = std::to_string(drone_position.first);
+                        drone_data[4].second = std::to_string(drone_position.second);
+                        drone_redis.hset(redis_id, "status", "SWAPPING");
+                        UploadStatusOnStream();
                     }
                     break;
 
@@ -171,6 +182,8 @@ namespace drones {
                     spdlog::info("TICK {}: Drone {} [{}%] is waiting for charge", tick_n, drone_id, drone_charge);
 #endif
                     SendChargeRequest();   // Uploads the drone status to Redis before sleeping
+                    drone_data[2].second = std::to_string(drone_charge);
+                    UploadStatusOnStream();
                     destroy = true;
 
                 case drone_state_enum::TOTAL:

@@ -68,22 +68,22 @@ namespace drones {
                 }
 
                 if (drones[0]->getDestroy()) {
-                    spdlog::info("Drone {} getting destroyed", drones[0]->getDroneId());
+//                    spdlog::info("Drone {} getting destroyed", drones[0]->getDroneId());
                     // Remove the drone from the vector
                     drones.erase(drones.begin());
 
-                    spdlog::info("DroneZone {} now has {} drones", zone_id, drones.size());
+//                    spdlog::info("DroneZone {} now has {} drones", zone_id, drones.size());
                 }
 
                 // Check if there is time left in the tick
                 auto tick_now = std::chrono::steady_clock::now();
-                if (tick_now < tick_start + (tick_duration_ms * number_of_drones)) {
+                if (tick_now <= tick_start + (tick_duration_ms * number_of_drones)) {
                     // Sleep for the remaining time
                     std::this_thread::sleep_for(tick_start + tick_duration_ms - tick_now);
                 } else if (tick_now > tick_start + (tick_duration_ms * number_of_drones)) {
                     // Log if the tick took too long
                     spdlog::warn("DroneZone {} tick took too long", zone_id);
-                    break;
+//                    break;
                 }
                 // Get sim_running from Redis
                 sim_running = (zone_redis.get("sim_running") == "true");

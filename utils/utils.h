@@ -4,6 +4,9 @@
 #include <array>
 #include <random>
 #include <unordered_map>
+#include <iostream>
+#include <csignal>
+#include <cstdlib>
 
 extern std::default_random_engine generator;
 extern std::uniform_real_distribution<float> float_distribution_mten_to_ten;
@@ -32,5 +35,6 @@ constexpr std::array<const char *, static_cast<std::size_t>(drone_state_enum::TO
 
 namespace utils {
 const char *CaccaPupu(drone_state_enum state);
+void signalHandler(int signal);
 }
 #endif // DRONECONTROLSYSTEM_UTILS_H

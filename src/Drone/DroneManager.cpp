@@ -52,7 +52,7 @@ namespace drones {
                 } else if (tick_now > tick_start + tick_duration_ms) {
                     // Log if the tick took too long
                     spdlog::warn("DroneManager tick took too long");
-                    break;
+//                    break;
                 }
 
                 // Get sim_running from Redis
@@ -135,6 +135,7 @@ namespace drones {
 
                         // Set the drone to work
                         zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
+
                         // TODO: move this somewhere consistent with the other calls
                         shared_redis.sadd("zone:" + zone_id.value() + ":drones_active", drone_id.value());
                     } else {
@@ -148,7 +149,8 @@ namespace drones {
 
                         // Set the drone to work
                         zones[z]->drones.back()->CalculateSwapFinalCoords();
-                        zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
+//                        zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
+                        shared_redis.set("drone:" + std::to_string(zones[z]->drones.back()->getDroneId()) + ":command", "follow");
                     }
                     // Update zone swap status
                     shared_redis.set("zone:" + zone_id.value() + ":swap", "started");
