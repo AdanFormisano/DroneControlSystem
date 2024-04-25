@@ -19,8 +19,6 @@ add_executable(DroneControlSystem
         src/Database/Database.h
         src/Database/Buffer.cpp
         src/Database/Buffer.h
-        src/Monitor/Monitor.cpp
-        src/Monitor/Monitor.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
