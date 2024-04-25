@@ -1,7 +1,7 @@
 #ifndef DRONECONTROLSYSTEM_DRONECONTROL_H
 #define DRONECONTROLSYSTEM_DRONECONTROL_H
 #include "../globals.h"
-#include "../db/Buffer.h"
+#include "../Database/Buffer.h"
 #include "../../utils/RedisUtils.h"
 #include <sw/redis++/redis++.h>
 #include <vector>

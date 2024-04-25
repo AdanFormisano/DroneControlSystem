@@ -15,14 +15,16 @@ add_executable(DroneControlSystem
         src/Drone/DroneManager.h
         src/globals.cpp
         src/globals.h
-        src/db/Database.cpp
-        src/db/Database.h
+        src/Database/Database.cpp
+        src/Database/Database.h
+        src/Database/Buffer.cpp
+        src/Database/Buffer.h
+        src/Monitor/Monitor.cpp
+        src/Monitor/Monitor.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
         utils/utils.h
-        src/db/Buffer.h
-        src/db/Buffer.cpp
 )
 
 option(DEBUG "Enable debug mode" OFF)
