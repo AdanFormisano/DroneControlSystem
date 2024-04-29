@@ -134,10 +134,8 @@ namespace drones {
                         zones[z]->CreateDrone(std::stoi(drone_id.value()));
 
                         // Set the drone to work
-                        zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
-
-                        // TODO: move this somewhere consistent with the other calls
-                        shared_redis.sadd("zone:" + zone_id.value() + ":drones_active", drone_id.value());
+//                        zones[z]->drones.back()->SetDroneState(drone_state_enum::TO_ZONE_FOLLOWING);
+                        shared_redis.set("drone:" + std::to_string(zones[z]->drones.back()->getDroneId()) + ":command", "follow");
                     } else {
                         // If there are no drones available, create a new drone for that zone
 

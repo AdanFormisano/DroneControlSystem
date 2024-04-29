@@ -103,6 +103,7 @@ namespace drones {
     void DroneZone::CreateDrone(int drone_id) {
         drones.emplace_back(std::make_shared<Drone>(drone_id, *this));
         spdlog::info("Drone {} created in zone {}", drone_id, zone_id);
+        zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(drone_id));
     }
 
     void DroneZone::CreateNewDrone() {

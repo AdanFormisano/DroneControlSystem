@@ -112,7 +112,7 @@ namespace drone_control {
         temp_drone_struct.data.position.second = std::stof(data[4].second);
         temp_drone_struct.data.zone_id = std::stoi(data[5].second);
         temp_drone_struct.data.charge_needed_to_base = std::stof(data[6].second);
-        temp_drone_struct.tick_n = std::stoi(data[7].second);;
+        temp_drone_struct.tick_n = std::stoi(data[7].second);
 
 //        spdlog::info("Drone {} at tick {}", temp_drone_struct.data.id, temp_drone_struct.tick_n);
 

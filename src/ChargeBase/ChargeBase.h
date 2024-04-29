@@ -22,6 +22,7 @@ namespace charge_base {
         struct ext_drone_data {
             drone_data base_data;
             float charge_rate{};
+            std::pair<int, int> charge_start; // first is drone's tick, second is ChargeBase's tick
         };
 
         std::mt19937 engine;
@@ -34,6 +35,7 @@ namespace charge_base {
 
         void ReadChargeStream();
         void SetChargeData(const std::vector<std::pair<std::string, std::string>> &data);
+        void IncrementZoneHistory(int zone_id, int tick);
         float getChargeRate();
 
     public:
@@ -46,6 +48,7 @@ namespace charge_base {
         static ChargeBase *getInstance(Redis &redis);
         void SetEngine(std::random_device &);
         void ChargeDrone();
+        void ChargeDroneMegaSpeed();
         void releaseDrone(ext_drone_data &);
 
         void Run();

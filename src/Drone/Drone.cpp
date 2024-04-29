@@ -33,6 +33,14 @@ namespace drones {
             spdlog::warn("Drone {} does not exist in the Redis DB", drone_id);
 #endif
             SetChargeNeededToBase();
+        } else {
+            // Take the charge_needed_to_base from the Redis DB
+            drone_charge_to_base = std::stof(drone_redis.hget(redis_id, "charge_needed_to_base").value_or("0"));
+            drone_data[6].second = std::to_string(drone_charge_to_base);
+
+            // Get the drone's final coords for the swap
+            swap_final_coords = {std::stof(drone_redis.hget(redis_id, "swap_final_x").value_or("0")),
+                                 std::stof(drone_redis.hget(redis_id, "swap_final_y").value_or("0"))};
         }
 
         // Set initial status in Redis
@@ -141,6 +149,8 @@ namespace drones {
 
                 case drone_state_enum::WORKING:
                     // TODO: Implement the swap of the drones and all the checks needed
+                    Work();
+
                     cmd = drone_redis.get("drone:" + std::to_string(drone_id) + ":command");
                     if (cmd == "charge") {
                         drone_redis.set("drone:" + std::to_string(drone_id) + ":command", "none");
@@ -156,7 +166,6 @@ namespace drones {
                         spdlog::info("Drone {} [{}%] received charge command", drone_id, drone_charge);
 #endif
                     }
-                    Work();
 #ifdef DEBUG
                     spdlog::info("TICK {}: Drone {} [{}%] is working ({} {})", tick_n, drone_id, drone_charge,
                                  drone_position.first, drone_position.second);
@@ -181,8 +190,8 @@ namespace drones {
 #ifdef DEBUG
                     spdlog::info("TICK {}: Drone {} [{}%] is waiting for charge", tick_n, drone_id, drone_charge);
 #endif
-                    SendChargeRequest();   // Uploads the drone status to Redis before sleeping
                     drone_data[2].second = std::to_string(drone_charge);
+                    SendChargeRequest();   // Uploads the drone status to Redis before sleeping
                     UploadStatusOnStream();
                     destroy = true;
 
@@ -302,11 +311,11 @@ namespace drones {
     void Drone::SendChargeRequest() {
         try {
             auto charge_data = drone_data;
-            charge_data.pop_back();  // Remove the charge_needed_to_base field
+//            charge_data.pop_back();  // Remove the charge_needed_to_base field
             // Upload the drone status to redis
 //            drone_redis.hmset("drone:" + std::to_string(drone_id), charge_data.begin(), charge_data.end());
             // Add to charge_stream the drone id
-            drone_redis.xadd("charge_stream", "*", charge_data.begin(), charge_data.end());
+            drone_redis.xadd("charge_stream", "*", drone_data.begin(), drone_data.end());
         } catch (const sw::redis::IoError &e) {
             spdlog::error("Couldn't update status: {}", e.what());
         }
@@ -352,5 +361,9 @@ namespace drones {
         auto [fx, fy] = dz.drone_path[new_index];
         // Set the final coords of the swap
         swap_final_coords = {fx, fy};
+
+        // Upload on Redis the final coords of the swap
+        drone_redis.hset(redis_id, "swap_final_x", std::to_string(fx));
+        drone_redis.hset(redis_id, "swap_final_y", std::to_string(fy));
     }
 }  // namespace drones

@@ -24,7 +24,8 @@ namespace charge_base {
             auto tick_start = std::chrono::steady_clock::now();
 
             // Work
-            ChargeDrone();
+            // ChargeDrone();
+            ChargeDroneMegaSpeed();
             ReadChargeStream();
 
             // Check if there is time left in the tick
@@ -35,7 +36,7 @@ namespace charge_base {
             } else if (tick_now > tick_start + tick_duration_ms) {
                 // Log if the tick took too long
                 spdlog::warn("DroneControl tick {} took too long", tick_n);
-                break;
+//                break;
             }
             // Get sim_running from Redis
             sim_running = (redis.get("sim_running") == "true");
@@ -93,11 +94,36 @@ namespace charge_base {
         temp_drone_struct.base_data.position.first = std::stof(data[3].second);
         temp_drone_struct.base_data.position.second = std::stof(data[4].second);
         temp_drone_struct.base_data.zone_id = std::stoi(data[5].second);
+        temp_drone_struct.base_data.charge_needed_to_base = std::stof(data[6].second);
+        temp_drone_struct.charge_start.first = std::stoi(data[7].second) + 1;
+        temp_drone_struct.charge_start.second = tick_n + 1;
         auto charge_rate = getChargeRate();
         temp_drone_struct.charge_rate = charge_rate;
 
         spdlog::info("Drone {} charge rate: {}", temp_drone_struct.base_data.id, charge_rate);
         redis.hset("drone:" + data[0].second, "status", "CHARGING");
+
+        // Increment the zone:id:drones_alive_history key for the current drone's zone
+        IncrementZoneHistory(temp_drone_struct.base_data.zone_id, temp_drone_struct.charge_start.first);
+        spdlog::info("Zone {} incremented", temp_drone_struct.base_data.zone_id);
+
+        // Upload an entry to the drone_stream indicating that the drone is charging
+        std::vector<std::pair<std::string, std::string>> new_data = {
+            {"id", data[0].second},
+            {"status", "CHARGING"},
+            {"charge", data[2].second},
+            {"position_x", data[3].second},
+            {"position_y", data[4].second},
+            {"zone_id", data[5].second},
+            {"charge_needed_to_base", data[6].second},
+            {"tick_n", std::to_string(temp_drone_struct.charge_start.first)}
+        };
+
+        spdlog::info("Drone_stream data created");
+        redis.xadd("drone_stream", "*", new_data.begin(), new_data.end());
+        spdlog::info("Drone_stream data added");
+
+//        redis.set("drone:" + data[0].second + ":charge_start", std::to_string(temp_drone_struct.charge_start.first + 1));
 
         // Update the drone unordered map
         charging_drones[std::to_string(temp_drone_struct.base_data.id)] = temp_drone_struct;
@@ -125,13 +151,52 @@ namespace charge_base {
         }
     }
 
+    void ChargeBase::ChargeDroneMegaSpeed() {
+        // List of drones to remove from the charging list
+        std::vector<int> drones_to_remove;
+
+        for (auto &drone: charging_drones) {
+            auto &drone_data = drone.second;
+            if (drone_data.base_data.charge < 100) {
+                drone_data.base_data.charge += drone_data.charge_rate * 5;
+            } else if (drone_data.base_data.charge >= 100) {
+                releaseDrone(drone_data);
+
+                // Add the drone to the list of drones to remove
+                drones_to_remove.push_back(drone_data.base_data.id);
+            }
+        }
+
+        // Remove the drones from the charging list
+        for (auto &drone_id: drones_to_remove) {
+            charging_drones.erase(std::to_string(drone_id));
+        }
+    }
+
     void ChargeBase::releaseDrone(ext_drone_data &drone) {
         // Update the drone's status in Redis
-        redis.hset("drone:" + std::to_string(drone.base_data.id), "status", "IDLE_IN_BASE");
+        redis.hset("drone:" + std::to_string(drone.base_data.id), "status", "CHARGE_COMPLETE");
         redis.hset("drone:" + std::to_string(drone.base_data.id), "charge", "100");
 
         // Add the drone to the zone's queue of drones
         redis.rpush("zone:" + std::to_string(drone.base_data.zone_id) + ":charged_drones", std::to_string(drone.base_data.id));
+
+        // Send entry to the drone_stream indicating that the drone is charged
+        int delta_ticks = tick_n - drone.charge_start.second;
+        IncrementZoneHistory(drone.base_data.zone_id, drone.charge_start.first + delta_ticks);
+
+        std::vector<std::pair<std::string, std::string>> new_data = {
+            {"id", std::to_string(drone.base_data.id)},
+            {"status", "CHARGE_COMPLETE"},
+            {"charge", "100"},
+            {"position_x", std::to_string(0)},
+            {"position_y", std::to_string(0)},
+            {"zone_id", std::to_string(drone.base_data.zone_id)},
+            {"charge_needed_to_base", std::to_string(drone.base_data.charge_needed_to_base)},
+            {"tick_n", std::to_string(drone.charge_start.first + delta_ticks)}
+        };
+        redis.xadd("drone_stream", "*", new_data.begin(), new_data.end());
+//        redis.set("drone:" + std::to_string(drone.base_data.id) + ":charge_end", std::to_string(drone.charge_start.first + delta_ticks + 1));
 
         spdlog::info("Drone {} charged to 100%", drone.base_data.id);
     }
@@ -150,5 +215,10 @@ namespace charge_base {
         auto tick_needed_to_charge = (generateRandomFloat() * (60 * 60)) / TICK_TIME_SIMULATED;
 
         return 100.0f / tick_needed_to_charge;
+    }
+
+    void ChargeBase::IncrementZoneHistory(int zone_id, int tick) {
+        // Increment the zone:id:drones_alive_history key for the current drone's zone
+        redis.hincrby("zone:" + std::to_string(zone_id) + ":drones_alive_history", std::to_string(tick), 1);
     }
 }
