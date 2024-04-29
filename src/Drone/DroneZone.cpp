@@ -36,6 +36,10 @@ namespace drones {
     void DroneZone::Run() {
         // Set initial drone to working
         zone_redis.set("drone:" + std::to_string(drones[0]->getDroneId()) + ":command", "work");
+
+        // Calculate first drone swap coords
+        drones[0]->CalculateSwapFinalCoords();
+
         // Get sim_running from Redis
         bool sim_running = (zone_redis.get("sim_running") == "true");
 
