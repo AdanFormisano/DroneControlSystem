@@ -25,7 +25,7 @@ namespace charge_base {
 
             // Work
             // ChargeDrone();
-            ChargeDroneMegaSpeed();
+            ChargeDroneMegaSpeed(); // TESTING: Charge drones at 5x speed
             ReadChargeStream();
 
             // Check if there is time left in the tick

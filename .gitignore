@@ -5,7 +5,11 @@
 .vscode/*
 
 # CLion settings
+.idea/*
 .idea/copilot/*
+
+# Python
+Monitors/.idea/*
 
 # For now remove build directory
 build/*
