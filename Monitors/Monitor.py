@@ -1,3 +1,21 @@
+"""
+All monitors are going to be executed in parallel during the simulation. In particular there are 3 functional monitors
+and 2 non-functional monitors.
+
+The functional monitors are:
+    - checkDroneRechargeTime(): This monitor checks that the number of ticks that a drone has been charging is between
+        [2,3] hours.
+    - checkAreaCoverage(): This monitor checks that all the points of the 6x6 Km area are verified (covered by the drones)
+        every 5 minutes.
+    - checkZoneVerification(): This monitor checks that each zone is verified every 5 minutes (this has some internal
+        implications).
+
+The non-functional monitors are:
+    - checkTimeToReadDroneData(): This monitor checks that the amount of time that the system takes to read one set of
+        data entries from the drones is less than 2.24 seconds (this is the amount of time that a tick simulates).
+    - checkDroneCharge(): This monitor checks that the drones' charge is correctly managed by the system. This means that
+        the drones are swapped when their charge is just enough to return to the base.
+"""
 import psycopg2
 import time
 
@@ -20,6 +38,9 @@ cursor = conn.cursor()
 
 last_element_read = None
 i = 0
+
+drones_charge_times = {}    # Dictionary to store the start and end tick of the drones' charging time
+
 
 def get_latest_element():
     cursor.execute("SELECT * FROM drone_logs ORDER BY tick_n DESC LIMIT 1")
@@ -44,5 +65,24 @@ def check_new_data(last_element):
 while i < 10:
     i += 1
     check_new_data(last_element_read)
+
+# checkDroneReachargeTime() monitor implementation DOABLE
+def checkDroneRechargeTime():
+    """
+    This monitor checks that the number of ticks that a drone has been charging is between [2,3] hours.
+    """
+    # Checks if there are new drones that are charging
+    cursor.execute("SELECT * FROM drone_logs WHERE status = 'CHARGING'")
+    for row in cursor:
+        if row[1] not in drones_charge_times:
+            drones_charge_times[row[1]] = [row[0]]  # Save the start tick of the charging time
+        else:
+
+
+    time.sleep(300)
+
+# checkTimeToReadDroneData() monitor implementation DOABLE BUT NEEDS CHANGES IN THE C++ CODE (new data in DB from DC)
+
+#checkDroneCharge() monitor implementation DOABLE
 
 print('End of simulation')
