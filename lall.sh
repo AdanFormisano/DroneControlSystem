@@ -1,17 +1,17 @@
 #!/bin/bash
-
+echo "-----------------------------------"
 echo "
- ########################
- ## DroneControlSystem ##
- ########################
+########################
+## DroneControlSystem ##
+########################
 "
 echo "Benvenuto in DroneControlSystem! 🤖
 
 Questo programma verifica che ogni punto di una area
- 6×6Km sia verificato almeno ogni 5 minuti.
+6×6 Km sia verificato almeno ogni 5 minuti
 
- Per più info sul progetto, vai qui
-  → https://tinyurl.com/ym49mmqw ←
+Per più info sul progetto, vai qui
+→ https://tinyurl.com/ym49mmqw ←
 "
 
 echo "-----------------------------------"
@@ -27,31 +27,32 @@ if lsof -i:$REDIS_PORT | grep LISTEN; then
     echo "
 Redis è già in esecuzione sulla porta $REDIS_PORT.
 Lo chiudo e lo riapro..."
-echo "-----------------------------------"
+    echo "-----------------------------------"
     redis-cli -p $REDIS_PORT shutdown
     sleep 2
 fi
 
-
 echo -e "\n ☑️ Avvio Redis sulla porta $REDIS_PORT..."
-# ./ls.sh &
-redis-server ./redis.conf --daemonize yes &> /dev/null # &> /dev/null & evita che Redis rompa con un warning inutile
-
+sleep 0.5 # non serve, è solo estetico
+redis-server ./redis.conf --daemonize yes &>/dev/null
+sleep 0.5 # non serve, è solo estetico
 
 cleanup() {
     echo -e "\n\n☑️ Termino i processi..."
-    # echo "Killing Drone PID: $DRONE_PID, Monitor PID: $MONITOR_PID, Tail PID: $TAIL_PID"
     kill -- -$DRONE_PID
-    kill $MONITOR_PID
+    # kill $MONITOR_PID
     if [ "$TAIL_RUNNING" = true ]; then
         kill $TAIL_PID
     fi
-    wait $DRONE_PID $MONITOR_PID $TAIL_PID 2>/dev/null
+    if [ "$MONITOR_RUNNING" = true ]; then
+        kill $MONITOR_LOG_PID
+    fi
+    wait $DRONE_PID $MONITOR_PID $TAIL_PID $MONITOR_LOG_PID 2>/dev/null
 
     echo -e "☑️ Termino Redis..."
     redis-cli -p $REDIS_PORT shutdown
 
-    echo -e "\n✅ Programma terminato."
+    echo -e "\n✅ Programma terminato"
     exit
 }
 
@@ -59,69 +60,96 @@ trap cleanup SIGINT SIGTERM
 
 toggle_tail() {
     if [ "$TAIL_RUNNING" = true ]; then
-        echo -e "
+        echo "
 
-Hai bloccato la visualizzazione di DroneControlSystem.
+Hai bloccato la visualizzazione di DroneControlSystem
 
-Premi l'iniziale per:
- • [v]isualizzare l'output (sbloccandolo)
- • [n]ascondere l'output
- • [c]hiudere il programma
+ Premi:
+  • [c] per chiudere il programma
+  • [d] per visualizzare ancora DroneControlSystem
+  • [m] per mostrare i monitor
+  • [h] per nascondere l'output
 "
         kill $TAIL_PID
         wait $TAIL_PID 2>/dev/null
         TAIL_RUNNING=false
     else
-        echo "Visualizzazione di DroneControlSystem."
+        echo "Visualizzazione di DroneControlSystem"
         tail -f drone_output.log &
         TAIL_PID=$!
         TAIL_RUNNING=true
     fi
 }
 
+toggle_monitor() {
+    if [ "$MONITOR_RUNNING" = true ]; then
+        echo -e "\nHai bloccato la visualizzazione dei monitor"
+        kill $MONITOR_LOG_PID
+        wait $MONITOR_LOG_PID 2>/dev/null
+        MONITOR_RUNNING=false
+    else
+        echo "Visualizzazione dei monitor"
+        tail -f monitor_output.log &
+        MONITOR_LOG_PID=$!
+        MONITOR_RUNNING=true
+    fi
+}
+
 echo " ☑️ Avvio il DroneControlSystem..."
 cd build
-setsid ./DroneControlSystem > drone_output.log 2>&1 &
+setsid ./DroneControlSystem >drone_output.log 2>&1 &
 DRONE_PID=$!
+sleep 0.5
 
 echo " ☑️ Avvio i monitor..."
-gnome-terminal -- python3 Monitors/Monitor.py
+python3 ../Monitors/Monitor.py >monitor_output.log 2>&1 &
 MONITOR_PID=$!
+sleep 0.5
 
 TAIL_RUNNING=false
 TAIL_PID=0
+MONITOR_RUNNING=false
+MONITOR_LOG_PID=0
 
-# echo -e "\nSimulazione avviata.\n\nComandi:\n • [V]isualizza output\n • [N]ascondi\n • [C]hiudi programma\n"
 echo "
- ✅ Simulazione avviata.
+ ✅ Simulazione avviata
 "
 echo "-----------------------------------"
 
 echo "
-Premi l'iniziale per:
- • [v]isualizzare l'output
- • [n]ascondere l'output
- • [c]hiudere il programma
-"
+ Premi:
+  • [c] per chiudere tutto
+  • [d] per mostrare DroneControlSystem
+  • [m] per mostrare i monitor"
+echo "    ----------------------
+     Puoi premerli anche
+      mentre vedi l'output"
 
 while true; do
     read -n 1 -r key
     case $key in
-    [Vv])
+    [Dd])
         toggle_tail
         ;;
-    [Nn])
+    [Mm])
+        toggle_monitor
+        ;;
+    [Hh])
         if [ "$TAIL_RUNNING" = true ]; then
-            toggle_tail  # Ferma tail se sta girando
+            toggle_tail # Ferma tail se sta girando
+        fi
+        if [ "$MONITOR_RUNNING" = true ]; then
+            toggle_monitor # Ferma tail del monitor se sta girando
         fi
         clear
         echo "
-Output di DroneControlSystem nascosto.
+Output nascosto
 
-Premi l'iniziale per:
-• [v]isualizzare l'output
-• [c]hiudere il programma
-        "
+ Premi:
+  • [c] per chiudere tutto
+  • [d] per mostrare DroneControlSystem
+  • [m] per mostrare i monitor
+"
         ;;
     [Cc])
         cleanup
