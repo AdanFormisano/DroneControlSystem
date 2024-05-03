@@ -5,19 +5,19 @@ echo "
  ## DroneControlSystem ##
  ########################
 "
-echo " Benvenuto in DroneControlSystem! 🤖
+echo "Benvenuto in DroneControlSystem! 🤖
 
-  Questo programma verifica che ogni punto di una area
-  6×6Km sia verificato almeno ogni 5 minuti.
+Questo programma verifica che ogni punto di una area
+ 6×6Km sia verificato almeno ogni 5 minuti.
 
-  Per più info sul progetto, vai qui
-   → https://tinyurl.com/ym49mmqw ←
+ Per più info sul progetto, vai qui
+  → https://tinyurl.com/ym49mmqw ←
 "
 
 echo "-----------------------------------"
 echo "
- Premi Invio per avviare la simulazione
- (o Ctrl+C per terminare il programma)"
+Premi Invio per avviare la simulazione
+(o Ctrl+C per terminare il programma)"
 read
 echo "-----------------------------------"
 
@@ -120,7 +120,6 @@ Output di DroneControlSystem nascosto.
 
 Premi l'iniziale per:
 • [v]isualizzare l'output
-• [n]ascondere l'output
 • [c]hiudere il programma
         "
         ;;
