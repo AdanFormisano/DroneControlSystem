@@ -68,15 +68,20 @@ while i < 10:
 
 # checkDroneReachargeTime() monitor implementation DOABLE
 def checkDroneRechargeTime():
-    """
-    This monitor checks that the number of ticks that a drone has been charging is between [2,3] hours.
-    """
-    # Checks if there are new drones that are charging
-    cursor.execute("SELECT * FROM drone_logs WHERE status = 'CHARGING'")
-    for row in cursor:
-        if row[1] not in drones_charge_times:
-            drones_charge_times[row[1]] = [row[0]]  # Save the start tick of the charging time
+    # Preleva droni che sono in fase di carica
+    cursor.execute("SELECT drone_id, tick_n FROM drone_logs WHERE status = 'CHARGING'")
+    drones_in_charge = cursor.fetchall()
+    for drone_id, start_tick in drones_in_charge:
+        if drone_id not in drones_charge_times:
+            drones_charge_times[drone_id] = [start_tick]  # Salva il tick di inizio carica
         else:
+            # Aggiungi il tick di fine e verifica il tempo di carica
+            end_tick = start_tick
+            start_tick = drones_charge_times[drone_id][0]
+            charge_time = end_tick - start_tick
+            if not (7200 <= charge_time <= 10800):  # Conversione dei ticks in secondi, se un tick è 1 secondo
+                print(f"Drone {drone_id} has incorrect charge time: {charge_time} seconds")
+            del drones_charge_times[drone_id]  # Pulizia dopo il controllo
 
 
     time.sleep(300)
