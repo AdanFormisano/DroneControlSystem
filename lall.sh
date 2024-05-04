@@ -29,7 +29,7 @@ Redis è già in esecuzione sulla porta $REDIS_PORT.
 Lo chiudo e lo riapro..."
     echo "-----------------------------------"
     redis-cli -p $REDIS_PORT shutdown
-    sleep 2
+    sleep 1.5
 fi
 
 echo -e "\n ☑️ Avvio Redis sulla porta $REDIS_PORT..."
@@ -40,7 +40,7 @@ sleep 0.2 # non serve, è solo estetico
 cleanup() {
     echo -e "\n\n☑️ Termino i processi..."
     kill -- -$DRONE_PID
-    # kill $MONITOR_PID
+    kill $MONITOR_PID
     if [ "$TAIL_RUNNING" = true ]; then
         kill $TAIL_PID
     fi
