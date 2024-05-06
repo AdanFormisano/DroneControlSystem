@@ -17,7 +17,8 @@ The non-functional monitors are:
         the drones are swapped when their charge is just enough to return to the base.
 """
 import psycopg2
-import time
+
+import RechargeTime
 
 conn = psycopg2.connect(database="dcs",
                         host="localhost",
@@ -35,59 +36,25 @@ cursor = conn.cursor()
 # This monitor is going to be executed during the simulation
 
 # Check if there is new data in the DB that needs to be processed
-
-last_element_read = None
-i = 0
-
-drones_charge_times = {}    # Dictionary to store the start and end tick of the drones' charging time
-
-
-def get_latest_element():
-    cursor.execute("SELECT * FROM drone_logs ORDER BY tick_n DESC LIMIT 1")
-
-    latest_element = cursor.fetchone()
-
-    if latest_element is not None:
-        return latest_element
-    else:
-        return None
-
-def check_new_data(last_element):
-    latest_element = get_latest_element()
-    if latest_element is not last_element:
-        print(f'tick_n: {latest_element[0]}, drone_id: {latest_element[1]}, zone: {latest_element[4]}')
-        last_element = latest_element
-    else:
-        print('No new data')
-
-    time.sleep(5)
-
-while i < 10:
-    i += 1
-    check_new_data(last_element_read)
-
-# checkDroneReachargeTime() monitor implementation DOABLE
-def checkDroneRechargeTime():
-    # Preleva droni che sono in fase di carica
-    cursor.execute("SELECT drone_id, tick_n FROM drone_logs WHERE status = 'CHARGING'")
-    drones_in_charge = cursor.fetchall()
-    for drone_id, start_tick in drones_in_charge:
-        if drone_id not in drones_charge_times:
-            drones_charge_times[drone_id] = [start_tick]  # Salva il tick di inizio carica
-        else:
-            # Aggiungi il tick di fine e verifica il tempo di carica
-            end_tick = start_tick
-            start_tick = drones_charge_times[drone_id][0]
-            charge_time = end_tick - start_tick
-            if not (7200 <= charge_time <= 10800):  # Conversione dei ticks in secondi, se un tick è 1 secondo
-                print(f"Drone {drone_id} has incorrect charge time: {charge_time} seconds")
-            del drones_charge_times[drone_id]  # Pulizia dopo il controllo
-
-
-    time.sleep(300)
-
 # checkTimeToReadDroneData() monitor implementation DOABLE BUT NEEDS CHANGES IN THE C++ CODE (new data in DB from DC)
-
 #checkDroneCharge() monitor implementation DOABLE
 
-print('End of simulation')
+def main():
+    # from threading import Thread
+
+    # Thread(target=check_new_data, args=(cursor,)).start()
+    # Thread(target=checkDroneRechargeTime, args=(cursor,)).start()
+    # Thread(target=checkAreaCoverage, args=(cursor,)).start()
+    # Thread(target=checkZoneVerification, args=(cursor,)).start()
+    # Thread(target=checkTimeToReadDroneData, args=(cursor,)).start()
+    # Thread(target=checkDroneCharge, args=(cursor,)).start()
+
+    print('Launching monitors...')
+
+    RechargeTime.check_drone_recharge_time(cursor)
+
+
+    conn.close()
+
+if __name__ == '__main__':
+    main()

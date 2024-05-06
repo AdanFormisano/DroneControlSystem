@@ -258,11 +258,11 @@ namespace drones {
 
         // Check if the drone is at the end of the path
         if (path_index == dz.drone_path.size() - 1) {
+            drone_position = dz.drone_path[path_index];
             path_index = 0;
-            drone_position = dz.drone_path[path_index];
         } else {
-            ++path_index;
             drone_position = dz.drone_path[path_index];
+            ++path_index;
         }
 
         // Use the drone's charge

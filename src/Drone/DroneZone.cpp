@@ -126,21 +126,23 @@ namespace drones {
         drone_boundaries[2] = {vertex_coords[2].first - 10, vertex_coords[2].second + 10};
         drone_boundaries[3] = {vertex_coords[3].first + 10, vertex_coords[3].second + 10};
 
-        auto step_size = 20.0f;
+        auto step_size = 20.0f; // In meters
         int i = 0;
 
         using namespace std;
 
         // From the top left corner to the top right corner
         for (float x = drone_boundaries[0].first; x <= drone_boundaries[1].first; x += step_size) {
-            drone_path[i] = {x, drone_boundaries[0].second};
-            drone_path_charge[i] = CalculateChargeNeeded(drone_path[i]);
+//            drone_path[i] = {x, drone_boundaries[0].second};
+//            drone_path_charge[i] = CalculateChargeNeeded(drone_path[i]);
+            drone_path.emplace_back(x, drone_boundaries[0].second);
             ++i;
         }
         // From the bottom right corner to the bottom left corner
         for (float x = drone_boundaries[2].first; x >= drone_boundaries[3].first; x -= step_size) {
-            drone_path[i] = {x, drone_boundaries[2].second};
-            drone_path_charge[i] = CalculateChargeNeeded(drone_path[i]);
+//            drone_path[i] = {x, drone_boundaries[2].second};
+//            drone_path_charge[i] = CalculateChargeNeeded(drone_path[i]);
+            drone_path.emplace_back(x, drone_boundaries[2].second);
             ++i;
         }
     }

@@ -51,7 +51,7 @@ namespace drones {
         std::array<std::pair<float, float>, 4> vertex_coords;   // Global coords that define the zone
         std::pair<float, float> path_furthest_point;
         std::vector<std::shared_ptr<Drone>> drones;              // Vector of drones owned by the zone
-        std::array<std::pair<float, float>, 124> drone_path;
+        std::vector<std::pair<float, float>> drone_path;
         int drone_path_index = 0;
         std::array<float, 124> drone_path_charge{};
 

@@ -1,3 +1,4 @@
+#include <set>
 #include "Buffer.h"
 
 Buffer::~Buffer() {
@@ -48,6 +49,8 @@ void Buffer::ClearBuffer() {
 
 void MiniBuffer::WriteBlockToDB(Database &db, int size) {
     try {
+        std::set<std::pair<int ,int>> ticks_and_ids;
+
         // Base query string
         std::string sql = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, zone, x, y, checked) VALUES ";
 
@@ -55,19 +58,26 @@ void MiniBuffer::WriteBlockToDB(Database &db, int size) {
         for (size_t _ = 0; _ < size; ++_) {
             drone_data_ext data = ReadFromBuffer();
 
-            // This print verifies that the minibuffer is full and that the second thread is reading from it
-            //            spdlog::info("Writing to DB Drone {} at tick {}", data.data.id, data.tick_n);
+            std::pair<int, int> db_key = {data.tick_n, data.data.id};
+            if (ticks_and_ids.contains(db_key)) {
+                spdlog::warn("Drone {} at tick {} already written to the database", data.data.id, data.tick_n);
+                continue;
+            } else {
+                ticks_and_ids.insert(db_key);
+                // This print verifies that the minibuffer is full and that the second thread is reading from it
+                //            spdlog::info("Writing to DB Drone {} at tick {}", data.data.id, data.tick_n);
 
-            sql += "(" + std::to_string(data.tick_n) + ", " +
-                   std::to_string(data.data.id) + ", '" +
-                   data.data.status + "', '" +
-                   std::to_string(data.data.charge) + "', " +
-                   std::to_string(data.data.zone_id) + ", " +
-                   std::to_string(data.data.position.first) + ", " +
-                   std::to_string(data.data.position.second) + ", '" +
-                   (data.check ? "true" : "false") + "')";
-            if (_ != size - 1) {
-                sql += ", ";
+                sql += "(" + std::to_string(data.tick_n) + ", " +
+                       std::to_string(data.data.id) + ", '" +
+                       data.data.status + "', '" +
+                       std::to_string(data.data.charge) + "', " +
+                       std::to_string(data.data.zone_id) + ", " +
+                       std::to_string(data.data.position.first) + ", " +
+                       std::to_string(data.data.position.second) + ", '" +
+                       (data.check ? "true" : "false") + "')";
+                if (_ != size - 1) {
+                    sql += ", ";
+                }
             }
         }
         // Add semicolon to the end of the query

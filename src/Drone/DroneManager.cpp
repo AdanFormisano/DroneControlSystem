@@ -37,7 +37,7 @@ namespace drones {
                 auto tick_start = std::chrono::steady_clock::now();
 
                 // Create the threads for the zones_vertex every 5 ticks
-                if (tick_n < 20 && tick_n % 5 == 0) {
+                if (tick_n <= 20 && tick_n % 5 == 0) {
                     CreateZoneThreads();
                 }
 
@@ -84,20 +84,30 @@ namespace drones {
         }
     }
 
-    // Creates the zones_vertex' global vertex_coords
+    // Creates the zones_vertexglobal vertex_coords. The total area
     void DroneManager::CalculateGlobalZoneCoords() {
         int i = 0;
-        int width = 62;
-        int height = 2;
+        int width = 1240;
+        int height = 40;
 
-        for (int x = -124; x <= 124 - width; x += width) {
-            for (int y = -150; y <= 150 - height; y += height) {
-                zones_vertex[i][0] = {x * 20, (y + height) * 20};              // Top left
-                zones_vertex[i][1] = {(x + width) * 20, (y + height) * 20};    // Top right
-                zones_vertex[i][2] = {(x + width) * 20, y * 20};                    // Bottom right
-                zones_vertex[i][3] = {x * 20, y * 20};                         // Bottom left
+        for (int x = -3000; x <= 1960 - width; x += width) {
+            for (int y = -3000; y <= 3000 - height; y += height) {
+                zones_vertex[i][0] = {x, (y + height)};                 // Top left
+                zones_vertex[i][1] = {(x + width), (y + height)};       // Top right
+                zones_vertex[i][2] = {(x + width), y};                  // Bottom right
+                zones_vertex[i][3] = {x, y};                            // Bottom left
                 ++i;
             }
+        }
+
+        // Special case for the last column
+        int width_special = 1040;
+        for (int y = -3000; y <= 3000 - height; y += height) {
+            zones_vertex[i][0] = {1960, (y + height)};                  // Top left
+            zones_vertex[i][1] = {1960 + width_special, (y + height)};  // Top right
+            zones_vertex[i][2] = {1960 + width_special, y};             // Bottom right
+            zones_vertex[i][3] = {1960, y};                             // Bottom left
+            ++i;
         }
     }
 

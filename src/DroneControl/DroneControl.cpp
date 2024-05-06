@@ -155,12 +155,16 @@ namespace drone_control {
 // Check if the drone's path is correct
     bool DroneControl::CheckPath(int zone_id, std::pair<float, float> &drone_position) {
         // Get the next point in the path
-        auto next_point = drone_paths[zone_id][drone_path_next_index[zone_id]];
+        auto desired_position = drone_paths[zone_id][drone_path_next_index[zone_id]];
 
-        // Check if the drone is in the next point
-        if (drone_position == next_point) {
+        if (drone_position == desired_position) {
             // Update the next point
             ++drone_path_next_index[zone_id];
+
+            // Check if the drone has reached the end of the path
+            if (drone_path_next_index[zone_id] == drone_paths[zone_id].size()) {
+                drone_path_next_index[zone_id] = 0;
+            }
             return true;
         } else {
             return false;
@@ -174,10 +178,12 @@ namespace drone_control {
             (current_charge - (DRONE_CONSUMPTION * 80.0f) <= charge_needed) &&
             (redis.get("drone:" + std::to_string(drone_id) + ":command") != "charge")) {
             redis.set("drone:" + std::to_string(drone_id) + ":command", "charge");
-
+#ifdef DEBUG
             spdlog::info("TICK {}: Drone {} needs to charge: current chg: {}%, chg needed: {}%", tick_n, drone_id,
                          current_charge, charge_needed);
+#endif
         }
+
     }
 
     void DroneControl::CheckForSwap(int zone_id, int drone_id, float current_charge, float charge_needed) {

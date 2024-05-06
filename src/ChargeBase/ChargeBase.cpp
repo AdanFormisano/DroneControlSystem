@@ -105,7 +105,7 @@ namespace charge_base {
 
         // Increment the zone:id:drones_alive_history key for the current drone's zone
         IncrementZoneHistory(temp_drone_struct.base_data.zone_id, temp_drone_struct.charge_start.first);
-        spdlog::info("Zone {} incremented", temp_drone_struct.base_data.zone_id);
+//        spdlog::info("Zone {} incremented", temp_drone_struct.base_data.zone_id);
 
         // Upload an entry to the drone_stream indicating that the drone is charging
         std::vector<std::pair<std::string, std::string>> new_data = {
@@ -119,9 +119,9 @@ namespace charge_base {
             {"tick_n", std::to_string(temp_drone_struct.charge_start.first)}
         };
 
-        spdlog::info("Drone_stream data created");
+//        spdlog::info("Drone_stream data created");
         redis.xadd("drone_stream", "*", new_data.begin(), new_data.end());
-        spdlog::info("Drone_stream data added");
+//        spdlog::info("Drone_stream data added");
 
 //        redis.set("drone:" + data[0].second + ":charge_start", std::to_string(temp_drone_struct.charge_start.first + 1));
 
