@@ -26,6 +26,7 @@ namespace drones {
 
         // Add the drone to the zone's queue of drones
         drone_redis.rpush("zone:" + std::to_string(dz.getZoneId()) + ":drones", std::to_string(drone_id));
+        drone_redis.sadd("zone:" + std::to_string(dz.getZoneId()) + ":drones_alive", std::to_string(drone_id));
 
         // Check if the drone already exists in the Redis DB
         if (!Exists()) {
@@ -193,6 +194,9 @@ namespace drones {
                     drone_data[2].second = std::to_string(drone_charge);
                     SendChargeRequest();   // Uploads the drone status to Redis before sleeping
                     UploadStatusOnStream();
+
+                    drone_redis.srem("zone:" + std::to_string(dz.getZoneId()) + ":drones_alive", std::to_string(drone_id));
+
                     destroy = true;
 
                 case drone_state_enum::TOTAL:

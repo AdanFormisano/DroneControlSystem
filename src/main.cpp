@@ -2,6 +2,7 @@
 #include "Drone/DroneManager.h"
 #include "DroneControl/DroneControl.h"
 #include "ChargeBase/ChargeBase.h"
+#include "TestGenerator/TestGenerator.h"
 #include "globals.h"
 #include <iostream>
 #include <spdlog/spdlog.h>
@@ -76,34 +77,53 @@ int main() {
                 cb->Run();
 
             } else {
-                // In Main process
-                auto main_redis = Redis("tcp://127.0.0.1:7777");
-//                main_redis.incr(sync_counter_key);
-                utils::AddThisProcessToSyncCounter(main_redis, "Main");
+                // In parent process create new child TestGenerator process
+                pid_t pid_test_generator = fork();
+                if (pid_test_generator == -1) {
+                    spdlog::error("Fork for TestGenerator failed");
+                    return 1;
+                } else if (pid_test_generator == 0) {
+                    // In child TestGenerator process
+                    spdlog::set_pattern("[%T.%e][%^%l%$][TestGenerator] %v");
+                    auto test_redis = Redis("tcp://127.0.0.1:7777");
 
-                // Wait for the other processes to finish initialization
-//                utils::SyncWait(main_redis);
-                utils::NamedSyncWait(main_redis, "Main");
+                    // Create the TestGenerator object
+                    TestGenerator tg(test_redis);
 
-                // Start simulation
-                auto sim_end_after = sim_duration_ms / tick_duration_ms;
-                int tick_n = 0;
-                while (tick_n < sim_end_after) {
-                    // Do simulation stuff
-                    std::cout << "Tick " << tick_n << " started" << std::endl;
-                    std::this_thread::sleep_for(tick_duration_ms);  // Sleep for 1 tick: 1 second
-                    std::cout << "Tick " << tick_n << " ended" << std::endl;
-                    ++tick_n;
+                    spdlog::info("TestGenerator started");
+
+                    // Start test generation
+                    tg.Run();
+                } else {
+                    // In Main process
+                    auto main_redis = Redis("tcp://127.0.0.1:7777");
+    //                main_redis.incr(sync_counter_key);
+                    utils::AddThisProcessToSyncCounter(main_redis, "Main");
+
+                    // Wait for the other processes to finish initialization
+    //                utils::SyncWait(main_redis);
+                    utils::NamedSyncWait(main_redis, "Main");
+
+                    // Start simulation
+                    auto sim_end_after = sim_duration_ms / tick_duration_ms;
+                    int tick_n = 0;
+                    while (tick_n < sim_end_after) {
+                        // Do simulation stuff
+                        std::cout << "Tick " << tick_n << " started" << std::endl;
+                        std::this_thread::sleep_for(tick_duration_ms);  // Sleep for 1 tick: 1 second
+                        std::cout << "Tick " << tick_n << " ended" << std::endl;
+                        ++tick_n;
+                    }
+
+                    // Use Redis to stop the simulation
+                    main_redis.set("sim_running", "false");
+
+                    // FIXME: This is a placeholder for the monitor process,
+                    // without it the main process will exit and
+                    // the children will be terminated
+                    std::this_thread::sleep_for(std::chrono::seconds(10));
+                    std::cout << "Exiting..." << std::endl;
                 }
-
-                // Use Redis to stop the simulation
-                main_redis.set("sim_running", "false");
-
-                // FIXME: This is a placeholder for the monitor process,
-                // without it the main process will exit and
-                // the children will be terminated
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                std::cout << "Exiting..." << std::endl;
             }
         }
     }
