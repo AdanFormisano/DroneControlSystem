@@ -1,0 +1,86 @@
+Scenarios:
+    ✔ @critical Decide how the system recognizes the scenario changes: @done (24-05-15 18:29)
+        - Does the drone change its status (depending on the input created by the TestGenerator) and the DC reacts to it?
+        - Is the DC the one that interprets the absence of status-updates from a drone? (eg. waits ~20 ticks and then decides)
+
+    The System first assuemes that the drone has lost its connection and tries to reconnect to the drone. If the drone doesn't
+    reconnect to the system, then it's assumed that the it's lost/broken and a new drone is sent.
+
+    Everything is fine:
+        Default Scenario of the simulation.
+
+        ✔ Default state @done (24-05-15 16:32)
+
+    Drone fault:
+        This Scenario represents a drone that has stopped working and it's **not recovereble**.
+        The System needs to recognize that the drone has "exploded" and send a new one.
+
+        ✔ Chose drone to explode @done (24-05-15 16:39)
+        ☐ Chosen drone has to actually stop working
+        ☐ DroneControl has to recognize that a drone has exploded
+        ☐ The System need to send a new drone to the exposed zone:
+            ☐ The new drone has a special status that indicates that it's swapping a drone that has exploded
+            ☐ The new drone needs to continue from where the previous drone was
+        ☐ The logdb needs to represent what happened to the system:
+            - Drone should stop sending update
+            - New drone should have status "EMERGENCY_SWAP_DEAD" (or something like that)
+
+    Connection lost:
+        This Scenario represents a drone that has lost its connection with the System but is still working.
+        The System needs to first recognize the loss of connection and then try to restore the connection,
+        if the attempt doesn't work consider the drone as broken.
+
+        **Process of restoring a lost connection**
+            A lost connection is indicated by a drone's status-update that takes more than a given number of
+            ticks to be read by the DroneControl (eg. ~20 ticks).
+                [This ability of the DC to wait for a number of ticks means that there needs to be a function
+                that checks if the _last_tick_received_, for a given drone, is more the 20 ticks from the current
+                tick... this can be expensive]
+
+        **Consequences of a lost connection**
+            1. In the current implementation of minibuffers, a loss of connection means that the thread writing
+            the log-entries on the db will stop (a minibuffer is written to db only if all the expected entries
+            are found). This means that...
+                a. DC needs to manually write "empty"/special entries in every minibuffer that needs it.
+                b. After the "waiting" time DC tells the thread to fill up the minibuffers that are blocked
+                with "empty"/special entries.
+
+        ☐ The system recognizes the loss of connection and tries to restore it
+        ☐ If failed, the System need to send a new drone to the exposed zone:
+            ☐ The new drone has a special status that indicates that it's swapping a drone that has been lost
+            ☐ The new drone needs to continue from where the previous drone was
+        ☐ The logdb needs to represent what happened to the system:
+            - Drone should stop sending update
+            - New drone should have status "EMERGENCY_SWAP_CONNECTION" (or something like that)
+
+
+Loop-scenarios:
+    Loop-scenarios are "special" Scenarios that repeat after a given number of ticks (time) and have a probability
+    of causing "damage"/changes to the environment/system.
+
+    Dust storm:
+        Every "day" at the same time (eg. 00:00) there is a chance (10%) that a drone breaks and (40%) that the storm
+        causes connection loss for a number of drones. This is in fact the same scenarios the **Drone fault** and
+        **Connection lost**.
+        The storm has a duration, during this period the System shouldn't send a new drone because there is a chance
+        that the new drone will be destroyed
+
+        **Drone Fault**
+        ☐ Chose drone that the storm destroys
+        ☐ Chosen drone has to actually stop working
+        ☐ DroneControl has to recognize that a drone has exploded
+        ☐ The System need to send a new drone to the exposed zone:
+            ☐ The new drone has a special status that indicates that it's swapping a drone that has exploded
+            ☐ The new drone needs to continue from where the previous drone was
+        ☐ The logdb needs to represent what happened to the system:
+            - Drone should stop sending update
+            - New drone should have status "EMERGENCY_SWAP_DEAD" (or something like that)
+
+        **Connection Lost**
+        ☐ The system recognizes the loss of connection and tries to restore it
+        ☐ If failed, the System need to send a new drone to the exposed zone, if the storm has ended:
+            ☐ The new drone has a special status that indicates that it's swapping a drone that has been lost
+            ☐ The new drone needs to continue from where the previous drone was
+        ☐ The logdb needs to represent what happened to the system:
+            - Drone should stop sending update
+            - New drone should have status "EMERGENCY_SWAP_CONNECTION" (or something like that)
