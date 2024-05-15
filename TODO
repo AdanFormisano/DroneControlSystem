@@ -12,12 +12,16 @@ Scenarios:
         ✔ Default state @done (24-05-15 16:32)
 
     Drone fault:
-        This Scenario represents a drone that has stopped working and it's **not recovereble**.
+        This Scenario represents a _single_ drone that has stopped working and it's **not recovereble**.
         The System needs to recognize that the drone has "exploded" and send a new one.
 
         ✔ Chose drone to explode @done (24-05-15 16:39)
-        ☐ Chosen drone has to actually stop working
+        ✔ Chosen drone has to actually stop working @done (24-05-15 19:21)
         ☐ DroneControl has to recognize that a drone has exploded
+            ☐ DC shares a data structure with WriteToDB thread that contains all the ticks (minibuffers) that needs to "filled" (which drones to fill for)
+            ☐ WriteToDB needs to fill the minibuffers
+            ☐ DC needs a map to have a view on which drone is not sending any status-update
+                ☐ If delta_tick > ~20 ticks then start "recover process" 
         ☐ The System need to send a new drone to the exposed zone:
             ☐ The new drone has a special status that indicates that it's swapping a drone that has exploded
             ☐ The new drone needs to continue from where the previous drone was
@@ -26,7 +30,7 @@ Scenarios:
             - New drone should have status "EMERGENCY_SWAP_DEAD" (or something like that)
 
     Connection lost:
-        This Scenario represents a drone that has lost its connection with the System but is still working.
+        This Scenario represents a _single_ drone that has lost its connection with the System but is still working.
         The System needs to first recognize the loss of connection and then try to restore the connection,
         if the attempt doesn't work consider the drone as broken.
 

@@ -8,7 +8,7 @@ TestGenerator::TestGenerator(Redis &redis) :
     spdlog::info("Creating TestGenerator object");
 
     // Everything_is_fine scenario [80%]
-    scenarios[0.2f] = []() {
+    scenarios[0.8f] = []() {
         spdlog::info("Everything is fine");
     };
 
@@ -18,7 +18,7 @@ TestGenerator::TestGenerator(Redis &redis) :
         int drone_id = ChooseRandomDrone();
 
         // Set the drone's status to "Exploded"
-        test_redis.hset("drone:" + std::to_string(drone_id), "status", "EXPLODED");
+        test_redis.hset("drone:" + std::to_string(drone_id), "status", "DEAD");
 
         spdlog::warn("Drone {} exploded", drone_id);
     };
@@ -56,7 +56,15 @@ int TestGenerator::ChooseRandomDrone() {
     int zone_id = dis_zone(gen);
 
     // Get a random drone from the zone's redis db
-    auto drone_id = test_redis.srandmember("zone:" + std::to_string(zone_id) + ":drones");
-
-    return std::stoi(drone_id.value());
+    auto v = test_redis.srandmember("zone:" + std::to_string(zone_id) + ":drones_alive");
+    if (!v.has_value()) {
+        spdlog::error("No drones in zone {}", zone_id);
+        return 0;
+    } else if (v == std::nullopt) {
+        spdlog::error("No alive drones found for zone {}", zone_id);
+        return 0;
+    } else {
+        spdlog::info("Drone chosen: {}", v.value());
+        return std::stoi(v.value());
+    }
 }
