@@ -1,13 +1,16 @@
-#include "../utils/RedisUtils.h"
-#include "Drone/DroneManager.h"
-#include "DroneControl/DroneControl.h"
-#include "ChargeBase/ChargeBase.h"
-#include "TestGenerator/TestGenerator.h"
-#include "globals.h"
-#include <iostream>
 #include <spdlog/spdlog.h>
 #include <sw/redis++/redis++.h>
 #include <unistd.h>
+
+#include <iostream>
+
+#include "../utils/RedisUtils.h"
+#include "ChargeBase/ChargeBase.h"
+#include "Drone/DroneManager.h"
+#include "DroneControl/DroneControl.h"
+#include "Monitor/Monitor.h"
+#include "TestGenerator/TestGenerator.h"
+#include "globals.h"
 
 using namespace sw::redis;
 
@@ -27,7 +30,7 @@ int main() {
     } else if (pid_drone_control == 0) {
         // In child DroneControl process
         auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
-//        drone_control_redis.incr(sync_counter_key);
+        //        drone_control_redis.incr(sync_counter_key);
         utils::AddThisProcessToSyncCounter(drone_control_redis, "DroneControl");
         spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
 
@@ -45,7 +48,7 @@ int main() {
         } else if (pid_drone == 0) {
             // In child Drones process
             auto drone_redis = Redis("tcp://127.0.0.1:7777");
-//            drone_redis.incr(sync_counter_key);
+            //            drone_redis.incr(sync_counter_key);
             utils::AddThisProcessToSyncCounter(drone_redis, "Drone");
             // Create the DroneManager object
             drones::DroneManager dm(drone_redis);
@@ -60,7 +63,7 @@ int main() {
             } else if (pid_charge_base == 0) {
                 // In child ChargeBase process
                 auto charge_base_redis = Redis("tcp://127.0.0.1:7777");
-//                charge_base_redis.incr(sync_counter_key);
+                //                charge_base_redis.incr(sync_counter_key);
                 utils::AddThisProcessToSyncCounter(charge_base_redis, "ChargeBase");
                 // Create the ChargeBase object
                 auto cb = charge_base::ChargeBase::getInstance(charge_base_redis);
@@ -70,7 +73,7 @@ int main() {
                 thread_local std::random_device rd;
                 cb->SetEngine(rd);
 
-//                utils::SyncWait(charge_base_redis);
+                //                utils::SyncWait(charge_base_redis);
                 utils::NamedSyncWait(charge_base_redis, "ChargeBase");
 
                 // Start simulation
@@ -97,12 +100,16 @@ int main() {
                 } else {
                     // In Main process
                     auto main_redis = Redis("tcp://127.0.0.1:7777");
-    //                main_redis.incr(sync_counter_key);
+                    //                main_redis.incr(sync_counter_key);
                     utils::AddThisProcessToSyncCounter(main_redis, "Main");
 
                     // Wait for the other processes to finish initialization
-    //                utils::SyncWait(main_redis);
+                    //                utils::SyncWait(main_redis);
                     utils::NamedSyncWait(main_redis, "Main");
+
+                    // Start monitors
+                    RechargeTimeMonitor rtm;
+                    rtm.RunMonitor();
 
                     // Start simulation
                     auto sim_end_after = sim_duration_ms / tick_duration_ms;

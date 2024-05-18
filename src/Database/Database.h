@@ -1,5 +1,6 @@
 #pragma once
-#include "../globals.h"
+#include <spdlog/spdlog.h>
+
 #include <boost/thread.hpp>
 #include <condition_variable>
 #include <map>
@@ -9,19 +10,24 @@
 #include <queue>
 #include <string>
 #include <thread>
-#include <spdlog/spdlog.h>
+
+#include "../globals.h"
 
 class Database {
-public:
+   public:
     int log_entry = 0;
 
     Database();
-
+    void ConnectToDB(const std::string &dbname,
+                     const std::string &user,
+                     const std::string &password,
+                     const std::string &hostaddr,
+                     const std::string &port);
     void get_DB();
+
     void ExecuteQuery(const std::string &query);
 
-private:
-
+   private:
     std::shared_ptr<pqxx::connection> conn;
 
     void connect_to_db(

@@ -19,12 +19,14 @@ add_executable(DroneControlSystem
         src/Database/Database.h
         src/Database/Buffer.cpp
         src/Database/Buffer.h
+        src/TestGenerator/TestGenerator.cpp
+        src/TestGenerator/TestGenerator.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
         utils/utils.h
-        src/TestGenerator/TestGenerator.cpp
-        src/TestGenerator/TestGenerator.h
+        src/Monitors/Monitor.cpp
+        src/Monitors/Monitor.h
 )
 
 option(DEBUG "Enable debug mode" OFF)

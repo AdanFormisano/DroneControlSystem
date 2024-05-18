@@ -1,9 +1,18 @@
 #include "Database.h"
+
 #include <iostream>
 
 // Constructor
 Database::Database() {
     spdlog::info("Database object created");
+}
+
+void Database::ConnectToDB(const std::string &dbname,
+                           const std::string &user,
+                           const std::string &password,
+                           const std::string &hostaddr,
+                           const std::string &port) {
+    connect_to_db(dbname, user, password, hostaddr, port);
 }
 
 // Connect to db
@@ -17,7 +26,7 @@ void Database::connect_to_db(const std::string &dbname,
                                    " password=" + password +
                                    " hostaddr=" + hostaddr +
                                    " port=" + port;
-    conn = std::make_shared<pqxx::connection>(connectionString);
+    conn = std::make_shared<pqxx::connection>(connectionString);  // FIXME: a single connection is not thread safe
 
     if (!conn->is_open()) {
 #ifdef DEBUG
@@ -46,22 +55,24 @@ void Database::get_DB() {
         }
         // Connession al DB 'dcs'
         connect_to_db("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
+
         // Se la connessione è stata stabilita, sovrascrivere la tabella 'drone_logs'
         if (conn && conn->is_open()) {
             pqxx::work W(*conn);
             // Eliminare la tabella se esiste
             W.exec("DROP TABLE IF EXISTS drone_logs");
             // Ricreare la tabella
-            W.exec("CREATE TABLE drone_logs ("
-                   "tick_n INT, "
-                   "drone_id INT NOT NULL, "
-                   "status VARCHAR(255), "
-                   "charge FLOAT, "
-                   "zone VARCHAR(255), " // TODO: Change to int
-                   "x FLOAT, "
-                   "y FLOAT, "
-                   "checked BOOLEAN, "
-                   "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
+            W.exec(
+                "CREATE TABLE drone_logs ("
+                "tick_n INT, "
+                "drone_id INT NOT NULL, "
+                "status VARCHAR(255), "
+                "charge FLOAT, "
+                "zone VARCHAR(255), "  // TODO: Change to int
+                "x FLOAT, "
+                "y FLOAT, "
+                "checked BOOLEAN, "
+                "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
             W.commit();
         }
     } catch (const std::exception &e) {
@@ -75,7 +86,7 @@ void Database::ExecuteQuery(const std::string &query) {
         return;
     }
 
-//    spdlog::info("Executing query: {}", query);
+    //    spdlog::info("Executing query: {}", query);
     pqxx::work W(*conn);
     W.exec(query);
     W.commit();
