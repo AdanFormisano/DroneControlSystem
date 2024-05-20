@@ -1,5 +1,32 @@
+High Priority:
+    ☐ Monitors:
+        ☐ Add a new column to DB: "ON_TIME" for DC's "tick_took_too_long"
+        ✔ Translate to C++ @done (24-05-18 18:01)
+        ☐ Implement CheckDroneRechargeTime:
+            ✔ Implement @done (24-05-18 18:01)
+            ☐ Test in C++
+        ☐ Implement CheckAreaCoverage
+        ☐ Implement CheckZoneVerification:
+            ☐ Check if a zone-based db table is needed
+        ☐ Implement CheckTimeToReadDroneData
+        ☐ Implement CheckDroneCharge
+    ☐ Better implementation of new_drone's final_destination calculations
+        (swapping drones are "jumping" to the working coords)
+    ☐ Test Generators:
+        ☐ Implement the test generator's side of all scenarios
+        ☐ Implement how the system responds to the inputs created by the TG
+Normal Priority:
+    ☐ Make drone_data struct model global, this makes stream data more homogeneous
+    ☐ When simulation ends let the threads finish writing on DBs
+
+Low Priority:
+    ☐ Check all the debug prints, choose the one to keep and the one to put in DEBUG mode
+    ☐ Check if a pool of threads is needed to read from stream in DC
+    ☐ Re-evaluate the break if a tick took too long
+    ☐ Implement a priority on DC for the buffer writing
+
 Scenarios:
-    ✔ @critical Decide how the system recognizes the scenario changes: @done (24-05-15 18:29)
+    ✔ @critical Decide how the system recognizes the scenario changes: @done (24-05-15 20:19)
         - Does the drone change its status (depending on the input created by the TestGenerator) and the DC reacts to it?
         - Is the DC the one that interprets the absence of status-updates from a drone? (eg. waits ~20 ticks and then decides)
 
@@ -12,7 +39,7 @@ Scenarios:
         ✔ Default state @done (24-05-15 16:32)
 
     Drone fault:
-        This Scenario represents a _single_ drone that has stopped working and it's **not recovereble**.
+        This Scenario represents a _single_ drone that has stopped working and it's **not recoverable**.
         The System needs to recognize that the drone has "exploded" and send a new one.
 
         ✔ Chose drone to explode @done (24-05-15 16:39)
@@ -50,6 +77,7 @@ Scenarios:
                 with "empty"/special entries.
 
         ☐ The system recognizes the loss of connection and tries to restore it
+        ☐ There needs to be a % for a successful reconnection
         ☐ If failed, the System need to send a new drone to the exposed zone:
             ☐ The new drone has a special status that indicates that it's swapping a drone that has been lost
             ☐ The new drone needs to continue from where the previous drone was
