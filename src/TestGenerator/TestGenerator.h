@@ -22,12 +22,14 @@ private:
     std::mt19937 gen;
     std::uniform_real_distribution<> dis;
     std::uniform_int_distribution<> dis_zone;
+    std::uniform_int_distribution<> dis_tick;
 
     float generateRandomFloat() {
         return static_cast<float>(dis(gen));
     }
 
     int ChooseRandomDrone();
+    int ChooseRandomTick();
 };
 
 #endif //DRONECONTROLSYSTEM_TESTGENERATOR_H

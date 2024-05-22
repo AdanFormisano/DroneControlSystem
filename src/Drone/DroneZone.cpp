@@ -53,9 +53,14 @@ namespace drones {
 
                 // Execute each drone in the zone
                 auto number_of_drones = drones.size();
+//                spdlog::info("DroneZone {} tick {}: number of drones {}", zone_id, tick_n, number_of_drones);
                 for (auto &drone: drones) {
                     drone->Run();
                 }
+
+                // Manage drone faults
+                ManageFaults();
+//                spdlog::info("DroneZone {} tick {}: drones ran and fault managed", zone_id, tick_n);
 
                 if (drones[0]->getSwap()) {
                     // Set the new drone to working
@@ -195,6 +200,108 @@ namespace drones {
                 drone_working_id = 0;
                 zone_redis.set("zone:" + std::to_string(zone_id) + ":working_drone", "none");
                 spdlog::warn("DroneZone {} has no working drones", zone_id);
+            }
+        }
+    }
+
+    void DroneZone::CreateDroneFault(int drone_id, drone_state_enum fault_state,
+                                     std::pair<float, float> fault_coords, int tick_start,
+                                     int tick_end, int reconnect_tick) {
+        drone_fault new_fault = {drone_working_id, fault_state, fault_coords, zone_id, tick_start, tick_end, reconnect_tick};
+        drone_faults.push_back(new_fault);
+    }
+
+    // When a drone fault is created, the DC needs to be notified and an acknowledgement needs to be received to continue
+    // the thread's execution.
+    void DroneZone::ManageFaults() {
+        if (drone_faults.empty()) {
+            return;
+        } else {
+            // If DC has not been notified of the NEW fault
+            if (!drone_fault_ack) {
+                for (auto &fault: drone_faults) {
+                    // Upload to Redis the fault data
+                    std::unordered_map<std::string, std::string> fault_data = {
+                            {"drone_id", std::to_string(fault.drone_id)},
+                            {"zone_id", std::to_string(fault.zone_id)},
+                            {"fault_state", utils::CaccaPupu(fault.fault_state)},
+                            {"fault_coords", std::to_string(fault.fault_coords.first) + " " + std::to_string(fault.fault_coords.second)},
+                            {"tick_start", std::to_string(fault.tick_start)},
+                            {"tick_end", std::to_string(fault.tick_end)},
+                            {"reconnect_tick", std::to_string(fault.reconnect_tick)}
+                    };
+                    zone_redis.hmset("drones_fault:" + std::to_string(fault.drone_id), fault_data.begin(), fault_data.end());
+                }
+
+                // Wait for the DC to acknowledge the fault using pub/sub
+        //        ConnectionOptions ack_opts;
+        //        ack_opts.host = "127.0.0.1";
+        //        ack_opts.port = 7777;
+        //        ack_opts.socket_timeout = std::chrono::seconds (5);
+
+                auto sub = zone_redis.subscriber();
+                sub.on_message([this](const std::string &channel, const std::string &msg) {
+                    if (msg == "ack") {
+                        drone_fault_ack = true;
+                        spdlog::info("{}'s fault acknowledged by DC", zone_id);
+                    }
+                });
+                sub.subscribe("fault_ack");
+
+                // Wait for the acknowledgement
+                while (!drone_fault_ack) {
+                    // Check if the faults have been acknowledged
+                    try {
+                        sub.consume();
+                    } catch (const Error &e) {
+                        spdlog::error("Acknowledgement not received: {}", e.what());
+                    }
+                }
+            }
+
+            // The DC has acknowledged the fault, now manage the fault
+            for (auto &fault: drone_faults) {
+                if (fault.fault_state == drone_state_enum::DEAD) {
+                    if (tick_n >= fault.tick_end) {
+                        // The drone is dead
+
+                        // Remove the drone from drones vector
+                        drones.erase(std::remove_if(drones.begin(), drones.end(), [fault](const std::shared_ptr<Drone> &drone) {
+                            return drone->getDroneId() == fault.drone_id;
+                        }), drones.end());
+
+                        // Remove fault from drone_faults vector
+                        drone_faults.erase(std::remove_if(drone_faults.begin(), drone_faults.end(), [fault](const drone_fault &in_vector_fault) {
+                            return fault.drone_id == in_vector_fault.drone_id;
+                        }), drone_faults.end());
+                    }
+                } else {
+                    // Drone is in NOT_CONNECTED fault state
+                    if (fault.reconnect_tick == -1) {
+                        // The drone will not reconnect
+                        if (tick_n >= fault.tick_end) {
+                            // The fault has ended
+                            drones.erase(std::remove_if(drones.begin(), drones.end(), [fault](const std::shared_ptr<Drone> &drone) {
+                                return drone->getDroneId() == fault.drone_id;
+                            }), drones.end());
+
+                            // Remove fault from drone_faults vector
+                            drone_faults.erase(std::remove_if(drone_faults.begin(), drone_faults.end(), [fault](const drone_fault &in_vector_fault) {
+                                return fault.drone_id == in_vector_fault.drone_id;
+                            }), drone_faults.end());
+                        }
+                    } else {
+                        // The drone will reconnect
+                        if (tick_n >= fault.reconnect_tick) {
+                            // The drone has reconnected
+
+                            // Remove fault from drone_faults vector
+                            drone_faults.erase(std::remove_if(drone_faults.begin(), drone_faults.end(), [fault](const drone_fault &in_vector_fault) {
+                                return fault.drone_id == in_vector_fault.drone_id;
+                            }), drone_faults.end());
+                        }
+                    }
+                }
             }
         }
     }

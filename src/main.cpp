@@ -8,7 +8,7 @@
 #include "ChargeBase/ChargeBase.h"
 #include "Drone/DroneManager.h"
 #include "DroneControl/DroneControl.h"
-#include "Monitor/Monitor.h"
+#include "Monitors/Monitor.h"
 #include "TestGenerator/TestGenerator.h"
 #include "globals.h"
 
@@ -109,7 +109,7 @@ int main() {
 
                     // Start monitors
                     RechargeTimeMonitor rtm;
-                    rtm.RunMonitor();
+                    rtm.RunMonitor();   //TODO: Bring out the thread from inside the function
 
                     // Start simulation
                     auto sim_end_after = sim_duration_ms / tick_duration_ms;

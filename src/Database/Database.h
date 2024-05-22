@@ -15,9 +15,8 @@
 
 class Database {
    public:
-    int log_entry = 0;
-
     Database();
+
     void ConnectToDB(const std::string &dbname,
                      const std::string &user,
                      const std::string &password,
@@ -26,9 +25,10 @@ class Database {
     void get_DB();
 
     void ExecuteQuery(const std::string &query);
+    pqxx::connection& getConnection() { return *conn; }
 
    private:
-    std::shared_ptr<pqxx::connection> conn;
+    std::unique_ptr<pqxx::connection> conn;
 
     void connect_to_db(
         const std::string &dbname,

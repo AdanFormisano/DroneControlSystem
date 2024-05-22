@@ -14,7 +14,13 @@ High Priority:
         (swapping drones are "jumping" to the working coords)
     ☐ Test Generators:
         ☐ Implement the test generator's side of all scenarios
-        ☐ Implement how the system responds to the inputs created by the TG
+    ☐ System's respose to scenarios:
+        ☐ When a drone is removed/unavailable, DC needs to adapt to the fact that the stream doesn't have the drone's status-update
+            (Everything that uses the drone's "existance" needs to be adjusted eg. DC's and DB's usages of zone:id:drones_active/zone:id:drones_alive)
+        ✔ Implement "NO_CONNECTION" version of drone's state machine: @done (24-05-22 20:10)
+            ✘ Special Move() for drone w/o connection @cancelled (24-05-22 17:11)
+    ☐ Implement if a drone ahs 0% charge it dies
+    ☐ Check and fix drone state machine: using Redis for status reads/checks not well implemented
 Normal Priority:
     ☐ Make drone_data struct model global, this makes stream data more homogeneous
     ☐ When simulation ends let the threads finish writing on DBs
@@ -24,6 +30,8 @@ Low Priority:
     ☐ Check if a pool of threads is needed to read from stream in DC
     ☐ Re-evaluate the break if a tick took too long
     ☐ Implement a priority on DC for the buffer writing
+    ✔ In DroneZone create functions for swap-checking and destroying drones @done (24-05-22 17:07)
+    ☐ Rename CaccaPupu to decent name
 
 Scenarios:
     ✔ @critical Decide how the system recognizes the scenario changes: @done (24-05-15 20:19)

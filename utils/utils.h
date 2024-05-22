@@ -21,20 +21,25 @@ enum class drone_state_enum {
     WAITING_CHARGE, // Drone is in the base, is idle, is not fully charged and is watching for a charging station
     TO_ZONE_FOLLOWING,
     FOLLOWING,
-    TOTAL
+    NOT_CONNECTED,
+    DEAD,
+    NONE
 };
 
-constexpr std::array<const char *, static_cast<std::size_t>(drone_state_enum::TOTAL)> drone_state_str = {
+constexpr std::array<const char *, static_cast<std::size_t>(drone_state_enum::NONE)> drone_state_str = {
     "IDLE_IN_BASE",
     "TO_ZONE",
     "WORKING",
     "TO_BASE",
     "WAITING_CHARGE",
     "TO_ZONE_FOLLOWING",
-    "FOLLOWING",};
+    "FOLLOWING",
+    "NOT_CONNECTED",
+    "DEAD"};
 
 namespace utils {
-const char *CaccaPupu(drone_state_enum state);
-void signalHandler(int signal);
+    const char *CaccaPupu(drone_state_enum state);
+    drone_state_enum stringToDroneStateEnum(const std::string& stateStr);
+    void signalHandler(int signal);
 }
 #endif // DRONECONTROLSYSTEM_UTILS_H

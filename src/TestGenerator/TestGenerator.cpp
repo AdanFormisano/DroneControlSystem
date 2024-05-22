@@ -2,7 +2,7 @@
 #include <spdlog/spdlog.h>
 
 TestGenerator::TestGenerator(Redis &redis) :
-    gen(rd()), dis(0, 1), dis_zone(0, ZONE_NUMBER - 1), test_redis(redis) {
+    gen(rd()), dis(0, 1), dis_zone(0, ZONE_NUMBER - 1), dis_tick(1, 20), test_redis(redis) {
     // Populate the map with cumulative probabilities and corresponding functions
 
     spdlog::info("Creating TestGenerator object");
@@ -24,7 +24,22 @@ TestGenerator::TestGenerator(Redis &redis) :
     };
 
     // Connection_lost scenario (drone loses connection to the DroneControl system) [10%]
-    scenarios[1.0f] = []() {
+    scenarios[1.0f] = [this]() {
+        int drone_id = ChooseRandomDrone();
+
+        // Set the drone's status to "Connection lost"
+        test_redis.hset("drone:" + std::to_string(drone_id), "status", "NOT_CONNECTED");
+
+        // Probability of reconnecting (70%) [for testing purposes 50%]
+        float reconnect = generateRandomFloat();
+        if (reconnect < 0.5f) {
+            // Calculate when the drone will reconnect
+            int tick = ChooseRandomTick();
+            test_redis.hset("drones_fault:" + std::to_string(drone_id), "reconnect_tick", std::to_string(tick));
+        } else {
+            // Set -1 to indicate that the drone will not reconnect
+            test_redis.hset("drones_fault:" + std::to_string(drone_id), "reconnect_tick", "-1");
+        }
         spdlog::warn("Connection lost");
     };
 
@@ -67,4 +82,8 @@ int TestGenerator::ChooseRandomDrone() {
         spdlog::info("Drone chosen: {}", v.value());
         return std::stoi(v.value());
     }
+}
+
+int TestGenerator::ChooseRandomTick() {
+    return dis_tick(gen);
 }

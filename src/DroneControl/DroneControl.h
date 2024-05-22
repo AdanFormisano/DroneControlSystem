@@ -27,7 +27,8 @@ namespace drone_control {
         std::string current_stream_id = "0";  // The id of the last message read from the stream
         std::array<std::vector<std::pair<float, float>>, ZONE_NUMBER> drone_paths;  // Array with the paths of all the drones
         std::array<int, ZONE_NUMBER> drone_path_next_index{};                       // Array with the index of the last point of the path of all the drones
-        std::array<bool, ZONE_NUMBER> checklist{};                                    // Array with bool values to check if the drone is following the path
+        std::array<bool, ZONE_NUMBER> checklist{};                                  // Array with bool values to check if the drone is following the path
+        std::unordered_map<int, std::pair<int, int>> last_tick_drone;               // Map with the last tick of the drone (drone_tick, dc_tick)
         Database db;
         Buffer buffer;
 //        std::map<int, std::shared_ptr<MiniBuffer>> mini_buffers;

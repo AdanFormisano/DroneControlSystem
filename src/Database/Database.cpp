@@ -26,7 +26,7 @@ void Database::connect_to_db(const std::string &dbname,
                                    " password=" + password +
                                    " hostaddr=" + hostaddr +
                                    " port=" + port;
-    conn = std::make_shared<pqxx::connection>(connectionString);  // FIXME: a single connection is not thread safe
+    conn = std::make_unique<pqxx::connection>(connectionString);
 
     if (!conn->is_open()) {
 #ifdef DEBUG
