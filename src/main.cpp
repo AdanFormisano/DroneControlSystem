@@ -125,6 +125,9 @@ int main() {
                     // Use Redis to stop the simulation
                     main_redis.set("sim_running", "false");
 
+                    // Join monitor's thread
+                    rtm.JoinThread();
+
                     // FIXME: This is a placeholder for the monitor process,
                     // without it the main process will exit and
                     // the children will be terminated

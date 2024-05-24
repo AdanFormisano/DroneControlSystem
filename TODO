@@ -1,5 +1,6 @@
 High Priority:
     ☐ Monitors:
+        ☐ Each monitor thread needs to be created inside the Main function: the execution of main needs to continue (TICK doesn't get printed)
         ☐ Add a new column to DB: "ON_TIME" for DC's "tick_took_too_long"
         ✔ Translate to C++ @done (24-05-18 18:01)
         ☐ Implement CheckDroneRechargeTime:
@@ -12,8 +13,8 @@ High Priority:
         ☐ Implement CheckDroneCharge
     ☐ Better implementation of new_drone's final_destination calculations
         (swapping drones are "jumping" to the working coords)
-    ☐ Test Generators:
-        ☐ Implement the test generator's side of all scenarios
+    ✔ Test Generators: @done (24-05-22 20:19)
+        ✔ Implement the test generator's side of all scenarios @done (24-05-22 20:19)
     ☐ System's respose to scenarios:
         ☐ When a drone is removed/unavailable, DC needs to adapt to the fact that the stream doesn't have the drone's status-update
             (Everything that uses the drone's "existance" needs to be adjusted eg. DC's and DB's usages of zone:id:drones_active/zone:id:drones_alive)
@@ -21,6 +22,8 @@ High Priority:
             ✘ Special Move() for drone w/o connection @cancelled (24-05-22 17:11)
     ☐ Implement if a drone ahs 0% charge it dies
     ☐ Check and fix drone state machine: using Redis for status reads/checks not well implemented
+    ☐ SCENARIOS:
+        ☐ Send new drones to the zone
 Normal Priority:
     ☐ Make drone_data struct model global, this makes stream data more homogeneous
     ☐ When simulation ends let the threads finish writing on DBs
@@ -84,8 +87,8 @@ Scenarios:
                 b. After the "waiting" time DC tells the thread to fill up the minibuffers that are blocked
                 with "empty"/special entries.
 
-        ☐ The system recognizes the loss of connection and tries to restore it
-        ☐ There needs to be a % for a successful reconnection
+        ✔ The system recognizes the loss of connection and tries to restore it @done (24-05-22 20:21)
+        ✔ There needs to be a % for a successful reconnection @done (24-05-22 20:21)
         ☐ If failed, the System need to send a new drone to the exposed zone:
             ☐ The new drone has a special status that indicates that it's swapping a drone that has been lost
             ☐ The new drone needs to continue from where the previous drone was

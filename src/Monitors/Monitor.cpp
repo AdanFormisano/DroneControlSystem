@@ -25,27 +25,25 @@ Monitor::Monitor() {
 
     // Create db connection
     db.ConnectToDB("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
-
-    // Create a work object
-    W = pqxx::work(db.conn);
 }
 
 void RechargeTimeMonitor::RunMonitor() {
     // Create a thread to run the monitor
-    boost::thread t(&RechargeTimeMonitor::checkDroneRechargeTime, this);
-
-    t.join();
+    t = boost::thread(&RechargeTimeMonitor::checkDroneRechargeTime, this);
+    // boost::thread t(&RechargeTimeMonitor::checkDroneRechargeTime, this);
 }
 
 void RechargeTimeMonitor::checkDroneRechargeTime() {
+
     while (true) {
         spdlog::info("Checking drone recharge time");
+        pqxx::work W(db.getConnection());
 
         // Get drones that are charging
-        getChargingDrones();
+        getChargingDrones(W);
 
         // Get drones that are charged
-        getChargedDrones();
+        getChargedDrones(W);
 
         // Check if drones are charging for the right amount of time
         for (const auto &drone : drone_recharge_time) {
@@ -57,7 +55,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
                 spdlog::warn("Drone {} is still charging", drone_id);
             } else {
                 int delta_time = end_tick - start_tick;
-                if (delta_time >= 3214 || delta_time <= 4821) {
+                if (delta_time >= 3214 && delta_time <= 4821) {
                     spdlog::info("Drone {} has been charging for {} minutes", drone_id, (delta_time * 2.24) / 60);
                 } else {
                     spdlog::warn("Drone {} has been charging for {} minutes...wrong amount of time", drone_id, (delta_time * 2.24) / 60);
@@ -70,7 +68,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
     }
 }
 
-void RechargeTimeMonitor::getChargingDrones() {
+void RechargeTimeMonitor::getChargingDrones(pqxx::work& W) {
     // Get drones that are charging
     pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs WHERE status = 'CHARGING'");
     for (const auto &row : r) {
@@ -84,7 +82,7 @@ void RechargeTimeMonitor::getChargingDrones() {
     }
 }
 
-void RechargeTimeMonitor::getChargedDrones() {
+void RechargeTimeMonitor::getChargedDrones(pqxx::work& W) {
     // Get drones that are charged
     pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs WHERE status = 'CHARGE_COMPLETE'");
 
