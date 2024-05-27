@@ -27,4 +27,13 @@ struct drone_data {
     float charge_needed_to_base;
     // TODO: Add the last time the drone was updated
 };
+
+struct drone_fault {
+    std::string fault_state;
+    int drone_id;
+    int zone_id;
+    std::pair<float, float> position;
+    int fault_tick;
+    int reconnect_tick;
+};
 #endif // DRONECONTROLSYSTEM_GLOBALS_H

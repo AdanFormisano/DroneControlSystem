@@ -1,7 +1,6 @@
 High Priority:
     ☐ Monitors:
-        ☐ Each monitor thread needs to be created inside the Main function: the execution of main needs to continue (TICK doesn't get printed)
-        ☐ Add a new column to DB: "ON_TIME" for DC's "tick_took_too_long"
+        ✔ Each monitor thread needs to be created inside the Main function: the execution of main needs to continue (TICK doesn't get printed) @done (24-05-24 11:19)
         ✔ Translate to C++ @done (24-05-18 18:01)
         ☐ Implement CheckDroneRechargeTime:
             ✔ Implement @done (24-05-18 18:01)
@@ -9,7 +8,8 @@ High Priority:
         ☐ Implement CheckAreaCoverage
         ☐ Implement CheckZoneVerification:
             ☐ Check if a zone-based db table is needed
-        ☐ Implement CheckTimeToReadDroneData
+        ☐ Implement CheckTimeToReadDroneData:
+            ☐ Add a new column to DB "ON_TIME" for DC's "tick_took_too_long" @Maybe
         ☐ Implement CheckDroneCharge
     ☐ Better implementation of new_drone's final_destination calculations
         (swapping drones are "jumping" to the working coords)
@@ -21,7 +21,8 @@ High Priority:
         ✔ Implement "NO_CONNECTION" version of drone's state machine: @done (24-05-22 20:10)
             ✘ Special Move() for drone w/o connection @cancelled (24-05-22 17:11)
     ☐ Implement if a drone ahs 0% charge it dies
-    ☐ Check and fix drone state machine: using Redis for status reads/checks not well implemented
+    ☐ Better implementation of destruction of a drone (it only destoys/checks the working drone)
+    ✔ Check and fix drone state machine: using Redis for status reads/checks not well implemented @done (24-05-27 17:53)
     ☐ SCENARIOS:
         ☐ Send new drones to the zone
 Normal Priority:
@@ -55,17 +56,19 @@ Scenarios:
 
         ✔ Chose drone to explode @done (24-05-15 16:39)
         ✔ Chosen drone has to actually stop working @done (24-05-15 19:21)
-        ☐ DroneControl has to recognize that a drone has exploded
-            ☐ DC shares a data structure with WriteToDB thread that contains all the ticks (minibuffers) that needs to "filled" (which drones to fill for)
-            ☐ WriteToDB needs to fill the minibuffers
-            ☐ DC needs a map to have a view on which drone is not sending any status-update
-                ☐ If delta_tick > ~20 ticks then start "recover process" 
+        ☐ DroneControl has to recognize that a drone has exploded:
+            ✔ An ack needs to be sent to DroneZone to start the "counting" of ticks @done (24-05-27 17:53)
+            ✔ DC shares a data structure with WriteToDB thread that contains all the ticks (minibuffers) that needs to "filled" (which drones to fill for) @done (24-05-27 17:53)
+            ✔ WriteToDB needs to fill the minibuffers @done (24-05-27 17:53)
+            ✔ DC needs a map to have a view on which drone is not sending any status-update @done (24-05-27 17:53)
+                ✔ If delta_tick > ~20 ticks then start "recover process" @done (24-05-27 17:53)
+            ☐ DC needs to check when the fault managment has finished (reading fault_state from redis)
         ☐ The System need to send a new drone to the exposed zone:
             ☐ The new drone has a special status that indicates that it's swapping a drone that has exploded
             ☐ The new drone needs to continue from where the previous drone was
-        ☐ The logdb needs to represent what happened to the system:
-            - Drone should stop sending update
-            - New drone should have status "EMERGENCY_SWAP_DEAD" (or something like that)
+        ✔ The logdb needs to represent what happened to the system: @done (24-05-27 17:53)
+            ✔ Drone should stop sending update @done (24-05-27 17:53)
+            ✔ New drone should have status "EMERGENCY_SWAP_DEAD" (or something like that) @done (24-05-27 17:53)
 
     Connection lost:
         This Scenario represents a _single_ drone that has lost its connection with the System but is still working.

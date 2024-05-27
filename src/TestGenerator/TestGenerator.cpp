@@ -34,16 +34,18 @@ TestGenerator::TestGenerator(Redis &redis) :
         float reconnect = generateRandomFloat();
         if (reconnect < 0.5f) {
             // Calculate when the drone will reconnect
+            spdlog::info("Drone {} will reconnect", drone_id);
             int tick = ChooseRandomTick();
             test_redis.hset("drones_fault:" + std::to_string(drone_id), "reconnect_tick", std::to_string(tick));
         } else {
             // Set -1 to indicate that the drone will not reconnect
+            spdlog::info("Drone {} will not reconnect", drone_id);
             test_redis.hset("drones_fault:" + std::to_string(drone_id), "reconnect_tick", "-1");
         }
         spdlog::warn("Connection lost");
     };
 
-    // Sleep for 5 seconds
+    // Sleep for 5 seconds to allow the DroneControlSystem to start
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 

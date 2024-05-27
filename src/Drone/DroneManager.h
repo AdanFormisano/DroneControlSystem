@@ -111,9 +111,12 @@ class Drone {
     bool getDestroy() const { return destroy; }
     bool getSwap() const { return swap; }
     drone_state_enum getDroneState() const { return drone_state; }
+    bool getConnectedToSys() const { return connected_to_sys; }
     void SetDronePathIndex(int index) { path_index = index; }
     void SetDroneState(drone_state_enum state);
+    void setDestroy(bool value) { destroy = value; }
     void setSwap(bool value) { swap = value; }
+    void setConnectedToSys(bool value) { connected_to_sys = value; }
 
     void Run();
     void CalculateSwapFinalCoords();  // Calculates the final coords of the swap

@@ -25,11 +25,16 @@ public:
     void WriteToBuffer(drone_data_ext &data);
     drone_data_ext ReadFromBuffer();
     void ClearBuffer();
+    void WriteFault(drone_fault &fault) { faults.push_back(fault); }
+    std::vector<drone_fault> GetFaults() { return faults; }
+    void ClearFaults() { faults.clear(); }
 
     size_t getSize();
+    size_t getFaultsSize() { return faults.size(); }
 
 private:
     std::queue<drone_data_ext> buffer;
+    std::vector<drone_fault> faults;
 };
 
 class MiniBuffer : public Buffer {

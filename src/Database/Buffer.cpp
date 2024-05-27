@@ -1,4 +1,5 @@
 #include <set>
+#include <iostream>
 #include "Buffer.h"
 
 Buffer::~Buffer() {
@@ -152,6 +153,81 @@ void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers, Redis 
                     mini_buffers.mini_buffers[data.tick_n]->WriteToBuffer(data);
                 }
             }
+
+            // Check if "empty" entries are needed for faulty drones
+            if (buffer.getFaultsSize() > 0) {
+                for (size_t _ = 0; _ < buffer.getFaultsSize(); ++_) {
+                    drone_fault fault = buffer.GetFaults()[_];
+//                    spdlog::info("Faulty drone {} at tick {} with fault state {}", fault.drone_id, fault.fault_tick, fault.fault_state);
+
+                    drone_data_ext empty_data = {
+                        .data = {
+                            .id = fault.drone_id,
+                            .status = "FAULT",
+                            .charge = -1.0f, // TODO: Get last known charge value from redis
+                            .position = fault.position,
+                            .zone_id = fault.zone_id,
+                            .charge_needed_to_base = 0.0f // TODO: Get charge needed to base from Redis
+                        },
+                        .check = false,
+                    };
+
+//                    spdlog::info("DATA: Drone {} Status {} Charge {} X {} Y {} Zone {} Charge needed {}",
+//                                 empty_data.data.id, empty_data.data.status, empty_data.data.charge, empty_data.data.position.first, empty_data.data.position.second, empty_data.data.zone_id, empty_data.data.charge_needed_to_base);
+                    // Loop to create/insert the entries for all ticks needed
+                    // Check if the drone is going to reconnect
+                    int wait_tick = 1;
+                    bool reconnect = false;
+                    if (fault.reconnect_tick != -1) {
+                        wait_tick = fault.fault_tick + fault.reconnect_tick - 1;
+                        reconnect = true;
+                    } else {
+                        wait_tick = fault.fault_tick + 20;
+                    }
+
+                    for (int i = fault.fault_tick; i <= wait_tick; ++i) {
+                        // Insert the faulty drone data
+                        empty_data.tick_n = i;
+//                        spdlog::info("DATA: Drone {} Status {} Charge {} X {} Y {} Zone {} Charge needed {}",
+//                                     empty_data.data.id, empty_data.data.status, empty_data.data.charge, empty_data.data.position.first, empty_data.data.position.second, empty_data.data.zone_id, empty_data.data.charge_needed_to_base);
+
+                        // Check if minibuffer is not nullptr
+                        // Check if the minibuffer already exists
+                        if (mini_buffers.mini_buffers.contains(i)) {
+                            // mini_buffers[data.tick_n].WriteToBuffer(data.data, data.check, data.tick_n);
+                            mini_buffers.mini_buffers[i]->WriteToBuffer(empty_data);
+                        } else {
+                            // MiniBuffer mini_bffr(data.tick_n);
+                            // mini_buffers[index] = mini_bffr;
+                            mini_buffers.mini_buffers[i] = std::make_shared<MiniBuffer>(i);
+                            mini_buffers.mini_buffers[i]->WriteToBuffer(empty_data);
+                        }
+                    }
+
+                    // Add last log entry that explains what happened to the drone
+                    empty_data.tick_n = wait_tick + 1;
+                    if (reconnect) {
+                        empty_data.data.status = "RECONNECT";
+                    } else {
+                        empty_data.data.status = fault.fault_state;
+                    }
+
+                    // Check if minibuffer is not nullptr
+                    // Check if the minibuffer already exists
+                    if (mini_buffers.mini_buffers.contains(wait_tick + 1)) {
+                        // mini_buffers[data.tick_n].WriteToBuffer(data.data, data.check, data.tick_n);
+                        mini_buffers.mini_buffers[wait_tick + 1]->WriteToBuffer(empty_data);
+                    } else {
+                        // MiniBuffer mini_bffr(data.tick_n);
+                        // mini_buffers[index] = mini_bffr;
+                        mini_buffers.mini_buffers[wait_tick + 1] = std::make_shared<MiniBuffer>(wait_tick + 1);
+                        mini_buffers.mini_buffers[wait_tick + 1]->WriteToBuffer(empty_data);
+                    }
+
+                }
+                buffer.ClearFaults();
+            }
+
             mini_lock.unlock();
             mini_buffers.cv.notify_all();
         }
@@ -200,7 +276,7 @@ void WriteToDB(MiniBufferContainer &mini_buffers, Database &db, Redis &redis) {
             // Get the number of elements in the current mini buffer
 
             spdlog::info("Minibuffer {} needs {} n_elements, it has {} elements", mini_b->getID(), mini_buffers_elements.second, mini_b->getSize());
-            if (mini_b->getSize() == mini_buffers_elements.second) {
+            if (mini_b->getSize() >= mini_buffers_elements.second) {
                 spdlog::info("Writing Minibuffer {} of size {} to db", mini_buffers.mini_buffers.begin()->first, mini_b->getSize());
                 mini_b->WriteBlockToDB(db, mini_buffers_elements.second);
 
@@ -211,7 +287,7 @@ void WriteToDB(MiniBufferContainer &mini_buffers, Database &db, Redis &redis) {
                 for (int i = 0; i < ZONE_NUMBER; ++i) {
                     redis.hdel("zone:" + std::to_string(i) + ":drones_alive_history", std::to_string(mini_b->getID()));
                 }
-            }
+            }// TODO: Add warning if the size of the minibuffer is different from the expected size
 
             mini_lock.unlock();
             boost::this_thread::sleep_for(boost::chrono::milliseconds(200));

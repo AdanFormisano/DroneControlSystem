@@ -62,34 +62,37 @@ namespace drones {
                 ManageFaults();
 //                spdlog::info("DroneZone {} tick {}: drones ran and fault managed", zone_id, tick_n);
 
-                if (drones[0]->getSwap()) {
-                    // Set the new drone to working
-                    // Set the drone to working
-                    drones[1]->SetDronePathIndex(drone_path_index);
-                    drones[1]->SetDroneState(drone_state_enum::WORKING);
-                    zone_redis.hset("drone:" + std::to_string(drones[1]->getDroneId()), "status", "WORKING");
-                    zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
-                    zone_redis.set("zone:" + std::to_string(zone_id) + ":working_drone", std::to_string(drones[1]->getDroneId()));
-#ifdef DEBUG
-                    spdlog::info("Drone {} is now working: path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
-#endif
-                    drones[0]->setSwap(false);
-                }
+                if (!drones.empty()) {
+                    // Check if the drone needs to be swapped
+                    if (drones[0]->getSwap()) {
+                        // Set the new drone to working
+                        // Set the drone to working
+                        drones[1]->SetDronePathIndex(drone_path_index);
+                        drones[1]->SetDroneState(drone_state_enum::WORKING);
+                        zone_redis.hset("drone:" + std::to_string(drones[1]->getDroneId()), "status", "WORKING");
+                        zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
+                        zone_redis.set("zone:" + std::to_string(zone_id) + ":working_drone", std::to_string(drones[1]->getDroneId()));
+    #ifdef DEBUG
+                        spdlog::info("Drone {} is now working: path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
+    #endif
+                        drones[0]->setSwap(false);
+                    }
 
-                if (drones[0]->getDestroy()) {
-//                    spdlog::info("Drone {} getting destroyed", drones[0]->getDroneId());
-                    // Remove the drone from the vector
-                    drones.erase(drones.begin());
+                    if (drones[0]->getDestroy()) {
+    //                    spdlog::info("Drone {} getting destroyed", drones[0]->getDroneId());
+                        // Remove the drone from the vector
+                        drones.erase(drones.begin());
 
-//                    spdlog::info("DroneZone {} now has {} drones", zone_id, drones.size());
+    //                    spdlog::info("DroneZone {} now has {} drones", zone_id, drones.size());
+                    }
                 }
 
                 // Check if there is time left in the tick
                 auto tick_now = std::chrono::steady_clock::now();
-                if (tick_now <= tick_start + (tick_duration_ms * number_of_drones)) {
+                if (tick_now <= tick_start + tick_duration_ms) {
                     // Sleep for the remaining time
                     std::this_thread::sleep_for(tick_start + tick_duration_ms - tick_now);
-                } else if (tick_now > tick_start + (tick_duration_ms * number_of_drones)) {
+                } else if (tick_now > tick_start + tick_duration_ms) {
                     // Log if the tick took too long
                     spdlog::warn("DroneZone {} tick took too long", zone_id);
 //                    break;
@@ -207,7 +210,14 @@ namespace drones {
     void DroneZone::CreateDroneFault(int drone_id, drone_state_enum fault_state,
                                      std::pair<float, float> fault_coords, int tick_start,
                                      int tick_end, int reconnect_tick) {
-        drone_fault new_fault = {drone_working_id, fault_state, fault_coords, zone_id, tick_start, tick_end, reconnect_tick};
+        drone_fault new_fault = {
+                .drone_id = drone_id,
+                .fault_state = fault_state,
+                .fault_coords = fault_coords,
+                .zone_id = zone_id,
+                .tick_start = tick_start,
+                .tick_end = tick_end,
+                .reconnect_tick = reconnect_tick};
         drone_faults.push_back(new_fault);
     }
 
@@ -219,26 +229,27 @@ namespace drones {
         } else {
             // If DC has not been notified of the NEW fault
             if (!drone_fault_ack) {
+
                 for (auto &fault: drone_faults) {
                     // Upload to Redis the fault data
                     std::unordered_map<std::string, std::string> fault_data = {
                             {"drone_id", std::to_string(fault.drone_id)},
                             {"zone_id", std::to_string(fault.zone_id)},
                             {"fault_state", utils::CaccaPupu(fault.fault_state)},
-                            {"fault_coords", std::to_string(fault.fault_coords.first) + " " + std::to_string(fault.fault_coords.second)},
+                            {"fault_coords_X", std::to_string(fault.fault_coords.first)},
+                            {"fault_coords_Y", std::to_string(fault.fault_coords.second)},
                             {"tick_start", std::to_string(fault.tick_start)},
                             {"tick_end", std::to_string(fault.tick_end)},
                             {"reconnect_tick", std::to_string(fault.reconnect_tick)}
                     };
                     zone_redis.hmset("drones_fault:" + std::to_string(fault.drone_id), fault_data.begin(), fault_data.end());
+//                    spdlog::info("Fault data uploaded to Redis for drone {}", fault.drone_id);
+                    zone_redis.sadd("drones_faults", std::to_string(fault.drone_id));
                 }
-
-                // Wait for the DC to acknowledge the fault using pub/sub
         //        ConnectionOptions ack_opts;
         //        ack_opts.host = "127.0.0.1";
         //        ack_opts.port = 7777;
         //        ack_opts.socket_timeout = std::chrono::seconds (5);
-
                 auto sub = zone_redis.subscriber();
                 sub.on_message([this](const std::string &channel, const std::string &msg) {
                     if (msg == "ack") {
@@ -264,41 +275,61 @@ namespace drones {
                 if (fault.fault_state == drone_state_enum::DEAD) {
                     if (tick_n >= fault.tick_end) {
                         // The drone is dead
-
-                        // Remove the drone from drones vector
-                        drones.erase(std::remove_if(drones.begin(), drones.end(), [fault](const std::shared_ptr<Drone> &drone) {
-                            return drone->getDroneId() == fault.drone_id;
-                        }), drones.end());
+                        spdlog::warn("Drone {} has died at tick {}", fault.drone_id, tick_n);
 
                         // Remove fault from drone_faults vector
                         drone_faults.erase(std::remove_if(drone_faults.begin(), drone_faults.end(), [fault](const drone_fault &in_vector_fault) {
                             return fault.drone_id == in_vector_fault.drone_id;
                         }), drone_faults.end());
+
+                        // Set fault status
+                        zone_redis.hset("drones_fault:" + std::to_string(fault.drone_id), "fault_state", "DONE");
                     }
                 } else {
                     // Drone is in NOT_CONNECTED fault state
                     if (fault.reconnect_tick == -1) {
                         // The drone will not reconnect
                         if (tick_n >= fault.tick_end) {
-                            // The fault has ended
-                            drones.erase(std::remove_if(drones.begin(), drones.end(), [fault](const std::shared_ptr<Drone> &drone) {
-                                return drone->getDroneId() == fault.drone_id;
-                            }), drones.end());
+                            // Destroy the drone
+                            spdlog::warn("Drone {} has lost connection and died without reconnecting at tick {}", fault.drone_id, tick_n);
+
+                            // Find the drone in the drones vector
+                            for (auto &drone: drones) {
+                                if (drone->getDroneId() == fault.drone_id) {
+                                    // Reconnect the drone
+                                    drone->setDestroy(true);
+                                }
+                            }
 
                             // Remove fault from drone_faults vector
                             drone_faults.erase(std::remove_if(drone_faults.begin(), drone_faults.end(), [fault](const drone_fault &in_vector_fault) {
                                 return fault.drone_id == in_vector_fault.drone_id;
                             }), drone_faults.end());
+
+                            // Set fault status
+                            zone_redis.hset("drones_fault:" + std::to_string(fault.drone_id), "fault_state", "DONE");
                         }
                     } else {
                         // The drone will reconnect
-                        if (tick_n >= fault.reconnect_tick) {
+                        if (tick_n >= fault.tick_start + fault.reconnect_tick) {
                             // The drone has reconnected
+                            spdlog::warn("Drone {} has reconnected at tick {}", fault.drone_id, tick_n);
+
+                            // Find the drone in the drones vector
+                            for (auto &drone: drones) {
+                                if (drone->getDroneId() == fault.drone_id) {
+                                    // Reconnect the drone
+                                    drone->setConnectedToSys(true);
+                                }
+                            }
 
                             // Remove fault from drone_faults vector
                             drone_faults.erase(std::remove_if(drone_faults.begin(), drone_faults.end(), [fault](const drone_fault &in_vector_fault) {
                                 return fault.drone_id == in_vector_fault.drone_id;
                             }), drone_faults.end());
+
+                            // Set fault status
+                            zone_redis.hset("drones_fault:" + std::to_string(fault.drone_id), "fault_state", "RECONNECTED");
                         }
                     }
                 }

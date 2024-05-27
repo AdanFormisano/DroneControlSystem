@@ -36,6 +36,8 @@ namespace drones {
                 // Get the time_point
                 auto tick_start = std::chrono::steady_clock::now();
 
+//                spdlog::info("DroneManager tick {}", tick_n);
+
                 // Create the threads for the zones_vertex every 5 ticks
                 if (tick_n <= 20 && tick_n % 5 == 0) {
                     CreateZoneThreads();

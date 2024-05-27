@@ -64,6 +64,11 @@ void Drone::Run() {
         // Check its status in the Redis DB
         drone_state = CheckDroneStateOnRedis();
 
+        if (!connected_to_sys) {
+            auto status = utils::CaccaPupu(drone_state);
+            spdlog::warn("Tick {} Drone {} is not connected (status: {})", tick_n, drone_id, status);
+        }
+
         // Run the drone's state machine
         switch (drone_state) {
             case drone_state_enum::IDLE_IN_BASE:
@@ -231,6 +236,7 @@ void Drone::Run() {
                 dz.CreateDroneFault(drone_id, drone_state_enum::DEAD, drone_position, tick_n, tick_n + 20, -1);
 
                 destroy = true;
+                spdlog::warn("Drone {} is dead", drone_id);
                 break;
 
             case drone_state_enum::NOT_CONNECTED:
@@ -251,6 +257,8 @@ void Drone::Run() {
 
                 connected_to_sys = false;
                 fault_managed = true;
+
+                spdlog::warn("Drone {} has lost connection", drone_id);
 
                 break;
 
@@ -439,8 +447,12 @@ drone_state_enum Drone::CheckDroneStateOnRedis() {
         new_state = drone_state;
     } else if (state.value() == "DEAD") {
         new_state = drone_state_enum::DEAD;
+        spdlog::warn("Drone {} is NOW dead", drone_id);
     } else if (state.value() == "NOT_CONNECTED") {
         new_state = drone_state_enum::NOT_CONNECTED;
+        spdlog::warn("Drone {} is NOW not connected", drone_id);
+    } else {
+        new_state = utils::stringToDroneStateEnum(state.value());
     }
 
     return new_state;

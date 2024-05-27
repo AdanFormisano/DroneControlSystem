@@ -43,7 +43,8 @@ namespace drone_control {
             auto tick_start = std::chrono::steady_clock::now();
 
             // Work
-            ReadStream();
+            ReadDataStream();
+            FaultAck();
 
             // Check if there is time left in the tick
             auto tick_now = std::chrono::steady_clock::now();
@@ -62,7 +63,7 @@ namespace drone_control {
     }
 
 // Reads the stream of data from Redis and updates the drones' data
-    void DroneControl::ReadStream() {
+    void DroneControl::ReadDataStream() {
 //        std::cout << "Creating stream data structure" << std::endl;
         using new_Attrs = std::vector<std::pair<std::string, std::string>>; // This NEEDS to be a vector for xread to work
         using new_Item = std::pair<std::string, new_Attrs>;
@@ -194,6 +195,41 @@ namespace drone_control {
             (current_charge <= ((charge_needed * 2) + (40.0f * DRONE_CONSUMPTION)))) {
             // Create a redis list of all the zones_vertex that need to be switched on
             redis.sadd("zones_to_swap", std::to_string(zone_id));
+        }
+    }
+
+    // When a fault happens, the DroneControl system must acknowledge it to the DroneZone enabling it to start the fault management
+    void DroneControl::FaultAck() {
+        // Check if there are new faults
+        auto faults_on_redis = redis.scard("drones_faults");
+        if (faults_on_redis <= 0) {
+            return;
+        } else {
+            // Acknowledge the fault
+            redis.publish("fault_ack", "ack");
+
+            // Get drones' ids with faults
+            std::unordered_set<std::string> faulting_drones_ids;
+            redis.smembers("drones_faults", std::inserter(faulting_drones_ids, faulting_drones_ids.end()));
+
+            // Get the fault data and store it in the faults_data vector
+            for (const auto &drone_id : faulting_drones_ids) {
+                std::unordered_map<std::string, std::string> fault_data;
+                redis.hgetall("drones_fault:" + drone_id, std::inserter(fault_data, fault_data.begin()));
+
+                drone_fault temp_fault;
+                temp_fault.fault_state = fault_data.at("fault_state");
+                temp_fault.drone_id = std::stoi(drone_id);
+                temp_fault.zone_id = std::stoi(fault_data.at("zone_id"));
+                temp_fault.position.first = stof(fault_data.at("fault_coords_X"));
+                temp_fault.position.second = stof(fault_data.at("fault_coords_Y"));
+                temp_fault.fault_tick = std::stoi(fault_data.at("tick_start"));
+                temp_fault.reconnect_tick = std::stoi(fault_data.at("reconnect_tick"));
+
+                buffer.WriteFault(temp_fault);
+            }
+            // Clear the faults from the Redis server
+            redis.del("drones_faults");
         }
     }
 } // namespace drone_control
