@@ -13,18 +13,23 @@ High Priority:
         ☐ Implement CheckDroneCharge
     ☐ Better implementation of new_drone's final_destination calculations
         (swapping drones are "jumping" to the working coords)
-    ✔ Test Generators: @done (24-05-22 20:19)
-        ✔ Implement the test generator's side of all scenarios @done (24-05-22 20:19)
-    ☐ System's respose to scenarios:
-        ☐ When a drone is removed/unavailable, DC needs to adapt to the fact that the stream doesn't have the drone's status-update
-            (Everything that uses the drone's "existance" needs to be adjusted eg. DC's and DB's usages of zone:id:drones_active/zone:id:drones_alive)
+    ☐ System's response to scenarios:
+        ✔ When a drone is removed/unavailable, DC needs to adapt to the fact that the stream doesn't have the drone's status-update @done (24-06-05 20:59)
+            (Everything that uses the drone's "existence" needs to be adjusted eg. DC's and DB's usages of zone:id:drones_active/zone:id:drones_alive)
         ✔ Implement "NO_CONNECTION" version of drone's state machine: @done (24-05-22 20:10)
             ✘ Special Move() for drone w/o connection @cancelled (24-05-22 17:11)
-    ☐ Implement if a drone ahs 0% charge it dies
-    ☐ Better implementation of destruction of a drone (it only destoys/checks the working drone)
-    ✔ Check and fix drone state machine: using Redis for status reads/checks not well implemented @done (24-05-27 17:53)
+        ✔ If a drone that is swapping loses connection DC doesn't need to send immediately a new one, it needs to wait for the outcome of the fault @done (24-06-05 20:59)
+    ☐ @critical Implement if a drone ahs 0% charge it dies and needs to be deleted
+    ☐ @critical Does the logdb need to have logs also for what DC does?
     ☐ SCENARIOS:
         ☐ Send new drones to the zone
+    ☐ Better implementation of Drone's destruction/swap functions:
+        ☐ Destruction of a drone only destroys/checks the working drone, it needs to check if because of a fault other drones need to be destroyed
+    ☐ Simplify DroneZone::ManageFaults(), it's better not to have a giant single function for fault managing
+
+    ✔ Check and fix drone state machine: using Redis for status reads/checks not well implemented @done (24-05-27 17:53)
+    ✔ Test Generators: @done (24-05-22 20:19)
+        ✔ Implement the test generator's side of all scenarios @done (24-05-22 20:19)
 Normal Priority:
     ☐ Make drone_data struct model global, this makes stream data more homogeneous
     ☐ When simulation ends let the threads finish writing on DBs
@@ -34,15 +39,16 @@ Low Priority:
     ☐ Check if a pool of threads is needed to read from stream in DC
     ☐ Re-evaluate the break if a tick took too long
     ☐ Implement a priority on DC for the buffer writing
-    ✔ In DroneZone create functions for swap-checking and destroying drones @done (24-05-22 17:07)
     ☐ Rename CaccaPupu to decent name
+    ☐ Change FAULT_SWAP status to "EMERGENCY_SWAP"
+    ✔ In DroneZone create functions for swap-checking and destroying drones @done (24-05-22 17:07)
 
 Scenarios:
     ✔ @critical Decide how the system recognizes the scenario changes: @done (24-05-15 20:19)
         - Does the drone change its status (depending on the input created by the TestGenerator) and the DC reacts to it?
         - Is the DC the one that interprets the absence of status-updates from a drone? (eg. waits ~20 ticks and then decides)
 
-    The System first assuemes that the drone has lost its connection and tries to reconnect to the drone. If the drone doesn't
+    The System first assumes that the drone has lost its connection and tries to reconnect to the drone. If the drone doesn't
     reconnect to the system, then it's assumed that the it's lost/broken and a new drone is sent.
 
     Everything is fine:
@@ -56,16 +62,16 @@ Scenarios:
 
         ✔ Chose drone to explode @done (24-05-15 16:39)
         ✔ Chosen drone has to actually stop working @done (24-05-15 19:21)
-        ☐ DroneControl has to recognize that a drone has exploded:
+        ✔ DroneControl has to recognize that a drone has exploded: @done (24-06-05 21:02)
             ✔ An ack needs to be sent to DroneZone to start the "counting" of ticks @done (24-05-27 17:53)
             ✔ DC shares a data structure with WriteToDB thread that contains all the ticks (minibuffers) that needs to "filled" (which drones to fill for) @done (24-05-27 17:53)
             ✔ WriteToDB needs to fill the minibuffers @done (24-05-27 17:53)
             ✔ DC needs a map to have a view on which drone is not sending any status-update @done (24-05-27 17:53)
                 ✔ If delta_tick > ~20 ticks then start "recover process" @done (24-05-27 17:53)
-            ☐ DC needs to check when the fault managment has finished (reading fault_state from redis)
-        ☐ The System need to send a new drone to the exposed zone:
-            ☐ The new drone has a special status that indicates that it's swapping a drone that has exploded
-            ☐ The new drone needs to continue from where the previous drone was
+            ✔ DC needs to check when the fault management has finished (reading fault_state from redis) @done (24-06-05 21:02)
+        ✔ The System need to send a new drone to the exposed zone: @done (24-06-05 21:02)
+            ✔ The new drone has a special status that indicates that it's swapping a drone that has exploded @done (24-06-05 21:02)
+            ✔ The new drone needs to continue from where the previous drone was @done (24-06-05 21:02)
         ✔ The logdb needs to represent what happened to the system: @done (24-05-27 17:53)
             ✔ Drone should stop sending update @done (24-05-27 17:53)
             ✔ New drone should have status "EMERGENCY_SWAP_DEAD" (or something like that) @done (24-05-27 17:53)
@@ -92,12 +98,12 @@ Scenarios:
 
         ✔ The system recognizes the loss of connection and tries to restore it @done (24-05-22 20:21)
         ✔ There needs to be a % for a successful reconnection @done (24-05-22 20:21)
-        ☐ If failed, the System need to send a new drone to the exposed zone:
-            ☐ The new drone has a special status that indicates that it's swapping a drone that has been lost
-            ☐ The new drone needs to continue from where the previous drone was
-        ☐ The logdb needs to represent what happened to the system:
-            - Drone should stop sending update
-            - New drone should have status "EMERGENCY_SWAP_CONNECTION" (or something like that)
+        ✔ If failed, the System need to send a new drone to the exposed zone: @done (24-06-05 21:03)
+            ✔ The new drone has a special status that indicates that it's swapping a drone that has been lost @done (24-06-05 21:03)
+            ✔ The new drone needs to continue from where the previous drone was @done (24-06-05 21:03)
+        ✔ The logdb needs to represent what happened to the system: @done (24-06-05 21:03)
+            ✔ Drone should stop sending update @done (24-06-05 21:03)
+            ✔ New drone should have status "EMERGENCY_SWAP_CONNECTION" (or something like that) @done (24-06-05 21:03)
 
 
 Loop-scenarios:

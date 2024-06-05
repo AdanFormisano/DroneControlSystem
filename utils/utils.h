@@ -23,6 +23,7 @@ enum class drone_state_enum {
     FOLLOWING,
     NOT_CONNECTED,
     DEAD,
+    FAULT_SWAP,
     NONE
 };
 
@@ -35,7 +36,9 @@ constexpr std::array<const char *, static_cast<std::size_t>(drone_state_enum::NO
     "TO_ZONE_FOLLOWING",
     "FOLLOWING",
     "NOT_CONNECTED",
-    "DEAD"};
+    "DEAD",
+    "FAULT_SWAP"
+};
 
 namespace utils {
     const char *CaccaPupu(drone_state_enum state);

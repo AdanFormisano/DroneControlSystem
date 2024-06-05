@@ -118,10 +118,21 @@ namespace drones {
         zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(drone_id));
     }
 
+    // Create a new drone
     void DroneZone::CreateNewDrone() {
         auto drone_id = new_drone_id + zone_id * 10;
         drones.emplace_back(std::make_shared<Drone>(drone_id, *this));
         zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(drone_id));
+        ++new_drone_id;
+    }
+
+    // Create a new drone with a specific state
+    void DroneZone::SwapFaultyDrone(std::pair<float, float> last_known_coords) {
+        auto drone_id = new_drone_id + zone_id * 10;
+        drones.emplace_back(std::make_shared<Drone>(drone_id, *this, drone_state_enum::FAULT_SWAP));
+        drones.back()->setFinalCoords(last_known_coords);
+        zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(drone_id));
+        // spdlog::info("Drone {} created in zone {} in state FAULT_SWAP, moving to last known location...", drone_id, zone_id);
         ++new_drone_id;
     }
 
@@ -273,6 +284,7 @@ namespace drones {
             // The DC has acknowledged the fault, now manage the fault
             for (auto &fault: drone_faults) {
                 if (fault.fault_state == drone_state_enum::DEAD) {
+                    // Drone is in DEAD fault state
                     if (tick_n >= fault.tick_end) {
                         // The drone is dead
                         spdlog::warn("Drone {} has died at tick {}", fault.drone_id, tick_n);
@@ -281,6 +293,10 @@ namespace drones {
                         drone_faults.erase(std::remove_if(drone_faults.begin(), drone_faults.end(), [fault](const drone_fault &in_vector_fault) {
                             return fault.drone_id == in_vector_fault.drone_id;
                         }), drone_faults.end());
+
+                        // Spawn new drone
+                        spdlog::info("Spawning new drone for zone {}", zone_id);
+                        SwapFaultyDrone(fault.fault_coords);
 
                         // Set fault status
                         zone_redis.hset("drones_fault:" + std::to_string(fault.drone_id), "fault_state", "DONE");
@@ -301,13 +317,18 @@ namespace drones {
                                 }
                             }
 
+                            // Set fault status
+                            zone_redis.hset("drones_fault:" + std::to_string(fault.drone_id), "fault_state", "DONE");
+
                             // Remove fault from drone_faults vector
                             drone_faults.erase(std::remove_if(drone_faults.begin(), drone_faults.end(), [fault](const drone_fault &in_vector_fault) {
                                 return fault.drone_id == in_vector_fault.drone_id;
                             }), drone_faults.end());
 
-                            // Set fault status
-                            zone_redis.hset("drones_fault:" + std::to_string(fault.drone_id), "fault_state", "DONE");
+                            // Spawn new drone
+                            spdlog::info("Spawning new drone for zone {}", zone_id);
+                            SwapFaultyDrone(fault.fault_coords);
+
                         }
                     } else {
                         // The drone will reconnect

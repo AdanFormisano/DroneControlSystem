@@ -55,6 +55,7 @@ class DroneZone {
     std::vector<std::pair<float, float>> drone_path;
     int drone_path_index = 0;
     std::array<float, 124> drone_path_charge{};
+    std::vector<drone_state_enum> last_drones_state;
 
     DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &zone_coords, Redis &redis);
     ~DroneZone() = default;
@@ -67,7 +68,8 @@ class DroneZone {
 
     void Run();
     void CreateDrone(int drone_id);                                                                                                                             // Creates a new drone
-    void CreateNewDrone();                                                                                                                                      // Creates a new drone
+    void CreateNewDrone();
+    void SwapFaultyDrone(std::pair<float, float> coords);
     void SpawnThread(int tick_n_drone_manager);                                                                                                                 // Spawns the zone thread
     void CreateDroneFault(int drone_id, drone_state_enum fault_state, std::pair<float, float> fault_coords, int tick_start, int tick_end, int reconnect_tick);  // Creates a drone fault
 
@@ -102,7 +104,8 @@ class Drone {
    public:
     float drone_charge_to_base = 0.0f;  // Charge needed to go back to the base
 
-    Drone(int, DroneZone &);
+    Drone(int drone_id, DroneZone &droneZone);
+    Drone(int drone_id, DroneZone& droneZone, drone_state_enum drone_state);
 
     [[nodiscard]] int getDroneId() const { return drone_id; }
     [[nodiscard]] std::pair<float, float> getDronePosition() const { return drone_position; }
@@ -117,6 +120,7 @@ class Drone {
     void setDestroy(bool value) { destroy = value; }
     void setSwap(bool value) { swap = value; }
     void setConnectedToSys(bool value) { connected_to_sys = value; }
+    void setFinalCoords(std::pair<float, float> coords) { swap_final_coords = coords; }
 
     void Run();
     void CalculateSwapFinalCoords();  // Calculates the final coords of the swap
@@ -125,11 +129,11 @@ class Drone {
     int tick_n;
     Redis &drone_redis;
     std::string redis_id;
+    std::pair<float, float> swap_final_coords;  // Final coords of the swap
     DroneZone &dz;
     int path_index = 0;                         // Index of the current position in the drone_path
     bool swap = false;                          // Flag to swap the drone
     bool destroy = false;                       // Flag to destroy the drone
-    std::pair<float, float> swap_final_coords;  // Final coords of the swap
     int reconnect_tick = -1;                    // Tick when the drone will reconnect
     bool fault_managed = false;                 // Flags whether a new fault has been created
     bool connected_to_sys = true;                      // Flags whether the drone is in a fault state

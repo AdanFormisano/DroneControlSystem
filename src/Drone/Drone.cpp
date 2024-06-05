@@ -49,6 +49,49 @@ Drone::Drone(int id, DroneZone &drone_zone) : drone_id(id), dz(drone_zone), dron
     UploadStatus(); // TODO: Check if needed
 }
 
+Drone::Drone(int id, DroneZone &drone_zone, drone_state_enum drone_state_ext) : drone_id(id), dz(drone_zone), drone_redis(drone_zone.zone_redis), drone_state(drone_state_ext) {
+    spdlog::info("Drone {} created with state {}", drone_id, utils::CaccaPupu(drone_state));
+
+    // Drone's base data initialization
+    redis_id = "drone:" + std::to_string(id);
+
+    drone_data = {
+            {"id", std::to_string(drone_id)},
+            {"status", utils::CaccaPupu(drone_state)},  // FIXME: name of function
+            {"charge", std::to_string(drone_charge)},
+            {"X", std::to_string(drone_position.first)},
+            {"Y", std::to_string(drone_position.second)},
+            {"zone_id", std::to_string(dz.getZoneId())},
+            {"charge_needed_to_base", std::to_string(0)},
+            {"tick_n", std::to_string(tick_n)}};
+
+    // Add the drone to the zone's queue of drones
+    drone_redis.rpush("zone:" + std::to_string(dz.getZoneId()) + ":drones", std::to_string(drone_id));
+    drone_redis.sadd("zone:" + std::to_string(dz.getZoneId()) + ":drones_alive", std::to_string(drone_id));
+
+    // Check if the drone already exists in the Redis DB
+    if (!Exists()) {
+#ifdef DEBUG
+        spdlog::warn("Drone {} does not exist in the Redis DB", drone_id);
+#endif
+        SetChargeNeededToBase();
+    } else {
+        // Take the charge_needed_to_base from the Redis DB
+        drone_charge_to_base = std::stof(drone_redis.hget(redis_id, "charge_needed_to_base").value_or("0"));
+        drone_data[6].second = std::to_string(drone_charge_to_base);
+
+        // Get the drone's final coords for the swap
+        swap_final_coords = {std::stof(drone_redis.hget(redis_id, "swap_final_x").value_or("0")),
+                             std::stof(drone_redis.hget(redis_id, "swap_final_y").value_or("0"))};
+    }
+
+    // Set initial status in Redis
+    //        tick_n = dz.tick_n;
+    UploadStatus(); // TODO: Check if needed
+
+    spdlog::info("Drone {} created with state {}", drone_id, utils::CaccaPupu(drone_state));
+}
+
 // Drone is going to execute this function every tick, this is the main function of the drone
 void Drone::Run() {
     try {
@@ -228,6 +271,8 @@ void Drone::Run() {
 
             case drone_state_enum::DEAD:
                 // The drone is dead
+                // Set last status in DZ
+                dz.last_drones_state.emplace_back(utils::stringToDroneStateEnum(drone_data[1].second));
                 drone_data[1].second = utils::CaccaPupu(drone_state_enum::DEAD);
                 drone_redis.hset(redis_id, "status", "DEAD");
                 drone_redis.srem("zone:" + std::to_string(dz.getZoneId()) + ":drones_alive", std::to_string(drone_id));
@@ -255,10 +300,38 @@ void Drone::Run() {
                 last_state = utils::stringToDroneStateEnum(drone_data[1].second);
                 drone_redis.hset(redis_id, "status", utils::CaccaPupu(last_state));
 
+                // Set last status in DZ if not reconnecting
+                if (reconnect_tick == -1) {
+                    dz.last_drones_state.emplace_back(utils::stringToDroneStateEnum(drone_data[1].second));
+                }
+
                 connected_to_sys = false;
                 fault_managed = true;
 
                 spdlog::warn("Drone {} has lost connection", drone_id);
+
+                break;
+
+            case drone_state_enum::FAULT_SWAP:
+                // Drone is swapping with a drone that has fault
+
+                // Move to the last known position of the faulty drone
+                Move(swap_final_coords.first, swap_final_coords.second);
+
+                if (drone_position.first == swap_final_coords.first && drone_position.second == swap_final_coords.second) {
+                    // Arrived to the faulty drone's position
+
+                    // Get last known state of the faulty drone
+                    auto fault_state = dz.last_drones_state.back();
+                    spdlog::warn("Drone {} is swapping with a faulty drone, setting state to {}", drone_id, utils::CaccaPupu(fault_state));
+
+                    // Set the drone to the last known state
+                    drone_data[1].second = utils::CaccaPupu(fault_state);
+                    drone_redis.lpop("zone:" + std::to_string(dz.getZoneId()) + ":drones");
+                    drone_redis.set("drone:" + std::to_string(drone_id) + ":command", "none");
+                    drone_state = fault_state;
+                    drone_redis.hset(redis_id, "status", utils::CaccaPupu(fault_state));
+                }
 
                 break;
 
