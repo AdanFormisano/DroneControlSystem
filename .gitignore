@@ -11,4 +11,4 @@ Monitors/.idea/*
 # For now remove build directory
 /build/
 /cmake-build-debug/
-/cmake-build-debug_lite/
+/cmake-build-debug-lite/
