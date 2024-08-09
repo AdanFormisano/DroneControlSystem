@@ -39,6 +39,7 @@ void Database::connect_to_db(const std::string &dbname,
 #endif
 }
 
+// TODO: Separate the function for connecting to the db from the one creating the db
 // Get or create db
 void Database::get_DB() {
     try {
