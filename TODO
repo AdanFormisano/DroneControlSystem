@@ -1,3 +1,15 @@
+Review:
+    ✔ main.cpp @done (24-08-09 18:36)
+    ✔ DroneControl @done (24-08-09 18:36)
+    ✔ DroneManager @done (24-08-09 18:36)
+    ☐ DroneZone
+    ☐ Drone
+    ☐ ChargeBase
+    ☐ Buffer
+    ☐ Database
+    ☐ TestGenerator
+    ☐ Monitors
+
 High Priority:
     ☐ Monitors:
         ✔ Each monitor thread needs to be created inside the Main function: the execution of main needs to continue (TICK doesn't get printed) @done (24-05-24 11:19)

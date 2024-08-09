@@ -1,18 +1,17 @@
-#include "DroneManager.h"
-#include <spdlog/spdlog.h>
-#include <utility>
-#include <iostream>
-
 /* The 6x6 km area is divided into zones_vertex of 62x2 squares, each square is 20x20 meters. The subdivision is not
 perfect: there is enough space for 4 zones_vertex in the x-axis and 150 zone in the y-axis. This creates a right "column"
 that is 52 squares wide and 2 squares tall. The drones in this area will have to move slower because they have less
 space to cover.
 The right column will have to be managed differently than the rest of the zones_vertex,
+*/
 
-For testing purposes, the right column will be ignored for now.*/
+#include "DroneManager.h"
+#include <spdlog/spdlog.h>
+#include <utility>
+
 
 namespace drones {
-    // The zone is created with vertex_coords_sqr set.
+    // The zone is created with global vertex coords.
     DroneZone::DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &coords, Redis &redis)
             : zone_id(zone_id), vertex_coords(coords), zone_redis(redis) {
         // Create drone path
@@ -21,69 +20,65 @@ namespace drones {
 
         // Calculate the furthest point of the drone path
         path_furthest_point = CalculateFurthestPoint();
+
 #ifdef DEBUG
         spdlog::info("Furthest point of zone {}: ({}, {})", zone_id, path_furthest_point.first,
                      path_furthest_point.second);
 #endif
 
         // Upload the zone to the Redis server
-        std::string redis_zone_id = "zone:" + std::to_string(zone_id);
+        redis_zone_id = "zone:" + std::to_string(zone_id);
         zone_redis.set(redis_zone_id + ":id", std::to_string(zone_id)); // TODO: Maybe remove this
         zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
     }
 
-    // Thread function for the zone-thread
+    // Main function of execution for the thread
     void DroneZone::Run() {
         // Set initial drone to working
         zone_redis.set("drone:" + std::to_string(drones[0]->getDroneId()) + ":command", "work");
 
+        // TODO: This is wrong, no reason to calculate now the swap coords
         // Calculate first drone swap coords
         drones[0]->CalculateSwapFinalCoords();
 
-        // Get sim_running from Redis
+        // Simulate
         bool sim_running = (zone_redis.get("sim_running") == "true");
-
-        // Simulate until sim_running is false
         while (sim_running) {
             try {
+                // Get the real-time start of the tick
                 auto tick_start = std::chrono::steady_clock::now();
 
-                // Check if a drone is working
-                // CheckDroneWorking();
-
                 // Execute each drone in the zone
-                auto number_of_drones = drones.size();
-//                spdlog::info("DroneZone {} tick {}: number of drones {}", zone_id, tick_n, number_of_drones);
                 for (auto &drone: drones) {
                     drone->Run();
                 }
 
                 // Manage drone faults
                 ManageFaults();
-//                spdlog::info("DroneZone {} tick {}: drones ran and fault managed", zone_id, tick_n);
 
+                // TODO: Create a function to manage the swapping process
+                // Manage drone swap and destroy
                 if (!drones.empty()) {
                     // Check if the drone needs to be swapped
                     if (drones[0]->getSwap()) {
-                        // Set the new drone to working
-                        // Set the drone to working
-                        drones[1]->SetDronePathIndex(drone_path_index);
-                        drones[1]->SetDroneState(drone_state_enum::WORKING);
+                        // Set the new drone to working and set its coords
+                        drones[1]->setDronePathIndex(drone_path_index);
+                        drones[1]->setDroneState(drone_state_enum::WORKING);
                         zone_redis.hset("drone:" + std::to_string(drones[1]->getDroneId()), "status", "WORKING");
                         zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
                         zone_redis.set("zone:" + std::to_string(zone_id) + ":working_drone", std::to_string(drones[1]->getDroneId()));
+
     #ifdef DEBUG
                         spdlog::info("Drone {} is now working: path index {}", drones[1]->getDroneId(), drones[1]->GetDronePathIndex());
     #endif
+
                         drones[0]->setSwap(false);
                     }
 
+                    // Check if the drone needs to be destroyed
                     if (drones[0]->getDestroy()) {
-    //                    spdlog::info("Drone {} getting destroyed", drones[0]->getDroneId());
                         // Remove the drone from the vector
                         drones.erase(drones.begin());
-
-    //                    spdlog::info("DroneZone {} now has {} drones", zone_id, drones.size());
                     }
                 }
 
@@ -107,18 +102,20 @@ namespace drones {
         spdlog::info("DroneZone {} finished", zone_id);
     }
 
+    // Spawn the thread for the zone
     void DroneZone::SpawnThread(int tick_n_dm) {
         tick_n = tick_n_dm;
         zone_thread = boost::thread(&DroneZone::Run, this);
     }
 
+    // Create a new drone with a given id
     void DroneZone::CreateDrone(int drone_id) {
         drones.emplace_back(std::make_shared<Drone>(drone_id, *this));
         spdlog::info("Drone {} created in zone {}", drone_id, zone_id);
         zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(drone_id));
     }
 
-    // Create a new drone
+    // Create a new drone using a new id
     void DroneZone::CreateNewDrone() {
         auto drone_id = new_drone_id + zone_id * 10;
         drones.emplace_back(std::make_shared<Drone>(drone_id, *this));
@@ -132,11 +129,10 @@ namespace drones {
         drones.emplace_back(std::make_shared<Drone>(drone_id, *this, drone_state_enum::FAULT_SWAP));
         drones.back()->setFinalCoords(last_known_coords);
         zone_redis.sadd("zone:" + std::to_string(zone_id) + ":drones_active", std::to_string(drone_id));
-        // spdlog::info("Drone {} created in zone {} in state FAULT_SWAP, moving to last known location...", drone_id, zone_id);
         ++new_drone_id;
     }
 
-    // Creates the drone path for the zone using global coords
+    // Creates drone path for the zone using global coords
     void DroneZone::CreateDronePath() {
         // Determine the boundaries of the drone path
         std::array<std::pair<float, float>, 4> drone_boundaries;
@@ -152,20 +148,17 @@ namespace drones {
 
         // From the top left corner to the top right corner
         for (float x = drone_boundaries[0].first; x <= drone_boundaries[1].first; x += step_size) {
-//            drone_path[i] = {x, drone_boundaries[0].second};
-//            drone_path_charge[i] = CalculateChargeNeeded(drone_path[i]);
             drone_path.emplace_back(x, drone_boundaries[0].second);
             ++i;
         }
         // From the bottom right corner to the bottom left corner
         for (float x = drone_boundaries[2].first; x >= drone_boundaries[3].first; x -= step_size) {
-//            drone_path[i] = {x, drone_boundaries[2].second};
-//            drone_path_charge[i] = CalculateChargeNeeded(drone_path[i]);
             drone_path.emplace_back(x, drone_boundaries[2].second);
             ++i;
         }
     }
 
+    // Calculate the charge needed to go back to the base for a given point
     float DroneZone::CalculateChargeNeeded(std::pair<float, float> path_position) {
         // Get the distance from the drone to the base
         float distance = std::sqrt(path_position.first * path_position.first +
@@ -173,7 +166,7 @@ namespace drones {
         return distance * DRONE_CONSUMPTION;
     }
 
-    // Calculates the furthest point of the drone path from the base
+    // Calculate the furthest point of the drone path from the base
     std::pair<float, float> DroneZone::CalculateFurthestPoint() {
         std::pair<float, float> furthest_point = {0, 0};
 

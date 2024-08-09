@@ -485,7 +485,7 @@ void Drone::UseCharge(float move_distance) {
     drone_charge -= DRONE_CONSUMPTION * move_distance;
 }
 
-void Drone::SetDroneState(drone_state_enum state) {
+void Drone::setDroneState(drone_state_enum state) {
     drone_state = state;
     drone_data[1].second = utils::CaccaPupu(state);
 }

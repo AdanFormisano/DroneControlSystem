@@ -1,5 +1,5 @@
 /* The simulation is diveded in 4 processes: Main, DroneControl, Drone, ChargeBase, TestGenerator.
- *  - Main: is the parent process, and creates the other 4 processes.
+ *  - Main: is the parent process, creates the other 4 processes and starts the monitors.
  *  - DroneControl: manages the system and always has knowledge of the drones' state, it also sends commands to the drones.
  *  - Drone: manages the simulation of the drones, and sends their state to the DroneControl.
  *  - ChargeBase: manages the charging slots and assigns drones to them, manages the charging process.

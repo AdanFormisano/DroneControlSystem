@@ -45,6 +45,7 @@ class DroneZone {
 public:
     int tick_n = 0;
     Redis &zone_redis;
+    std::string redis_zone_id;
     std::array<std::pair<float, float>, 4> vertex_coords;   // Global coords that define the zone
     std::pair<float, float> path_furthest_point;            // Furthest point of the drone path from the base
     std::vector<std::shared_ptr<Drone>> drones;             // Vector of drones owned by the zone
