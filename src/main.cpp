@@ -20,6 +20,11 @@ using namespace sw::redis;
  *  - ChargeBase: manages the charging slots and assigns drones to them, manages the charging process.
  *  - TestGenerator: generates test data for the simulation, simulating every possible outcome.
  *
+ *  Every process has a Redis connection which is used to sync the processes and to store the simulation status.
+ *  Once the process is ready to start the simulation, it adds itself to a set in Redis, and waits for the other processes to do the same.
+ *  The simulation starts when all the processes are ready.
+ *  The Main process is the one that stops the simulation, by setting the "sim_running" key in Redis to "false".
+ *
  * The simulation starts after all the processes have initiated and are sync to one another.
  * The tick duration is 1 second (can be modified in globals.cpp), and it simulates 2.42 real time seconds
  * (time needed for a drone to move to the next "checkpoint") in 1 tick.
