@@ -1,18 +1,3 @@
-#include <spdlog/spdlog.h>
-#include <sw/redis++/redis++.h>
-#include <unistd.h>
-#include <iostream>
-
-#include "../utils/RedisUtils.h"
-#include "ChargeBase/ChargeBase.h"
-#include "Drone/DroneManager.h"
-#include "DroneControl/DroneControl.h"
-#include "Monitors/Monitor.h"
-#include "TestGenerator/TestGenerator.h"
-#include "globals.h"
-
-using namespace sw::redis;
-
 /* The simulation is diveded in 4 processes: Main, DroneControl, Drone, ChargeBase, TestGenerator.
  *  - Main: is the parent process, and creates the other 4 processes.
  *  - DroneControl: manages the system and always has knowledge of the drones' state, it also sends commands to the drones.
@@ -29,6 +14,21 @@ using namespace sw::redis;
  * The tick duration is 1 second (can be modified in globals.cpp), and it simulates 2.42 real time seconds
  * (time needed for a drone to move to the next "checkpoint") in 1 tick.
  */
+
+#include "../utils/RedisUtils.h"
+#include "ChargeBase/ChargeBase.h"
+#include "Drone/DroneManager.h"
+#include "DroneControl/DroneControl.h"
+#include "Monitors/Monitor.h"
+#include "TestGenerator/TestGenerator.h"
+#include "globals.h"
+#include <spdlog/spdlog.h>
+#include <sw/redis++/redis++.h>
+#include <unistd.h>
+#include <iostream>
+
+using namespace sw::redis;
+
 
 int main() {
     spdlog::set_pattern("[%T.%e][%^%l%$][Main] %v");
