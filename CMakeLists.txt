@@ -75,7 +75,8 @@ find_path(LIBPQXX_HEADER pqxx)
 target_include_directories(DroneControlSystem PUBLIC ${LIBPQXX_HEADER})
 
 find_library(LIBPQXX_LIB pqxx)
-target_link_libraries(DroneControlSystem ${LIBPQXX_LIB})
+find_library(PQ_LIB pq REQUIRED)
+target_link_libraries(DroneControlSystem ${LIBPQXX_LIB} ${PQ_LIB})
 
 target_include_directories(DroneControlSystem PUBLIC ${Boost_INCLUDE_DIRS})
 target_link_libraries(DroneControlSystem ${Boost_LIBRARIES})
