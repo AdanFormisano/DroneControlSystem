@@ -28,7 +28,7 @@ Il sistema è sviluppato come progetto d'esame per [Ingegneria del software](htt
 
 ## Descrizione generale
 
-### Di cosa si occupa Drone Control System
+### Fini del sistema
 
 Il sistema progettato è basato, come detto in apertura, su una delle tracce di progetto fornite dal prof Tronci. La traccia è la seguente:
 
@@ -40,25 +40,23 @@ Il sistema progettato è basato, come detto in apertura, su una delle tracce di 
 > 4.  Monitors per almeno tre proprietà funzionali
 > 5.  Monitors per almeno due proprietà non-funzionali
 
-### Fini del sistema
-
 Il sistema si occupa quindi di verificare che ogni punto dell'area sia sorvegliato ogni cinque minuti, e, in caso contrario, segnala eventuali anomalie.
 
-### Schema del sistema
+### Descrizione ed illustrazione del sistema
 
 La seguente è una vista ad alto livello delle componenti del sistema
 
 #### Area da sorvegliare
 
-![[Area da sorvegliare]](res/drone_area.png)
+![[Area da sorvegliare]](../res/drone_area.png)
 
 #### Contesto del sistema
 
-![[Contesto del sistema]](res/cntxt_view.png)
+![[Contesto del sistema]](../res/cntxt_view.png)
 
 ## User requirements
 
-Questi requisiti riflettono le esigenze e le aspettative degli utenti finali del sistema.
+Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli utenti del sistema:
 
 - **(1) Area di Sorveglianza**: L’area da monitorare misura $6\times6$ Km.
 - **(2) Posizione del Centro di Controllo e Ricarica**: Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare.
@@ -66,13 +64,19 @@ Questi requisiti riflettono le esigenze e le aspettative degli utenti finali del
 
 ### Use case utente
 
+#### Use case vista ampia del sistema
+
+![alt text](image.png)
+
+#### Use case a vista ristretta alternativa
+
 | Drone                      | Drone Control        |
 | -------------------------- | -------------------- |
-| ![drone](res/drone.png) | ![DC](res/DC.png) |
+| ![drone](../res/drone.png) | ![DC](../res/DC.png) |
 
 ## System requirements
 
-Questi requisiti dettagliano le specifiche tecniche e le funzionalità necessarie per implementare il sistema.
+Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecniche e le funzionalità necessarie per implementare il sistema:
 
 - **(1.1) Sistema di Copertura dell'Area di Sorveglianza**: Il sistema deve programmare e coordinare i percorsi di volo dei droni per garantire una copertura completa e costante dell'area di sorveglianza di $6\times6$ Km.
 - **(1.2) Monitoraggio e Verifica del Territorio**: Il sistema deve assicurare che ogni punto dell'area sia verificato almeno una volta ogni $5$ minuti, monitorando la posizione e l'attività di ciascun drone.
@@ -82,7 +86,9 @@ Questi requisiti dettagliano le specifiche tecniche e le funzionalità necessari
 - **(3.1) Controllo autonomia dei Droni**: Il sistema deve gestire autonomamente l'autonomia di volo di ciascun drone, coordinando i tempi di rientro per la ricarica basandosi sul livello di carica della batteria.
 - **(3.2) Ricambio Droni in volo**: Il sistema deve garantire la copertura dell'area assicurando che i droni scarichi vengano sostituiti per tempo e coordinatamente da altri droni che li rimpiazzino nello svolgimento della missione di verifica dei punti assegnativi.
 
-### Use case di sistema
+### Architectural system view
+
+![alt text](image-1.png)
 
 - Almeno un Activity Diagram UML per mostrare come le componenti del
   sistema concorrono ad soddisfare i requisiti utenti.
