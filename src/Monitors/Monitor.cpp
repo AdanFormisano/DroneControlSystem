@@ -32,3 +32,9 @@ void RechargeTimeMonitor::RunMonitor() {
     t = boost::thread(&RechargeTimeMonitor::checkDroneRechargeTime, this);
     // boost::thread t(&RechargeTimeMonitor::checkDroneRechargeTime, this);
 }
+
+void ZoneCoverageMonitor::RunMonitor() {
+    // Create a thread to run the monitor
+    t = boost::thread(&ZoneCoverageMonitor::checkZoneVerification, this);
+    // boost::thread t(&ZoneCoverageMonitor::checkAreaCoverage, this);
+}

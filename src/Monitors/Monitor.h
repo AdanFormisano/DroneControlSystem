@@ -11,6 +11,7 @@
 class Monitor {
 public:
     explicit Monitor();
+    virtual ~Monitor() { JoinThread(); }
 
     virtual void RunMonitor() {};
 
@@ -29,16 +30,24 @@ protected:
 };
 
 class RechargeTimeMonitor : public Monitor {
-   public:
-    RechargeTimeMonitor() : Monitor() {};
-
+public:
     void RunMonitor() override;
 
-   private:
+private:
     std::unordered_map<int, std::pair<int, int>> drone_recharge_time;
 
     void checkDroneRechargeTime();  // Thread's function
     void getChargingDrones(pqxx::work& W);
     void getChargedDrones(pqxx::work& W);
+};
+
+class ZoneCoverageMonitor : public Monitor {
+public:
+    void RunMonitor() override;
+    int last_tick = 0;  // Last tick that was checked/read from DB
+
+private:
+    void checkZoneVerification();  // Thread's function
+    std::vector<std::array<int,3>> getZoneVerification(pqxx::nontransaction& N);
 };
 #endif  // MONITOR_H

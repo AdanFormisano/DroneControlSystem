@@ -19,7 +19,7 @@ High Priority:
             ☐ Test in C++
         ☐ Implement CheckAreaCoverage
         ☐ Implement CheckZoneVerification:
-            ☐ Check if a zone-based db table is needed
+            ✔ Check if a zone-based db table is needed @done (24-08-12 17:57)
         ☐ Implement CheckTimeToReadDroneData:
             ☐ Add a new column to DB "ON_TIME" for DC's "tick_took_too_long" @Maybe
         ☐ Implement CheckDroneCharge
@@ -38,6 +38,7 @@ High Priority:
     ☐ Better implementation of Drone's destruction/swap functions:
         ☐ Destruction of a drone only destroys/checks the working drone, it needs to check if because of a fault other drones need to be destroyed
     ☐ Simplify DroneZone::ManageFaults(), it's better not to have a giant single function for fault managing
+    ☐ @critical Fix check value for first WORKING tick
 
     ✔ Check and fix drone state machine: using Redis for status reads/checks not well implemented @done (24-05-27 17:53)
     ✔ Test Generators: @done (24-05-22 20:19)

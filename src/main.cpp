@@ -123,7 +123,9 @@ int main() {
 
                     // Start monitors
                     RechargeTimeMonitor rtm;
+                    ZoneCoverageMonitor zcm;
                     rtm.RunMonitor();   //TODO: Bring out the thread from inside the function
+                    zcm.RunMonitor();   //TODO: Bring out the thread from inside the function
 
                     // Start simulation
                     auto sim_end_after = sim_duration_ms / tick_duration_ms;
@@ -141,6 +143,7 @@ int main() {
 
                     // Join monitor's thread
                     rtm.JoinThread();
+                    zcm.JoinThread();
 
                     // FIXME: This is a placeholder for the monitor process,
                     // without it the main process will exit and

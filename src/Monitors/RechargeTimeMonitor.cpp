@@ -1,9 +1,12 @@
+// TODO: Add documentation
+
 #include "Monitor.h"
 
 void RechargeTimeMonitor::checkDroneRechargeTime() {
-    spdlog::set_pattern("[%T.%e][%^%l%$][M-RechargeTime] %v");
+    // spdlog::set_pattern("[%T.%e][%^%l%$][M-RechargeTime] %v");
     spdlog::info("Monitor initiated...");
 
+    // TODO: Maybe not the best thing to have a while(true) loop
     while (true) {
         spdlog::info("Checking drone recharge time");
         pqxx::work W(db.getConnection());
