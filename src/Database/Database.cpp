@@ -4,7 +4,51 @@
 
 // Constructor
 Database::Database() {
-    spdlog::info("Database object created");
+    // try {
+    //     // Connect to PostgreSQL server
+    //     pqxx::connection C("user=postgres password=admin@123 hostaddr=127.0.0.1 port=5432");
+    //     if (!C.is_open()) {
+    //         spdlog::error("Can't open connection to PostgreSQL server");
+    //         return;
+    //     }
+    //     spdlog::info("Connected to PostgreSQL server");
+    //
+    //     // Check if dcs exists
+    //     pqxx::nontransaction N(C);
+    //     auto R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'");
+    //     if (R.empty()) {
+    //         // Create dcs database and connect to it
+    //         spdlog::warn("Databse not found, creating dcs...");
+    //         pqxx::work W(C);
+    //         W.exec("CREATE DATABASE dcs");
+    //         W.commit();
+    //         ConnectToDB_(); // This sets the conn object
+    //
+    //         // Se la connessione è stata stabilita, sovrascrivere la tabella 'drone_logs'
+    //         if (conn && conn->is_open()) {
+    //             pqxx::work W(*conn);
+    //             // Eliminare la tabella se esiste
+    //             W.exec("DROP TABLE IF EXISTS drone_logs");
+    //             // Ricreare la tabella
+    //             W.exec(
+    //                 "CREATE TABLE drone_logs ("
+    //                 "tick_n INT, "
+    //                 "drone_id INT NOT NULL, "
+    //                 "status VARCHAR(255), "
+    //                 "charge FLOAT, "
+    //                 "zone VARCHAR(255), "  // TODO: Change to int
+    //                 "x FLOAT, "
+    //                 "y FLOAT, "
+    //                 "checked BOOLEAN, "
+    //                 "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
+    //             W.commit();
+    //         }
+    //     }
+    //
+    //     spdlog::info("Database object created");
+    // } catch (const std::exception &e) {
+    //     spdlog::error("Database object creation failed: {}", e.what());
+    // }
 }
 
 void Database::ConnectToDB(const std::string &dbname,
@@ -12,31 +56,17 @@ void Database::ConnectToDB(const std::string &dbname,
                            const std::string &password,
                            const std::string &hostaddr,
                            const std::string &port) {
-    connect_to_db(dbname, user, password, hostaddr, port);
+    ConnectToDB_();
 }
 
 // Connect to db
-void Database::connect_to_db(const std::string &dbname,
-                             const std::string &user,
-                             const std::string &password,
-                             const std::string &hostaddr,
-                             const std::string &port) {
-    std::string connectionString = "dbname=" + dbname +
-                                   " user=" + user +
-                                   " password=" + password +
-                                   " hostaddr=" + hostaddr +
-                                   " port=" + port;
+void Database::ConnectToDB_() {
+    std::string connectionString = "dbname=dcs user=postgres password=admin@123 hostaddr=127.0.0.1 port=5432";
     conn = std::make_unique<pqxx::connection>(connectionString);
 
     if (!conn->is_open()) {
-#ifdef DEBUG
-        spdlog::error("DB can't connect");
-#endif
         throw std::runtime_error("DB can't connect");
     }
-#ifdef DEBUG
-    spdlog::info("DB connected to {}", dbname);
-#endif
 }
 
 // TODO: Separate the function for connecting to the db from the one creating the db
@@ -50,13 +80,16 @@ void Database::get_DB() {
         pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'");
         // Se il DB non esiste, crearlo
         if (R.empty()) {
-            pqxx::work W(C);
-            W.exec("CREATE DATABASE dcs");
-            W.commit();
+            spdlog::warn("Creating dcs databse");
+            // pqxx::work W(C);
+            // W.exec("CREATE DATABASE dcs;");
+            // W.commit();
+            N.exec("CREATE DATABASE dcs");
         }
         // Connession al DB 'dcs'
-        connect_to_db("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
+        ConnectToDB_();
 
+        // TODO: Check if to create a table it's better to use a nontransaction connection or not
         // Se la connessione è stata stabilita, sovrascrivere la tabella 'drone_logs'
         if (conn && conn->is_open()) {
             pqxx::work W(*conn);

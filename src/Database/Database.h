@@ -22,18 +22,12 @@ class Database {
                      const std::string &password,
                      const std::string &hostaddr,
                      const std::string &port);
-    void get_DB();
-
     void ExecuteQuery(const std::string &query);
     pqxx::connection& getConnection() { return *conn; }
+    void get_DB();
 
    private:
     std::unique_ptr<pqxx::connection> conn;
 
-    void connect_to_db(
-        const std::string &dbname,
-        const std::string &user,
-        const std::string &password,
-        const std::string &hostaddr,
-        const std::string &port);
+    void ConnectToDB_();
 };
