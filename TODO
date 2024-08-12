@@ -37,16 +37,20 @@ High Priority:
         ✔ If a drone that is swapping loses connection DC doesn't need to send immediately a new one, it needs to wait for the outcome of the fault @done (24-06-05 20:59)
     ☐ @critical Implement if a drone ahs 0% charge it dies and needs to be deleted
     ☐ @critical Does the logdb need to have logs also for what DC does?
-    ☐ SCENARIOS:
-        ☐ Send new drones to the zone
     ☐ Better implementation of Drone's destruction/swap functions:
         ☐ Destruction of a drone only destroys/checks the working drone, it needs to check if because of a fault other drones need to be destroyed
     ☐ Simplify DroneZone::ManageFaults(), it's better not to have a giant single function for fault managing
     ☐ @critical Fix check value for first WORKING tick
+    ☐ @critical Fix 'checked' value for the first tick of a WORKING drone
+        - When a drone arrives to the WORKING coords the 'checked' value is true because of the coords that corrispond to the first step of the working path
+        - DC sees that the coords are the first step of the path and sets the value of 'checked' to TRUE
+        - Next tick when the coords don't change DC sets the value to FALSE
 
     ✔ Check and fix drone state machine: using Redis for status reads/checks not well implemented @done (24-05-27 17:53)
     ✔ Test Generators: @done (24-05-22 20:19)
         ✔ Implement the test generator's side of all scenarios @done (24-05-22 20:19)
+    ✔ SCENARIOS: @done (24-08-12 23:08)
+        ✔ Send new drones to the zone @done (24-08-12 23:09)
 Normal Priority:
     ☐ Make drone_data struct model global, this makes stream data more homogeneous
     ☐ When simulation ends let the threads finish writing on DBs
