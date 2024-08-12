@@ -33,8 +33,9 @@ void RechargeTimeMonitor::RunMonitor() {
     // boost::thread t(&RechargeTimeMonitor::checkDroneRechargeTime, this);
 }
 
-void ZoneCoverageMonitor::RunMonitor() {
+// Currently implemented by checking every log entry if the checked field is false
+void CoverageMonitor::RunMonitor() {
     // Create a thread to run the monitor
-    t = boost::thread(&ZoneCoverageMonitor::checkZoneVerification, this);
+    t = boost::thread(&CoverageMonitor::checkCoverage, this);
     // boost::thread t(&ZoneCoverageMonitor::checkAreaCoverage, this);
 }

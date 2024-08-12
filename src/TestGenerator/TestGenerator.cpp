@@ -32,7 +32,7 @@ TestGenerator::TestGenerator(Redis &redis) :
 
         // Probability of reconnecting (70%) [for testing purposes 50%]
         float reconnect = generateRandomFloat();
-        if (reconnect < 0.5f) {
+        if (reconnect < 0.7f) {
             // Calculate when the drone will reconnect
             spdlog::info("Drone {} will reconnect", drone_id);
             int tick = ChooseRandomTick();

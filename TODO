@@ -17,9 +17,13 @@ High Priority:
         ☐ Implement CheckDroneRechargeTime:
             ✔ Implement @done (24-05-18 18:01)
             ☐ Test in C++
-        ☐ Implement CheckAreaCoverage
-        ☐ Implement CheckZoneVerification:
-            ✔ Check if a zone-based db table is needed @done (24-08-12 17:57)
+        ☐ Implement Coverage monitors:
+        CheckZoneverification is currently implemented not by checking if a zone is covered every 5 minutes, instead as soon as a drone fails a zone-check the monitor is "triggered".
+        CheckAreaCoverage should just check every 5 minutes if all the zones are fail-free. Instead it's currently implemented as a "continuous" check that "triggers" the monitor
+        as soon as a single zone fails the coverage-check.
+            ☐ Implement CheckAreaCoverage
+            ☐ Implement CheckZoneVerification:
+                ✔ Check if a zone-based db table is needed @done (24-08-12 17:57)
         ☐ Implement CheckTimeToReadDroneData:
             ☐ Add a new column to DB "ON_TIME" for DC's "tick_took_too_long" @Maybe
         ☐ Implement CheckDroneCharge
@@ -46,6 +50,7 @@ High Priority:
 Normal Priority:
     ☐ Make drone_data struct model global, this makes stream data more homogeneous
     ☐ When simulation ends let the threads finish writing on DBs
+    ☐ The AreaMonitor and ZoneMonitor are really similar, it might be necessary to find another monitor
 
 Low Priority:
     ☐ Check all the debug prints, choose the one to keep and the one to put in DEBUG mode

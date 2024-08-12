@@ -123,7 +123,7 @@ int main() {
 
                     // Start monitors
                     RechargeTimeMonitor rtm;
-                    ZoneCoverageMonitor zcm;
+                    CoverageMonitor zcm;
                     rtm.RunMonitor();   //TODO: Bring out the thread from inside the function
                     zcm.RunMonitor();   //TODO: Bring out the thread from inside the function
 

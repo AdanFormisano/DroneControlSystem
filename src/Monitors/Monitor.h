@@ -1,6 +1,8 @@
 #ifndef MONITOR_H
 #define MONITOR_H
 
+#include <set>
+
 #include "../Database/Database.h"
 
 /* To avoid extra work reading the hole database, we can make sure that the monitors only read the data that they need.
@@ -41,13 +43,18 @@ private:
     void getChargedDrones(pqxx::work& W);
 };
 
-class ZoneCoverageMonitor : public Monitor {
+class CoverageMonitor : public Monitor {
 public:
     void RunMonitor() override;
     int last_tick = 0;  // Last tick that was checked/read from DB
 
 private:
-    void checkZoneVerification();  // Thread's function
+    std::set<int> failed_ticks;
+
+    void checkCoverage();  // Thread's function
+    void checkZoneVerification(pqxx::nontransaction& N);
+    void checkAreaCoverage();
+
     std::vector<std::array<int,3>> getZoneVerification(pqxx::nontransaction& N);
 };
 #endif  // MONITOR_H
