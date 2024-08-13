@@ -40,17 +40,18 @@ High Priority:
     ☐ Better implementation of Drone's destruction/swap functions:
         ☐ Destruction of a drone only destroys/checks the working drone, it needs to check if because of a fault other drones need to be destroyed
     ☐ Simplify DroneZone::ManageFaults(), it's better not to have a giant single function for fault managing
-    ☐ @critical Fix check value for first WORKING tick
-    ☐ @critical Fix 'checked' value for the first tick of a WORKING drone
-        - When a drone arrives to the WORKING coords the 'checked' value is true because of the coords that corrispond to the first step of the working path
-        - DC sees that the coords are the first step of the path and sets the value of 'checked' to TRUE
-        - Next tick when the coords don't change DC sets the value to FALSE
-
+    
     ✔ Check and fix drone state machine: using Redis for status reads/checks not well implemented @done (24-05-27 17:53)
     ✔ Test Generators: @done (24-05-22 20:19)
         ✔ Implement the test generator's side of all scenarios @done (24-05-22 20:19)
     ✔ SCENARIOS: @done (24-08-12 23:08)
         ✔ Send new drones to the zone @done (24-08-12 23:09)
+    ✔ @critical Fault swapped drone needs to continue the work from the last known drone_path @done (24-08-13 19:23)
+    ✔ @critical Fix check value for first WORKING tick @done (24-08-13 19:46)
+    ✔ @critical Fix 'checked' value for the first tick of a WORKING drone @done (24-08-13 19:46)
+        - When a drone arrives to the WORKING coords the 'checked' value is true because of the coords that corrispond to the first step of the working path
+        -  DC sees that the coords are the first step of the path and sets the value of 'checked' to TRUE
+        - Next tick when the coords don't change DC sets the value to FALSE
 Normal Priority:
     ☐ Make drone_data struct model global, this makes stream data more homogeneous
     ☐ When simulation ends let the threads finish writing on DBs

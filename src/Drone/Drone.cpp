@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 
 #include "../../utils/RedisUtils.h"
@@ -149,8 +150,11 @@ void Drone::Run() {
                 spdlog::info("TICK {}: Drone {} [{}%] is moving to zone {} {}", tick_n, drone_id, drone_charge,
                              drone_position.first, drone_position.second);
 #endif
-                if (drone_position.first == dz.drone_path[0].first &&
-                    drone_position.second == dz.drone_path[0].second) {
+
+                // Check if the drone is in range to start workingx
+                if (std::sqrt(
+                    std::pow((drone_position.first - dz.drone_path[path_index].first), 2) +
+                    std::pow((drone_position.second - dz.drone_path[path_index].second), 2)) <= DRONE_STEP_SIZE) {
                     drone_data[1].second = utils::CaccaPupu(drone_state_enum::WORKING);
                     // Set the drone as the working drone in DroneZone
                     drone_redis.hset(redis_id, "status", "WORKING");

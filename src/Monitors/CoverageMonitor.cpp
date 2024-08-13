@@ -39,7 +39,7 @@ void CoverageMonitor::checkZoneVerification(pqxx::nontransaction &N)
         // Enque failed checks
         failed_ticks.insert(tick_n);
 
-        // spdlog::warn("Zone {} was not verified by drone {} at tick {}", zone_id, drone_id, tick_n);
+        spdlog::warn("Zone {} was not verified by drone {} at tick {}", zone_id, drone_id, tick_n);
     }
 }
 
