@@ -59,6 +59,8 @@ void CoverageMonitor::checkAreaCoverage()
         spdlog::warn("Failed ticks: {}", f);
 
         failed_ticks.clear();
+    } else {
+        spdlog::info("All zones were verified");
     }
 }
 

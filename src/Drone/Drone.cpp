@@ -331,6 +331,10 @@ void Drone::Run() {
                     drone_redis.set("drone:" + std::to_string(drone_id) + ":command", "none");
                     drone_state = fault_state;
                     drone_redis.hset(redis_id, "status", utils::CaccaPupu(fault_state));
+
+                    // Set the drone path index to the last known index
+                    path_index = dz.drone_path_index;
+                    // spdlog::warn("Drone {} is now in state {} and path cords are {}", drone_id, utils::CaccaPupu(fault_state), dz.drone_path_index);
                 }
 
                 break;

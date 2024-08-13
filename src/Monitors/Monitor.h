@@ -50,6 +50,7 @@ public:
 
 private:
     std::set<int> failed_ticks;
+    std::vector<std::array<int,3>> failed_data;
 
     void checkCoverage();  // Thread's function
     void checkZoneVerification(pqxx::nontransaction& N);
