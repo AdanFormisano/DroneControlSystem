@@ -4,6 +4,9 @@
 #include <set>
 
 #include "../Database/Database.h"
+#include "sw/redis++/redis++.h"
+
+using namespace sw::redis;
 
 /* To avoid extra work reading the hole database, we can make sure that the monitors only read the data that they need.
  * This way, we can avoid reading the whole database every time we need to check something.
@@ -57,5 +60,18 @@ private:
     void checkAreaCoverage();
 
     std::vector<std::array<int,3>> getZoneVerification(pqxx::nontransaction& N);
+};
+
+class DroneChargeMonitor : public Monitor
+{
+public:
+    void RunMonitor() override;
+    int last_tick = 0;  // Last tick that was checked/read from DB
+
+private:
+    std::unordered_map<int, float> charge_needed;
+
+    void getChargeNeededForZones();
+    void checkDroneCharge();
 };
 #endif  // MONITOR_H

@@ -29,6 +29,7 @@ add_executable(DroneControlSystem
         src/Monitors/Monitor.h
         src/Monitors/RechargeTimeMonitor.cpp
         src/Monitors/CoverageMonitor.cpp
+        src/Monitors/DroneChargeMonitor.cpp
 )
 
 option(DEBUG "Enable debug mode" OFF)

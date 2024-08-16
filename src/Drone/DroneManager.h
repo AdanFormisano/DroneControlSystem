@@ -48,6 +48,7 @@ public:
     std::string redis_zone_id;
     std::array<std::pair<float, float>, 4> vertex_coords;   // Global coords that define the zone
     std::pair<float, float> path_furthest_point;            // Furthest point of the drone path from the base
+    float charge_needed_to_base;                            // Charge needed for a drone to go from the furthest point of the zone to base
     std::vector<std::shared_ptr<Drone>> drones;             // Vector of drones owned by the zone
     std::vector<std::pair<float, float>> drone_path;        // Drone path in global coords
     int drone_path_index = 0;                               // Index of the current position in the drone_path
@@ -93,12 +94,12 @@ private:
     std::vector<drone_fault> drone_faults;
     bool drone_fault_ack = false;
 
-    void CreateDronePath();                                              // Create the drone path for the zone using global coords
-    static float CalculateChargeNeeded(std::pair<float, float> coords);  // Calculate the charge needed to go back to the base
-    void UploadPathToRedis();                                            // Upload path to the Redis server
-    std::pair<float, float> CalculateFurthestPoint();                    // Calculate the furthest point of the drone path
-    void CheckDroneWorking();                                            // Check if the drone is working
-    void ManageFaults();                                                 // Manage drone faults
+    void CreateDronePath();                                             // Create the drone path for the zone using global coords
+    void UploadPathToRedis();                                           // Upload path to the Redis server
+    std::pair<float, float> CalculateFurthestPoint();                   // Calculate the furthest point of the drone path
+    float CalculateChargeNeededToBase(std::pair<float, float> furthest_point);                                // Calculate charge needed to go from furthest point to base
+    void CheckDroneWorking();                                           // Check if the drone is working
+    void ManageFaults();                                                // Manage drone faults
 };
 
 class Drone {

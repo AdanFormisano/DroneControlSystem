@@ -39,3 +39,9 @@ void CoverageMonitor::RunMonitor() {
     t = boost::thread(&CoverageMonitor::checkCoverage, this);
     // boost::thread t(&ZoneCoverageMonitor::checkAreaCoverage, this);
 }
+
+void DroneChargeMonitor::RunMonitor()
+{
+    // Create a thread to run the monitor
+    t = boost::thread(&DroneChargeMonitor::checkDroneCharge, this);
+}

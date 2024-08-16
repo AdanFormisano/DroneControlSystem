@@ -21,6 +21,9 @@ namespace drones {
         // Calculate the furthest point of the drone path
         path_furthest_point = CalculateFurthestPoint();
 
+        // Calculate charge needed to go back to base from the furthest point to base
+        charge_needed_to_base = CalculateChargeNeededToBase(path_furthest_point);
+
 #ifdef DEBUG
         spdlog::info("Furthest point of zone {}: ({}, {})", zone_id, path_furthest_point.first,
                      path_furthest_point.second);
@@ -30,6 +33,7 @@ namespace drones {
         redis_zone_id = "zone:" + std::to_string(zone_id);
         zone_redis.set(redis_zone_id + ":id", std::to_string(zone_id)); // TODO: Maybe remove this
         zone_redis.set("zone:" + std::to_string(zone_id) + ":swap", "none");
+        zone_redis.set("zone:" + std::to_string(zone_id) + ":charge_needed_to_base", std::to_string(charge_needed_to_base));
     }
 
     // Main function of execution for the thread
@@ -158,14 +162,6 @@ namespace drones {
         }
     }
 
-    // Calculate the charge needed to go back to the base for a given point
-    float DroneZone::CalculateChargeNeeded(std::pair<float, float> path_position) {
-        // Get the distance from the drone to the base
-        float distance = std::sqrt(path_position.first * path_position.first +
-                                      path_position.second * path_position.second);
-        return distance * DRONE_CONSUMPTION;
-    }
-
     // Calculate the furthest point of the drone path from the base
     std::pair<float, float> DroneZone::CalculateFurthestPoint() {
         std::pair<float, float> furthest_point = {0, 0};
@@ -180,6 +176,13 @@ namespace drones {
         }
 
         return furthest_point;
+    }
+
+    float DroneZone::CalculateChargeNeededToBase(std::pair<float, float> furthest_point)
+    {
+        return std::sqrt(
+            furthest_point.first * furthest_point.first +
+            furthest_point.second * furthest_point.second) * DRONE_CONSUMPTION;
     }
 
     // Uploads the path to the Redis server

@@ -119,13 +119,17 @@ int main() {
 
                     // Sync of processes
                     utils::AddThisProcessToSyncCounter(main_redis, "Main");
-                    utils::NamedSyncWait(main_redis, "Main");
 
                     // Start monitors
                     RechargeTimeMonitor rtm;
                     CoverageMonitor zcm;
+                    DroneChargeMonitor dcm;
                     rtm.RunMonitor();   //TODO: Bring out the thread from inside the function
                     zcm.RunMonitor();   //TODO: Bring out the thread from inside the function
+                    dcm.RunMonitor();
+
+                    utils::NamedSyncWait(main_redis, "Main");
+
 
                     // Start simulation
                     auto sim_end_after = sim_duration_ms / tick_duration_ms;
@@ -144,6 +148,7 @@ int main() {
                     // Join monitor's thread
                     rtm.JoinThread();
                     zcm.JoinThread();
+                    dcm.JoinThread();
 
                     // FIXME: This is a placeholder for the monitor process,
                     // without it the main process will exit and

@@ -6,6 +6,7 @@
 #include <array>
 
 #define DRONE_CONSUMPTION 0.00672f
+// #define DRONE_CONSUMPTION 0.00872f
 #define TICK_TIME_SIMULATED 2.42f
 #define DRONE_STEP_SIZE 20.0f
 #define ZONE_NUMBER 750

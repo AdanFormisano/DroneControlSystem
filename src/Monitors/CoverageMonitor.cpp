@@ -12,7 +12,6 @@ void CoverageMonitor::checkCoverage()
 {
     // spdlog::set_pattern("[%T.%e][%^%l%$][M-ZoneCoverage] %v");
     spdlog::info("Coverage monitors initiated...");
-
     pqxx::nontransaction N(db.getConnection());
 
     while(true)

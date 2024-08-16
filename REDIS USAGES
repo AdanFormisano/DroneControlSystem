@@ -10,6 +10,7 @@ REDIS USAGES
 [?] - zone:id:drones 				-> A LIST
 - zone:id:swap 						-> A KEY
 - zone:id:working_drone				-> A KEY that has the id of the working drone
+- zone:id:charge_needed_to_base		-> A KEY that has the float value of the max charge needed for a drone of the zone to go back to base.
 
 ---DRONE---
 - drone:id:charge_start				-> A KEY that indicates (tick) when the ChargeBase has started charging drone:id

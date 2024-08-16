@@ -11,36 +11,35 @@ Review:
     ☐ Monitors
 
 High Priority:
+    ☐ @critical PROJECT STILL CRASHES FOR UNKOWN REASON
+        - Current walk-around is to encrease duration of each ticks
     ☐ Monitors:
         ✔ Each monitor thread needs to be created inside the Main function: the execution of main needs to continue (TICK doesn't get printed) @done (24-05-24 11:19)
         ✔ Translate to C++ @done (24-05-18 18:01)
-        ☐ Implement CheckDroneRechargeTime:
+        ✔ Implement CheckDroneRechargeTime: @done (24-08-13 20:06)
             ✔ Implement @done (24-05-18 18:01)
-            ☐ Test in C++
-        ☐ Implement Coverage monitors:
+            ✔ Test in C++ @done (24-08-13 20:06)
+        ✔ Implement Coverage monitors: @done (24-08-13 20:05)
         CheckZoneverification is currently implemented not by checking if a zone is covered every 5 minutes, instead as soon as a drone fails a zone-check the monitor is "triggered".
         CheckAreaCoverage should just check every 5 minutes if all the zones are fail-free. Instead it's currently implemented as a "continuous" check that "triggers" the monitor
         as soon as a single zone fails the coverage-check.
-            ☐ Implement CheckAreaCoverage
-            ☐ Implement CheckZoneVerification:
+            ✔ Implement CheckAreaCoverage @done (24-08-13 20:05)
+            ✔ Implement CheckZoneVerification: @done (24-08-13 20:05)
                 ✔ Check if a zone-based db table is needed @done (24-08-12 17:57)
         ☐ Implement CheckTimeToReadDroneData:
             ☐ Add a new column to DB "ON_TIME" for DC's "tick_took_too_long" @Maybe
         ☐ Implement CheckDroneCharge
     ☐ Better implementation of new_drone's final_destination calculations
         (swapping drones are "jumping" to the working coords)
-    ☐ System's response to scenarios:
-        ✔ When a drone is removed/unavailable, DC needs to adapt to the fact that the stream doesn't have the drone's status-update @done (24-06-05 20:59)
-            (Everything that uses the drone's "existence" needs to be adjusted eg. DC's and DB's usages of zone:id:drones_active/zone:id:drones_alive)
-        ✔ Implement "NO_CONNECTION" version of drone's state machine: @done (24-05-22 20:10)
-            ✘ Special Move() for drone w/o connection @cancelled (24-05-22 17:11)
-        ✔ If a drone that is swapping loses connection DC doesn't need to send immediately a new one, it needs to wait for the outcome of the fault @done (24-06-05 20:59)
-    ☐ @critical Implement if a drone ahs 0% charge it dies and needs to be deleted
+    ☐ @critical When a drone reconnects its checked value in logdb doesn't take in consideration the fact that while it was disconnected it continued to move
+        ✔ While disconnected 'checked' is false @done (24-08-15 23:15)
+        - When it reconnects 'checked' needs to be True because it's doing its job
+    ☐ @critical Implement if a drone hass 0% charge it dies and needs to be deleted
     ☐ @critical Does the logdb need to have logs also for what DC does?
     ☐ Better implementation of Drone's destruction/swap functions:
         ☐ Destruction of a drone only destroys/checks the working drone, it needs to check if because of a fault other drones need to be destroyed
     ☐ Simplify DroneZone::ManageFaults(), it's better not to have a giant single function for fault managing
-    
+
     ✔ Check and fix drone state machine: using Redis for status reads/checks not well implemented @done (24-05-27 17:53)
     ✔ Test Generators: @done (24-05-22 20:19)
         ✔ Implement the test generator's side of all scenarios @done (24-05-22 20:19)
@@ -52,10 +51,17 @@ High Priority:
         - When a drone arrives to the WORKING coords the 'checked' value is true because of the coords that corrispond to the first step of the working path
         -  DC sees that the coords are the first step of the path and sets the value of 'checked' to TRUE
         - Next tick when the coords don't change DC sets the value to FALSE
+    ✔ System's response to scenarios: @done (24-08-13 20:04)
+        ✔ When a drone is removed/unavailable, DC needs to adapt to the fact that the stream doesn't have the drone's status-update @done (24-06-05 20:59)
+            (Everything that uses the drone's "existence" needs to be adjusted eg. DC's and DB's usages of zone:id:drones_active/zone:id:drones_alive)
+        ✔ Implement "NO_CONNECTION" version of drone's state machine: @done (24-05-22 20:10)
+            ✘ Special Move() for drone w/o connection @cancelled (24-05-22 17:11)
+        ✔ If a drone that is swapping loses connection DC doesn't need to send immediately a new one, it needs to wait for the outcome of the fault @done (24-06-05 20:59)
 Normal Priority:
     ☐ Make drone_data struct model global, this makes stream data more homogeneous
     ☐ When simulation ends let the threads finish writing on DBs
     ☐ The AreaMonitor and ZoneMonitor are really similar, it might be necessary to find another monitor
+    ☐ Util to save last read tick for Monitors
 
 Low Priority:
     ☐ Check all the debug prints, choose the one to keep and the one to put in DEBUG mode
