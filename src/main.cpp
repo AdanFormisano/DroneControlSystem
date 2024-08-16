@@ -124,9 +124,11 @@ int main() {
                     RechargeTimeMonitor rtm;
                     CoverageMonitor zcm;
                     DroneChargeMonitor dcm;
+                    TimeToReadDataMonitor trd;
                     rtm.RunMonitor();   //TODO: Bring out the thread from inside the function
                     zcm.RunMonitor();   //TODO: Bring out the thread from inside the function
                     dcm.RunMonitor();
+                    trd.RunMonitor();
 
                     utils::NamedSyncWait(main_redis, "Main");
 
@@ -149,6 +151,7 @@ int main() {
                     rtm.JoinThread();
                     zcm.JoinThread();
                     dcm.JoinThread();
+                    trd.JoinThread();
 
                     // FIXME: This is a placeholder for the monitor process,
                     // without it the main process will exit and

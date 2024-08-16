@@ -14,6 +14,7 @@ High Priority:
     ☐ @critical PROJECT STILL CRASHES FOR UNKOWN REASON
         - Current walk-around is to encrease duration of each ticks
     ☐ Monitors:
+        ☐ Every monitors' main execution while-loop needs to check if the simulation is running isntead of while-trueing
         ✔ Each monitor thread needs to be created inside the Main function: the execution of main needs to continue (TICK doesn't get printed) @done (24-05-24 11:19)
         ✔ Translate to C++ @done (24-05-18 18:01)
         ✔ Implement CheckDroneRechargeTime: @done (24-08-13 20:06)
@@ -28,7 +29,7 @@ High Priority:
                 ✔ Check if a zone-based db table is needed @done (24-08-12 17:57)
         ☐ Implement CheckTimeToReadDroneData:
             ☐ Add a new column to DB "ON_TIME" for DC's "tick_took_too_long" @Maybe
-        ☐ Implement CheckDroneCharge
+        ✔ Implement CheckDroneCharge @done (24-08-16 19:36)
     ☐ Better implementation of new_drone's final_destination calculations
         (swapping drones are "jumping" to the working coords)
     ☐ @critical When a drone reconnects its checked value in logdb doesn't take in consideration the fact that while it was disconnected it continued to move

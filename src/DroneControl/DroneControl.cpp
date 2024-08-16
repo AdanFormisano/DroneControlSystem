@@ -19,6 +19,14 @@ namespace drone_control {
     void DroneControl::Run() {
         spdlog::info("DroneControl process starting");
 
+        // Open message queue for IPC with TimeToReadData monitor
+        message_queue mq (
+            open_or_create,       //only open
+            "time_to_read_data_monitor",
+            100,
+            sizeof(int)
+           );
+
         // Wait for other processes
         utils::NamedSyncWait(redis, "DroneControl");
 
@@ -50,6 +58,14 @@ namespace drone_control {
             } else if (tick_now > tick_start + tick_duration_ms) {
                 // Log if the tick took too long
                 spdlog::warn("DroneControl tick {} took too long", tick_n);
+
+                // Send the tick number that took too long to the TimeToReadData monitor
+                auto m_sent = mq.try_send(&tick_n, sizeof(tick_n), 0);
+                if (!m_sent)
+                {
+                    spdlog::warn("IPC error: couldn't send tick number");
+                }
+
                 // break;
             }
             // Get sim_running from Redis

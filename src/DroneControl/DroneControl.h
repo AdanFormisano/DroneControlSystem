@@ -3,10 +3,12 @@
 #include "../globals.h"
 #include "../Database/Buffer.h"
 #include <sw/redis++/redis++.h>
+#include <boost/interprocess/ipc/message_queue.hpp>
 #include <vector>
 #include <spdlog/spdlog.h>
 
 using namespace sw::redis;
+using namespace boost::interprocess;
 
 namespace drone_control {
     class DroneControl {

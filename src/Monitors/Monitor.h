@@ -74,4 +74,15 @@ private:
     void getChargeNeededForZones();
     void checkDroneCharge();
 };
+
+class TimeToReadDataMonitor : public Monitor
+{
+public:
+    void RunMonitor() override;
+
+private:
+    std::vector<int> failed_ticks;
+
+    void checktimeToReadData();
+};
 #endif  // MONITOR_H
