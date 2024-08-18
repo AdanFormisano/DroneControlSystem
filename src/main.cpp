@@ -119,19 +119,17 @@ int main() {
 
                     // Sync of processes
                     utils::AddThisProcessToSyncCounter(main_redis, "Main");
+                    utils::NamedSyncWait(main_redis, "Main");
 
                     // Start monitors
-                    RechargeTimeMonitor rtm;
-                    CoverageMonitor zcm;
-                    DroneChargeMonitor dcm;
-                    TimeToReadDataMonitor trd;
+                    RechargeTimeMonitor rtm(main_redis);
+                    CoverageMonitor zcm(main_redis);
+                    DroneChargeMonitor dcm(main_redis);
+                    TimeToReadDataMonitor trd(main_redis);
                     rtm.RunMonitor();   //TODO: Bring out the thread from inside the function
                     zcm.RunMonitor();   //TODO: Bring out the thread from inside the function
                     dcm.RunMonitor();
                     trd.RunMonitor();
-
-                    utils::NamedSyncWait(main_redis, "Main");
-
 
                     // Start simulation
                     auto sim_end_after = sim_duration_ms / tick_duration_ms;

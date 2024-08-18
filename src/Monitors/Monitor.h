@@ -15,7 +15,9 @@ using namespace sw::redis;
 
 class Monitor {
 public:
-    explicit Monitor();
+    Redis &shared_redis;
+
+    explicit Monitor(Redis&);
     virtual ~Monitor() { JoinThread(); }
 
     virtual void RunMonitor() {};
@@ -36,6 +38,7 @@ protected:
 
 class RechargeTimeMonitor : public Monitor {
 public:
+    RechargeTimeMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
 
 private:
@@ -48,6 +51,7 @@ private:
 
 class CoverageMonitor : public Monitor {
 public:
+    CoverageMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
     int last_tick = 0;  // Last tick that was checked/read from DB
 
@@ -65,6 +69,7 @@ private:
 class DroneChargeMonitor : public Monitor
 {
 public:
+    DroneChargeMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
     int last_tick = 0;  // Last tick that was checked/read from DB
 
@@ -78,6 +83,7 @@ private:
 class TimeToReadDataMonitor : public Monitor
 {
 public:
+    TimeToReadDataMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
 
 private:

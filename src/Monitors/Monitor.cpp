@@ -20,7 +20,7 @@ The non-functional monitors are:
 
 #include "Monitor.h"
 
-Monitor::Monitor() {
+Monitor::Monitor(Redis &redis) : shared_redis(redis) {
     // spdlog::info("Monitor object created");
 
     // Create db connection

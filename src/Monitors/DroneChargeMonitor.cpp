@@ -76,13 +76,10 @@ void DroneChargeMonitor::checkDroneCharge()
 // Read from Redis the charge_needed for each zone
 void DroneChargeMonitor::getChargeNeededForZones()
 {
-    // Create Redis connection
-    auto redis = Redis("tcp://127.0.0.1:7777");
-
     // For each zone get charge_needed for each drone from Redis
     for (int z = 0; z < ZONE_NUMBER; z++)
     {
-        auto r = redis.get("zone:" + std::to_string(z) + ":charge_needed_to_base");
+        auto r = shared_redis.get("zone:" + std::to_string(z) + ":charge_needed_to_base");
         if (!r.has_value())
         {
             spdlog::error("Couldn't get charge_needed_to_base from Redis");
