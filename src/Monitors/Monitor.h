@@ -8,19 +8,15 @@
 
 using namespace sw::redis;
 
-/* To avoid extra work reading the hole database, we can make sure that the monitors only read the data that they need.
- * This way, we can avoid reading the whole database every time we need to check something.
- * This can be achived by saving the latest ordered row every time we read from the db, and save it as an offset.
- */
-
+// Base Monitor class
 class Monitor {
 public:
-    Redis &shared_redis;
+    Redis &shared_redis; // Redis connection shared with the main thread
 
     explicit Monitor(Redis&);
     virtual ~Monitor() { JoinThread(); }
 
-    virtual void RunMonitor() {};
+    virtual void RunMonitor() {};   // Main execution function of thread, overitten by each monitor
 
     int JoinThread() {
         if (t.joinable()) {
@@ -32,8 +28,8 @@ public:
     };
 
 protected:
-    Database db;
-    boost::thread t;
+    Database db;        // Connection to Database
+    boost::thread t;    // Thread for execution of monitor
 };
 
 class RechargeTimeMonitor : public Monitor {
@@ -42,11 +38,11 @@ public:
     void RunMonitor() override;
 
 private:
-    std::unordered_map<int, std::pair<int, int>> drone_recharge_time;
+    std::unordered_map<int, std::pair<int, int>> drone_recharge_time;   // Used for storing the recharge time of drones
 
-    void checkDroneRechargeTime();  // Thread's function
-    void getChargingDrones(pqxx::work& W);
-    void getChargedDrones(pqxx::work& W);
+    void checkDroneRechargeTime();          // Thread's function
+    void getChargingDrones(pqxx::work& W);  // Get the drones that are currently charging
+    void getChargedDrones(pqxx::work& W);   // Get drone done charging
 };
 
 class CoverageMonitor : public Monitor {
@@ -59,7 +55,7 @@ private:
     std::set<int> failed_ticks;
     std::vector<std::array<int,3>> failed_data;
 
-    void checkCoverage();  // Thread's function
+    void checkCoverage();                                   // Thread's function
     void checkZoneVerification(pqxx::nontransaction& N);
     void checkAreaCoverage();
 

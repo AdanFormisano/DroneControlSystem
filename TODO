@@ -14,6 +14,7 @@ High Priority:
     ☐ @critical PROJECT STILL CRASHES FOR UNKOWN REASON
         - Current walk-around is to encrease duration of each ticks
     ☐ Monitors:
+        ☐ Monitors should read only unread entries from db
         ☐ Write better docs
         ☐ Every monitors' main execution while-loop needs to check if the simulation is running isntead of while-trueing
         ✔ Each monitor thread needs to be created inside the Main function: the execution of main needs to continue (TICK doesn't get printed) @done (24-05-24 11:19)
@@ -37,7 +38,7 @@ High Priority:
     ☐ @critical When a drone reconnects its checked value in logdb doesn't take in consideration the fact that while it was disconnected it continued to move
         ✔ While disconnected 'checked' is false @done (24-08-15 23:15)
         - When it reconnects 'checked' needs to be True because it's doing its job
-    ☐ @critical Implement if a drone hass 0% charge it dies and needs to be deleted
+    ☐ @critical Implement if a drone has 0% charge it dies and needs to be deleted
     ☐ Better implementation of Drone's destruction/swap functions:
         ☐ Destruction of a drone only destroys/checks the working drone, it needs to check if because of a fault other drones need to be destroyed
     ☐ Simplify DroneZone::ManageFaults(), it's better not to have a giant single function for fault managing
@@ -73,6 +74,7 @@ Low Priority:
     ☐ Implement a priority on DC for the buffer writing
     ☐ Rename CaccaPupu to decent name
     ☐ Change FAULT_SWAP status to "EMERGENCY_SWAP"
+
     ✔ In DroneZone create functions for swap-checking and destroying drones @done (24-05-22 17:07)
 
 Scenarios:
@@ -136,6 +138,13 @@ Scenarios:
         ✔ The logdb needs to represent what happened to the system: @done (24-06-05 21:03)
             ✔ Drone should stop sending update @done (24-06-05 21:03)
             ✔ New drone should have status "EMERGENCY_SWAP_CONNECTION" (or something like that) @done (24-06-05 21:03)
+
+
+
+
+
+
+
 
 
 Loop-scenarios:
