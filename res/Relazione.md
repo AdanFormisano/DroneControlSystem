@@ -90,9 +90,14 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
 
 ![alt text](image-1.png)
 
-- Almeno un Activity Diagram UML per mostrare come le componenti del
-  sistema concorrono ad soddisfare i requisiti utenti.
-- Almeno uno State Diagram UML per una delle componenti del sistema.
+### Activity diagram Autonomia e ricarica dei droni
+
+![alt text](image-2.png)
+
+### State diagram Drone
+
+![alt text](image-3.png)
+
 - Almeno un Message Sequence Chart UML per la comunicazione tra le
   componenti del sistema.
 
