@@ -49,5 +49,5 @@ void DroneChargeMonitor::RunMonitor()
 void TimeToReadDataMonitor::RunMonitor()
 {
     // Create a thread to run the monitor
-    t = boost::thread(&TimeToReadDataMonitor::checktimeToReadData, this);
+    t = boost::thread(&TimeToReadDataMonitor::checkTimeToReadData, this);
 }

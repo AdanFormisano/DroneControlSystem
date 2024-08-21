@@ -1,4 +1,12 @@
-// TODO: Add documentation
+/* checkDroneRechargeTime(): This monitor checks that the number of ticks that a drone has been charging is between [2,3] hours.
+ *
+ * The monitor reads the DB looking for new drone in 'CHARGING' state saving the tick in drone_recharge_time[tick_n][0].
+ * Once the monitor finds a drone with the 'CHARGE_COMPLETE' state, it checks if delta_time >= 3214 && delta_time <= 4821,
+ * where:
+ * - delta_time = end_tick - start_tick and
+ * - 3214 = number of ticks for 2 hours
+ * - 4821 = number of ticks for 3 hours
+ */
 
 #include "Monitor.h"
 
@@ -20,14 +28,12 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
         // Check if drones are charging for the right amount of time
         for (const auto &drone : drone_recharge_time) {
             int drone_id = drone.first;
-            int start_tick = drone.second.first;
-            int end_tick = drone.second.second;
+            const int start_tick = drone.second.first;
 
-            if (end_tick == -1) {
+            if (const int end_tick = drone.second.second; end_tick == -1) {
                 spdlog::warn("Drone {} is still charging", drone_id);
             } else {
-                int delta_time = end_tick - start_tick;
-                if (delta_time >= 3214 && delta_time <= 4821) {
+                if (const int delta_time = end_tick - start_tick; delta_time >= 3214 && delta_time <= 4821) {
                     spdlog::info("Drone {} has been charging for {} minutes", drone_id, (delta_time * 2.24) / 60);
                 } else {
                     spdlog::warn("Drone {} has been charging for {} minutes...wrong amount of time", drone_id, (delta_time * 2.24) / 60);
@@ -40,30 +46,39 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
     }
 }
 
-void RechargeTimeMonitor::getChargingDrones(pqxx::work& W) {
-    // Get drones that are charging
-    pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs WHERE status = 'CHARGING'");
+// Get new charging drones
+void RechargeTimeMonitor::getChargingDrones(pqxx::work &W) {
+    pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs "
+                            "WHERE status = 'CHARGING' AND tick_n > " + std::to_string(tick_last_read) +
+                            " ORDER BY tick_n DESC");
+
+    tick_last_read = r[0][0].as<int>(); // Update last read tick from DB
+
     for (const auto &row : r) {
         int drone_id = row[0].as<int>();
         int tick_n = row[1].as<int>();
 
         // Check if drone is in the map
-        if (drone_recharge_time.find(drone_id) == drone_recharge_time.end()) {
+        if (!drone_recharge_time.contains(drone_id)) {
             drone_recharge_time[drone_id] = std::make_pair(tick_n, -1);
         }
     }
 }
 
-void RechargeTimeMonitor::getChargedDrones(pqxx::work& W) {
-    // Get drones that are charged
-    pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs WHERE status = 'CHARGE_COMPLETE'");
+// Get drones that are done charging
+void RechargeTimeMonitor::getChargedDrones(pqxx::work &W) {
+    pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs "
+                            "WHERE status = 'CHARGE_COMPLETE' AND tick_n > " + std::to_string(tick_last_read) +
+                            " ORDER BY tick_n DESC");
+
+    tick_last_read = r[0][0].as<int>(); // Update last read tick from DB
 
     for (const auto &row : r) {
         int drone_id = row[0].as<int>();
         int tick_n = row[1].as<int>();
 
         // Check if drone is in the map
-        if (drone_recharge_time.find(drone_id) != drone_recharge_time.end()) {
+        if (drone_recharge_time.contains(drone_id)) {
             drone_recharge_time[drone_id].second = tick_n;
         } else {
             spdlog::error("Drone {} is not charging", drone_id);

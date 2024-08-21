@@ -13,7 +13,7 @@ data entries from the drones is less than 2.24 seconds (this is the amount of ti
 
 using namespace boost::interprocess;
 
-void TimeToReadDataMonitor::checktimeToReadData()
+void TimeToReadDataMonitor::checkTimeToReadData()
 {
     try
     {

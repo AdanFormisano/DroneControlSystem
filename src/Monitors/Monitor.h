@@ -30,24 +30,27 @@ public:
 protected:
     Database db;        // Connection to Database
     boost::thread t;    // Thread for execution of monitor
+    int tick_last_read = 0;
 };
 
+// Class for the monitor that checks the recharge duration for each drone
 class RechargeTimeMonitor : public Monitor {
 public:
-    RechargeTimeMonitor(Redis& redis) : Monitor(redis) {};
+    explicit RechargeTimeMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
 
 private:
-    std::unordered_map<int, std::pair<int, int>> drone_recharge_time;   // Used for storing the recharge time of drones
+    std::unordered_map<int, std::pair<int, int>> drone_recharge_time;   // tick_n: <start, end> ticks of the recharge
 
     void checkDroneRechargeTime();          // Thread's function
     void getChargingDrones(pqxx::work& W);  // Get the drones that are currently charging
     void getChargedDrones(pqxx::work& W);   // Get drone done charging
 };
 
+// Class for the monitors that check the coverage of each zone and of the total 6x6 km area
 class CoverageMonitor : public Monitor {
 public:
-    CoverageMonitor(Redis& redis) : Monitor(redis) {};
+    explicit CoverageMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
     int last_tick = 0;  // Last tick that was checked/read from DB
 
@@ -65,7 +68,7 @@ private:
 class DroneChargeMonitor : public Monitor
 {
 public:
-    DroneChargeMonitor(Redis& redis) : Monitor(redis) {};
+    explicit DroneChargeMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
     int last_tick = 0;  // Last tick that was checked/read from DB
 
@@ -79,12 +82,12 @@ private:
 class TimeToReadDataMonitor : public Monitor
 {
 public:
-    TimeToReadDataMonitor(Redis& redis) : Monitor(redis) {};
+    explicit TimeToReadDataMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
 
 private:
     std::vector<int> failed_ticks;
 
-    void checktimeToReadData();
+    void checkTimeToReadData();
 };
 #endif  // MONITOR_H

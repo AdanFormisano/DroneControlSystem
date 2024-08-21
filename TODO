@@ -1,7 +1,4 @@
 Review:
-    ✔ main.cpp @done (24-08-09 18:36)
-    ✔ DroneControl @done (24-08-09 18:36)
-    ✔ DroneManager @done (24-08-09 18:36)
     ☐ DroneZone
     ☐ Drone
     ☐ ChargeBase
@@ -9,6 +6,10 @@ Review:
     ☐ Database
     ☐ TestGenerator
     ☐ Monitors
+    
+    ✔ main.cpp @done (24-08-09 18:36)
+    ✔ DroneControl @done (24-08-09 18:36)
+    ✔ DroneManager @done (24-08-09 18:36)
 
 High Priority:
     ☐ @critical PROJECT STILL CRASHES FOR UNKOWN REASON
@@ -61,6 +62,8 @@ High Priority:
             ✘ Special Move() for drone w/o connection @cancelled (24-05-22 17:11)
         ✔ If a drone that is swapping loses connection DC doesn't need to send immediately a new one, it needs to wait for the outcome of the fault @done (24-06-05 20:59)
 Normal Priority:
+    ☐ Make a process only for monitors
+        ☐ Change spdlog pattern for each monitor
     ☐ Does the logdb need to have logs also for what DC does?
     ☐ Make drone_data struct model global, this makes stream data more homogeneous
     ☐ When simulation ends let the threads finish writing on DBs
@@ -76,6 +79,12 @@ Low Priority:
     ☐ Change FAULT_SWAP status to "EMERGENCY_SWAP"
 
     ✔ In DroneZone create functions for swap-checking and destroying drones @done (24-05-22 17:07)
+
+
+
+
+
+
 
 Scenarios:
     ✔ @critical Decide how the system recognizes the scenario changes: @done (24-05-15 20:19)
