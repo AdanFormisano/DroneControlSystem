@@ -17,7 +17,7 @@ void TimeToReadDataMonitor::checkTimeToReadData()
 {
     try
     {
-        spdlog::info("TIME_TO_READ_DATA_MONITOR initiated...");
+        spdlog::info("TIME-TO-READ-MONITOR: Initiated...");
 
         // Create message queue
         message_queue mq(
@@ -37,21 +37,19 @@ void TimeToReadDataMonitor::checkTimeToReadData()
 
             // Get number of messages in queue
             auto n_msg = mq.get_num_msg();
-            spdlog::info("TIME_TO_READ_DATA_MONITOR: {} of failed tick", n_msg);
+            spdlog::info("TIME-TO-READ-MONITOR: {} failed tick", n_msg);
 
             // Read every message sent by DC
             for ( auto i = 0; i < n_msg; i++)
             {
-                auto tick_failed = mq.try_receive(&failed_tick, sizeof(failed_tick), recvd_size, priority);
-
                 // If the queue is empty tick_failed is false and
-                if (!tick_failed)
+                if (auto tick_failed = mq.try_receive(&failed_tick, sizeof(failed_tick), recvd_size, priority); !tick_failed)
                 {
-                    spdlog::info("TIME_TO_READ_DATA_MONITOR: Everything is fine", failed_tick);
+                    spdlog::info("TIME-TO-READ-MONITOR: Everything is fine", failed_tick);
                 } else  // Some tick took too long
                 {
                     failed_ticks.emplace_back(failed_tick);
-                    spdlog::warn("TIME_TO_READ_DATA_MONITOR: tick {} took too long!", failed_tick);
+                    spdlog::warn("TIME-TO-READ-MONITOR: tick {} took too long!", failed_tick);
                 }
             }
 
@@ -60,7 +58,7 @@ void TimeToReadDataMonitor::checkTimeToReadData()
         }
     } catch (interprocess_exception &ex)
     {
-        spdlog::error("IPC error: {}", ex.what());
+        spdlog::error("TIME-TO-READ-MONITOR: IPC error: {}", ex.what());
     }
 }
 

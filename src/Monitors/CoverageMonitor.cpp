@@ -4,16 +4,23 @@
  * DroneControl checks for every drone update if the coords are the expected ones then adds the result of the verification
  * to the database (for now this only works when the drone is WORKING).
  *
- * checkAreaCoverage(): This monitor checks that all the zones of the 6x6 Km area are verified.
+ * checkAreaCoverage(): This monitor checks that all the zones of the 6x6 Km area are verified for every given tick.
  */
 #include "Monitor.h"
 
+/**
+ * \brief Main function to monitor zone and area coverage.
+ *
+ * This function runs in a loop, periodically calling checkZoneVerification() and checkAreaCoverage().
+ * It sleeps for 20 seconds between each iteration.
+ */
 void CoverageMonitor::checkCoverage()
 {
-    // spdlog::set_pattern("[%T.%e][%^%l%$][M-ZoneCoverage] %v");
-    spdlog::info("Coverage monitors initiated...");
+    spdlog::info("COVERAGE-MONITOR: Initiated...");
+
     pqxx::nontransaction N(db.getConnection());
 
+    // TODO: Use better condition
     while(true)
     {
         checkZoneVerification(N);
@@ -26,25 +33,30 @@ void CoverageMonitor::checkCoverage()
 
 void CoverageMonitor::checkZoneVerification(pqxx::nontransaction &N)
 {
-    spdlog::info("Checking zone verification");
-    auto _ = getZoneVerification(N);
+    spdlog::info("COVERAGE-MONITOR: Checking zone verification...");
 
-    for (const auto &zone : _)
+    if (auto failed_zones = getZoneVerification(N); failed_zones.empty())
     {
-        int zone_id = zone[0];
-        int tick_n = zone[1];
-        int drone_id = zone[2];
+        spdlog::info("COVERAGE-MONITOR: No zone failed until tick {}", tick_last_read); // TODO: Better english pls
+    } else
+    {
+        for (const auto &zone : failed_zones)
+        {
+            int zone_id = zone[0];
+            int tick_n = zone[1];
+            int drone_id = zone[2];
 
-        // Enque failed checks
-        failed_ticks.insert(tick_n);
+            // Enqueue failed checks
+            failed_ticks.insert(tick_n);
 
-        spdlog::warn("Zone {} was not verified by drone {} at tick {}", zone_id, drone_id, tick_n);
+            spdlog::warn("COVERAGE-MONITOR: Zone {} was not verified by drone {} at tick {}", zone_id, drone_id, tick_n);
+        }
     }
 }
 
 void CoverageMonitor::checkAreaCoverage()
 {
-    spdlog::info("Checking area coverage");
+    spdlog::info("COVERAGE-MONITOR: Checking area coverage...");
 
     // Print list of failed ticks
     if (!failed_ticks.empty())
@@ -55,15 +67,14 @@ void CoverageMonitor::checkAreaCoverage()
             f += std::to_string(tick) + ", ";
         }
         f.resize(f.size() - 2);
-        spdlog::warn("Failed ticks: {}", f);
+        spdlog::warn("COVERAGE-MONITOR: Failed ticks: {}", f);
 
         failed_ticks.clear();
     } else {
-        spdlog::info("All zones were verified");
+        spdlog::info("COVERAGE-MONITOR: All zones were verified until tick {}", tick_last_read);
     }
 }
 
-// Get the zones that were not verified
 std::vector<std::array<int,3>>CoverageMonitor::getZoneVerification(pqxx::nontransaction &N)
 {
     // Get the zones that were verified
@@ -74,7 +85,7 @@ std::vector<std::array<int,3>>CoverageMonitor::getZoneVerification(pqxx::nontran
     if (!r.empty())
     {
         last_tick = r[0][1].as<int>();
-        spdlog::info("Last tick checked: {}", last_tick);
+        // spdlog::info("COVERAGE-MONITOR: Last tick checked: {}", last_tick);
         std::vector<std::array<int,3>> zones_not_verified; // zone_id, tick_n, drone_id
         for (const auto &row : r)
         {

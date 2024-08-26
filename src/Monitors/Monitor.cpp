@@ -27,17 +27,26 @@ Monitor::Monitor(Redis &redis) : shared_redis(redis) {
     db.ConnectToDB("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
 }
 
+int Monitor::JoinThread()
+{
+    if (t.joinable())
+    {
+        t.join();
+        return EXIT_SUCCESS;
+    }
+    return EXIT_FAILURE;
+}
+
+
 void RechargeTimeMonitor::RunMonitor() {
     // Create a thread to run the monitor
     t = boost::thread(&RechargeTimeMonitor::checkDroneRechargeTime, this);
-    // boost::thread t(&RechargeTimeMonitor::checkDroneRechargeTime, this);
 }
 
 // Currently implemented by checking every log entry if the checked field is false
 void CoverageMonitor::RunMonitor() {
     // Create a thread to run the monitor
     t = boost::thread(&CoverageMonitor::checkCoverage, this);
-    // boost::thread t(&ZoneCoverageMonitor::checkAreaCoverage, this);
 }
 
 void DroneChargeMonitor::RunMonitor()

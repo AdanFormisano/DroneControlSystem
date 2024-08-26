@@ -9,9 +9,9 @@ to go back to base as soon as the drone state changes from WORKING to TO_BASE
 void DroneChargeMonitor::checkDroneCharge()
 {
     // Sleep for 5 seconds to let the zones calculate and upload the charge_needed to Redis
-    boost::this_thread::sleep_for(boost::chrono::seconds(5));
+    // boost::this_thread::sleep_for(boost::chrono::seconds(5));
 
-    spdlog::info("Drone charge monitor initiated...");
+    spdlog::info("CHARGE-MONITOR: Initiated...");
     pqxx::work W(db.getConnection());
 
     // Get data needed to run monitor
@@ -23,7 +23,7 @@ void DroneChargeMonitor::checkDroneCharge()
         auto r = W.exec("SELECT tick_n FROM drone_logs ORDER BY tick_n DESC");
         last_tick = r[0][0].as<int>();
 
-        spdlog::info("CHARGE MONITOR: last tick read {}", last_tick);
+        spdlog::info("CHARGE-MONITOR: last tick read {}", last_tick);
 
         auto query =  "WITH StatusChange AS ("
             "    SELECT"
@@ -73,7 +73,7 @@ void DroneChargeMonitor::checkDroneCharge()
     }
 }
 
-// Read from Redis the charge_needed for each zone
+
 void DroneChargeMonitor::getChargeNeededForZones()
 {
     // For each zone get charge_needed for each drone from Redis

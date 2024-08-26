@@ -11,12 +11,11 @@
 #include "Monitor.h"
 
 void RechargeTimeMonitor::checkDroneRechargeTime() {
-    // spdlog::set_pattern("[%T.%e][%^%l%$][M-RechargeTime] %v");
-    spdlog::info("Monitor initiated...");
+    spdlog::info("RECHARGE-MONITOR: Initiated...");
 
     // TODO: Maybe not the best thing to have a while(true) loop
     while (true) {
-        spdlog::info("Checking drone recharge time");
+        spdlog::info("RECHARGE-MONITOR: Checking drone recharge time...");
         pqxx::work W(db.getConnection());
 
         // Get drones that are charging
@@ -31,12 +30,12 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
             const int start_tick = drone.second.first;
 
             if (const int end_tick = drone.second.second; end_tick == -1) {
-                spdlog::warn("Drone {} is still charging", drone_id);
+                spdlog::warn("RECHARGE-MONITOR: Drone {} is still charging", drone_id);
             } else {
                 if (const int delta_time = end_tick - start_tick; delta_time >= 3214 && delta_time <= 4821) {
-                    spdlog::info("Drone {} has been charging for {} minutes", drone_id, (delta_time * 2.24) / 60);
+                    spdlog::info("RECHARGE-MONITOR: Drone {} has been charging for {} minutes", drone_id, (delta_time * 2.24) / 60);
                 } else {
-                    spdlog::warn("Drone {} has been charging for {} minutes...wrong amount of time", drone_id, (delta_time * 2.24) / 60);
+                    spdlog::warn("RECHARGE-MONITOR: Drone {} has been charging for {} minutes...wrong amount of time", drone_id, (delta_time * 2.24) / 60);
                 }
             }
         }
@@ -81,7 +80,7 @@ void RechargeTimeMonitor::getChargedDrones(pqxx::work &W) {
         if (drone_recharge_time.contains(drone_id)) {
             drone_recharge_time[drone_id].second = tick_n;
         } else {
-            spdlog::error("Drone {} is not charging", drone_id);
+            spdlog::error("RECHARGE-MONITOR: Drone {} is not charging", drone_id);
         }
     }
 }
