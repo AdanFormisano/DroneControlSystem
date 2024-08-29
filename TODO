@@ -5,8 +5,8 @@ Review:
     ☐ Buffer
     ☐ Database
     ☐ TestGenerator
-    ☐ Monitors
     
+    ✔ Monitors @done (24-08-26 18:46)
     ✔ main.cpp @done (24-08-09 18:36)
     ✔ DroneControl @done (24-08-09 18:36)
     ✔ DroneManager @done (24-08-09 18:36)
@@ -15,6 +15,7 @@ High Priority:
     ☐ @critical PROJECT STILL CRASHES FOR UNKOWN REASON
         - Current walk-around is to encrease duration of each ticks
     ☐ Monitors:
+        ☐ DB table for monitors where the entries are only failed ticks
         ☐ Monitors should read only unread entries from db
         ☐ Write better docs
         ☐ Every monitors' main execution while-loop needs to check if the simulation is running isntead of while-trueing

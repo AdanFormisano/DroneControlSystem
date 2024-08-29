@@ -80,7 +80,7 @@ void Database::get_DB() {
         pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'");
         // Se il DB non esiste, crearlo
         if (R.empty()) {
-            spdlog::warn("Creating dcs databse");
+            spdlog::warn("Creating dcs database");
             // pqxx::work W(C);
             // W.exec("CREATE DATABASE dcs;");
             // W.commit();
@@ -95,7 +95,9 @@ void Database::get_DB() {
             pqxx::work W(*conn);
             // Eliminare la tabella se esiste
             W.exec("DROP TABLE IF EXISTS drone_logs");
-            // Ricreare la tabella
+            W.exec("DROP TABLE IF EXISTS monitor_logs");
+
+            // Ricreare la tabella per i log dei droni
             W.exec(
                 "CREATE TABLE drone_logs ("
                 "tick_n INT, "
@@ -107,6 +109,20 @@ void Database::get_DB() {
                 "y FLOAT, "
                 "checked BOOLEAN, "
                 "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
+
+            // Create table for monitor logs
+            W.exec(
+                "CREATE TABLE monitor_logs ("
+                "tick_n INT PRIMARY KEY, "
+                "zone_cover INT[], "
+                "area_cover VARCHAR(255), "
+                "charge_drone_id INT[], "
+                "charge_percentage INT[], "
+                "charge_needed INT[], "
+                "recharge_drone_id INT[], "
+                "recharge_duration INT[], "
+                "time_to_read INT[]);");
+
             W.commit();
         }
     } catch (const std::exception &e) {

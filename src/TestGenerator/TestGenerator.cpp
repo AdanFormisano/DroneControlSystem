@@ -8,12 +8,12 @@ TestGenerator::TestGenerator(Redis &redis) :
     spdlog::info("Creating TestGenerator object");
 
     // Everything_is_fine scenario [80%]
-    scenarios[0.8f] = []() {
+    scenarios[0.9f] = []() {
         spdlog::info("Everything is fine");
     };
 
     // Drone_failure scenario (drone stops working) [10%]
-    scenarios[0.9f] = [this]() {
+    scenarios[0.95f] = [this]() {
         // Choose a random drone to explode
         int drone_id = ChooseRandomDrone();
 

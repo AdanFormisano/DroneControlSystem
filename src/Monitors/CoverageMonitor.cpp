@@ -17,17 +17,25 @@
 void CoverageMonitor::checkCoverage()
 {
     spdlog::info("COVERAGE-MONITOR: Initiated...");
+    boost::this_thread::sleep_for(boost::chrono::seconds(10));
 
     pqxx::nontransaction N(db.getConnection());
 
-    // TODO: Use better condition
-    while(true)
+    try
     {
-        checkZoneVerification(N);
-        checkAreaCoverage();
+        // TODO: Use better condition
+        while(true)
+        {
+            checkZoneVerification(N);
+            checkAreaCoverage();
 
-        // Sleep for 20 seconds
-        boost::this_thread::sleep_for(boost::chrono::seconds(20));
+            // Sleep for 20 seconds
+            boost::this_thread::sleep_for(boost::chrono::seconds(20));
+        }
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::error("COVERAGE-MONITOR: {}", e.what());
     }
 }
 
@@ -79,12 +87,12 @@ std::vector<std::array<int,3>>CoverageMonitor::getZoneVerification(pqxx::nontran
 {
     // Get the zones that were verified
     auto r = N.exec("SELECT zone, tick_n, drone_id FROM drone_logs "
-               "WHERE status = 'WORKING' AND checked = FALSE AND tick_n > " + std::to_string(last_tick) +
+               "WHERE status = 'WORKING' AND checked = FALSE AND tick_n > " + std::to_string(tick_last_read) +
                " ORDER BY tick_n DESC");
 
     if (!r.empty())
     {
-        last_tick = r[0][1].as<int>();
+        tick_last_read = r[0][1].as<int>();
         // spdlog::info("COVERAGE-MONITOR: Last tick checked: {}", last_tick);
         std::vector<std::array<int,3>> zones_not_verified; // zone_id, tick_n, drone_id
         for (const auto &row : r)

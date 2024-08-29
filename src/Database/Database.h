@@ -23,7 +23,7 @@ class Database {
                      const std::string &hostaddr,
                      const std::string &port);
     void ExecuteQuery(const std::string &query);
-    pqxx::connection& getConnection() { return *conn; }
+    pqxx::connection &getConnection() { return *conn; }
     void get_DB();
 
    private:

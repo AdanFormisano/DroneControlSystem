@@ -1,27 +1,28 @@
 #ifndef DRONECONTROLSYSTEM_DRONEMANAGER_H
 #define DRONECONTROLSYSTEM_DRONEMANAGER_H
 
-#include "../../utils/utils.h"
-#include "../globals.h"
-#include "sw/redis++/redis++.h"
+#include <boost/thread.hpp>
 #include <algorithm>
 #include <array>
-#include <boost/thread.hpp>
 #include <chrono>
 #include <cmath>
 #include <queue>
 #include <vector>
 
+#include "../../utils/utils.h"
+#include "../globals.h"
+#include "sw/redis++/redis++.h"
+
 using namespace sw::redis;
 
 namespace drones {
-    class DroneZone;
-    class Drone;
+class DroneZone;
+class Drone;
 }  // namespace drones
 
 namespace drones {
 class DroneManager {
-public:
+   public:
     Redis &shared_redis;
     std::array<std::array<std::pair<float, float>, 4>, ZONE_NUMBER> zones_vertex;  // Array of all the zones_vertex' vertex_coords_sqr, NOT global coords
     std::unordered_map<int, std::shared_ptr<DroneZone>> zones;                     // Vector of all the DroneZones
@@ -29,10 +30,10 @@ public:
 
     explicit DroneManager(Redis &);
 
-    void Run();                         // Main execution loop
-    void CalculateGlobalZoneCoords();   // Calculates the global coords of the zones_vertex
+    void Run();                        // Main execution loop
+    void CalculateGlobalZoneCoords();  // Calculates the global coords of the zones_vertex
 
-private:
+   private:
     int tick_n = 0;
     int column_n = 0;
 
@@ -42,18 +43,18 @@ private:
 };
 
 class DroneZone {
-public:
+   public:
     int tick_n = 0;
     Redis &zone_redis;
     std::string redis_zone_id;
-    std::array<std::pair<float, float>, 4> vertex_coords;   // Global coords that define the zone
-    std::pair<float, float> path_furthest_point;            // Furthest point of the drone path from the base
-    float charge_needed_to_base;                            // Charge needed for a drone to go from the furthest point of the zone to base
-    std::vector<std::shared_ptr<Drone>> drones;             // Vector of drones owned by the zone
-    std::vector<std::pair<float, float>> drone_path;        // Drone path in global coords
-    int drone_path_index = 0;                               // Index of the current position in the drone_path
-    std::array<float, 124> drone_path_charge{};             // Charge needed to go back to the base for every point in the drone_path
-    std::vector<drone_state_enum> last_drones_state;        // Vector of the last state of the drones
+    std::array<std::pair<float, float>, 4> vertex_coords;  // Global coords that define the zone
+    std::pair<float, float> path_furthest_point;           // Furthest point of the drone path from the base
+    float charge_needed_to_base;                           // Charge needed for a drone to go from the furthest point of the zone to base
+    std::vector<std::shared_ptr<Drone>> drones;            // Vector of drones owned by the zone
+    std::vector<std::pair<float, float>> drone_path;       // Drone path in global coords
+    int drone_path_index = 0;                              // Index of the current position in the drone_path
+    std::array<float, 124> drone_path_charge{};            // Charge needed to go back to the base for every point in the drone_path
+    std::vector<drone_state_enum> last_drones_state;       // Vector of the last state of the drones
 
     DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &zone_coords, Redis &redis);
 
@@ -63,17 +64,17 @@ public:
 
     void setIsDroneWorking(bool value) { drone_is_working = value; }
 
-    void Run();                                             // Main execution loop
-    void CreateDrone(int drone_id);                         // Create a drone with a given id (respawn a drone)
-    void CreateNewDrone();                                  // Create a new drone for the zone
-    void SwapFaultyDrone(std::pair<float, float> coords);   // Swaps the faulty drone with a working one
-    void SpawnThread(int tick_n_drone_manager);             // Spawn the zone thread
+    void Run();                                            // Main execution loop
+    void CreateDrone(int drone_id);                        // Create a drone with a given id (respawn a drone)
+    void CreateNewDrone();                                 // Create a new drone for the zone
+    void SwapFaultyDrone(std::pair<float, float> coords);  // Swaps the faulty drone with a working one
+    void SpawnThread(int tick_n_drone_manager);            // Spawn the zone thread
     void CreateDroneFault(int drone_id,
-        drone_state_enum fault_state,
-        std::pair<float, float> fault_coords,
-        int tick_start, int tick_end, int reconnect_tick);  // Create a drone fault
+                          drone_state_enum fault_state,
+                          std::pair<float, float> fault_coords,
+                          int tick_start, int tick_end, int reconnect_tick);  // Create a drone fault
 
-private:
+   private:
     const int zone_id;
     int new_drone_id = 1;
     bool drone_is_working = false;
@@ -94,20 +95,20 @@ private:
     std::vector<drone_fault> drone_faults;
     bool drone_fault_ack = false;
 
-    void CreateDronePath();                                             // Create the drone path for the zone using global coords
-    void UploadPathToRedis();                                           // Upload path to the Redis server
-    std::pair<float, float> CalculateFurthestPoint();                   // Calculate the furthest point of the drone path
-    float CalculateChargeNeededToBase(std::pair<float, float> furthest_point);                                // Calculate charge needed to go from furthest point to base
-    void CheckDroneWorking();                                           // Check if the drone is working
-    void ManageFaults();                                                // Manage drone faults
+    void CreateDronePath();                                                     // Create the drone path for the zone using global coords
+    void UploadPathToRedis();                                                   // Upload path to the Redis server
+    std::pair<float, float> CalculateFurthestPoint();                           // Calculate the furthest point of the drone path
+    float CalculateChargeNeededToBase(std::pair<float, float> furthest_point);  // Calculate charge needed to go from furthest point to base
+    void CheckDroneWorking();                                                   // Check if the drone is working
+    void ManageFaults();                                                        // Manage drone faults
 };
 
 class Drone {
-public:
+   public:
     float drone_charge_to_base = 0.0f;
 
     Drone(int drone_id, DroneZone &droneZone);
-    Drone(int drone_id, DroneZone& droneZone, drone_state_enum drone_state);
+    Drone(int drone_id, DroneZone &droneZone, drone_state_enum drone_state);
 
     [[nodiscard]] int getDroneId() const { return drone_id; }
     [[nodiscard]] std::pair<float, float> getDronePosition() const { return drone_position; }
@@ -124,10 +125,10 @@ public:
     void setConnectedToSys(bool value) { connected_to_sys = value; }
     void setFinalCoords(std::pair<float, float> coords) { swap_final_coords = coords; }
 
-    void Run();                         // Main execution loop
-    void CalculateSwapFinalCoords();    // Calculate the final coords of the swap
+    void Run();                       // Main execution loop
+    void CalculateSwapFinalCoords();  // Calculate the final coords of the swap
 
-private:
+   private:
     int tick_n;
     Redis &drone_redis;
     std::string redis_id;
@@ -144,7 +145,7 @@ private:
     const int drone_id;
     drone_state_enum drone_state = drone_state_enum::IDLE_IN_BASE;  // Drone state
     float drone_charge = 100.0f;                                    // Drone charge in percentage
-    std::pair<float, float> drone_position = {0, 0};            // Drone position in global coords
+    std::pair<float, float> drone_position = {0, 0};                // Drone position in global coords
     std::vector<std::pair<std::string, std::string>> drone_data;    // Drone data container
 
     void SetChargeNeededToBase();               // Set the charge needed to go back to the base

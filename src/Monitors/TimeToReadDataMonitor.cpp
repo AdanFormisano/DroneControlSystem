@@ -18,6 +18,7 @@ void TimeToReadDataMonitor::checkTimeToReadData()
     try
     {
         spdlog::info("TIME-TO-READ-MONITOR: Initiated...");
+        boost::this_thread::sleep_for(boost::chrono::seconds(10));
 
         // Create message queue
         message_queue mq(
