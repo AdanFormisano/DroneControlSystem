@@ -19,14 +19,12 @@ void CoverageMonitor::checkCoverage()
     spdlog::info("COVERAGE-MONITOR: Initiated...");
     boost::this_thread::sleep_for(boost::chrono::seconds(10));
 
-    pqxx::nontransaction N(db.getConnection());
-
     try
     {
         // TODO: Use better condition
         while(true)
         {
-            checkZoneVerification(N);
+            checkZoneVerification();
             checkAreaCoverage();
 
             // Sleep for 20 seconds
@@ -39,11 +37,11 @@ void CoverageMonitor::checkCoverage()
     }
 }
 
-void CoverageMonitor::checkZoneVerification(pqxx::nontransaction &N)
+void CoverageMonitor::checkZoneVerification()
 {
     spdlog::info("COVERAGE-MONITOR: Checking zone verification...");
 
-    if (auto failed_zones = getZoneVerification(N); failed_zones.empty())
+    if (auto failed_zones = getZoneVerification(); failed_zones.empty())
     {
         spdlog::info("COVERAGE-MONITOR: No zone failed until tick {}", tick_last_read); // TODO: Better english pls
     } else
@@ -58,6 +56,13 @@ void CoverageMonitor::checkZoneVerification(pqxx::nontransaction &N)
             failed_ticks.insert(tick_n);
 
             spdlog::warn("COVERAGE-MONITOR: Zone {} was not verified by drone {} at tick {}", zone_id, drone_id, tick_n);
+
+            std::string q = "INSERT INTO monitor_logs (tick_n, zone_cover) "
+                    "VALUES (" + std::to_string(tick_n) + ", ARRAY[" + std::to_string(zone_id) + "]) "
+                    "ON CONFLICT (tick_n) DO UPDATE SET "
+                        "zone_cover = array_append(monitor_logs.zone_cover, " + std::to_string(zone_id) + ");";
+
+            WriteToDB(q);
         }
     }
 }
@@ -73,6 +78,12 @@ void CoverageMonitor::checkAreaCoverage()
         for (const auto &tick : failed_ticks)
         {
             f += std::to_string(tick) + ", ";
+
+            std::string q = "INSERT INTO monitor_logs (tick_n, area_cover) "
+                        "VALUES (" + std::to_string(tick) + ", 'FAILED') "
+                        "ON CONFLICT (tick_n) DO UPDATE SET "
+                            "area_cover = 'FAILED';";
+            WriteToDB(q);   // This will maybe cause a lot of overhead
         }
         f.resize(f.size() - 2);
         spdlog::warn("COVERAGE-MONITOR: Failed ticks: {}", f);
@@ -83,10 +94,12 @@ void CoverageMonitor::checkAreaCoverage()
     }
 }
 
-std::vector<std::array<int,3>>CoverageMonitor::getZoneVerification(pqxx::nontransaction &N)
+std::vector<std::array<int,3>>CoverageMonitor::getZoneVerification()
 {
+    pqxx::nontransaction N(db.getConnection());
+
     // Get the zones that were verified
-    auto r = N.exec("SELECT zone, tick_n, drone_id FROM drone_logs "
+        auto r = N.exec("SELECT zone, tick_n, drone_id FROM drone_logs "
                "WHERE status = 'WORKING' AND checked = FALSE AND tick_n > " + std::to_string(tick_last_read) +
                " ORDER BY tick_n DESC");
 
@@ -103,5 +116,3 @@ std::vector<std::array<int,3>>CoverageMonitor::getZoneVerification(pqxx::nontran
     }
     return {};
 }
-
-

@@ -37,6 +37,19 @@ int Monitor::JoinThread()
     return EXIT_FAILURE;
 }
 
+void Monitor::WriteToDB(const std::string& query)
+{
+    try
+    {
+        pqxx::work W(db.getConnection());
+        W.exec(query);
+        W.commit();
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::error("Error writing to DB: {}", e.what());
+    }
+}
 
 void RechargeTimeMonitor::RunMonitor() {
     // Create a thread to run the monitor

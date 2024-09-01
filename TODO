@@ -12,9 +12,16 @@ Review:
     ✔ DroneManager @done (24-08-09 18:36)
 
 High Priority:
+    ☐ Following drone is not actually following
     ☐ @critical PROJECT STILL CRASHES FOR UNKOWN REASON
         - Current walk-around is to encrease duration of each ticks
+        - Increasing the drone consumption lowers the number of ticks the program is able to run (?)
+            - More drones are "alive"
+            - More calculation needed
+        ☐ Simplify all output to reduce possible overhead
+            e.g. "Tick 1: executed" "Tick 2: errors [insert errors]"
     ☐ Monitors:
+        ☐ Check how prof implemented his monitors
         ☐ DB table for monitors where the entries are only failed ticks
         ☐ Monitors should read only unread entries from db
         ☐ Write better docs

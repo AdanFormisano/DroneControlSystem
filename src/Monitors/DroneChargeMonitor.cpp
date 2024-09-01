@@ -14,7 +14,6 @@ void DroneChargeMonitor::checkDroneCharge()
         spdlog::info("CHARGE-MONITOR: Initiated...");
         boost::this_thread::sleep_for(boost::chrono::seconds(10));
 
-        pqxx::work W(db.getConnection());
 
         // Get data needed to run monitor
         getChargeNeededForZones();
@@ -22,6 +21,7 @@ void DroneChargeMonitor::checkDroneCharge()
         while (true)
         {
             // Get last tick read
+            pqxx::work W(db.getConnection());
             auto r = W.exec("SELECT tick_n FROM drone_logs ORDER BY tick_n DESC");
             last_tick = r[0][0].as<int>();
 
@@ -66,11 +66,23 @@ void DroneChargeMonitor::checkDroneCharge()
                 {
                     spdlog::error("CHARGE MONITOR: Drone {} going to base at tick {} with {}% charge, but it needs {}% charge",
                                   drone_id, tick, charge, charge_needed[zone]);
+
+                    // Insert into monitor_logs
+                    std::string q = "INSERT INTO monitor_logs (tick_n, charge_drone_id, charge_percentage, charge_needed) "
+                    "VALUES (" + std::to_string(tick) + ", ARRAY[" + std::to_string(drone_id) + "], ARRAY[" + std::to_string(charge) + ", ARRAY[" + std::to_string(charge_needed[zone]) + "]) "
+                    "ON CONFLICT (tick_n) DO UPDATE SET "
+                        "charge_drone_id = array_append(monitor_logs.charge_drone_id, " + std::to_string(drone_id) + "), "
+                        "charge_percentage = array_append(monitor_logs.charge_percentage, " + std::to_string(charge) + "), "
+                        "charge_needed = array_append(monitor_logs.charge_needed, " + std::to_string(charge_needed[zone]) + ");";
+
+                    // WriteToDB(q);    // Commented because it can create an error when accessing the db
+                    W.exec(q);
                 } else
                 {
                     spdlog::info("CHARGE MONITOR: Drone {} ({}%) is going back to base", drone_id, charge);
                 }
             }
+            W.commit();
             boost::this_thread::sleep_for(boost::chrono::seconds(20));
         }
     }
@@ -79,7 +91,6 @@ void DroneChargeMonitor::checkDroneCharge()
         spdlog::error("CHARGE-MONITOR: {}", e.what());
     }
 }
-
 
 void DroneChargeMonitor::getChargeNeededForZones()
 {

@@ -46,12 +46,36 @@ void TimeToReadDataMonitor::checkTimeToReadData()
                 // If the queue is empty tick_failed is false and
                 if (auto tick_failed = mq.try_receive(&failed_tick, sizeof(failed_tick), recvd_size, priority); !tick_failed)
                 {
-                    spdlog::info("TIME-TO-READ-MONITOR: Everything is fine", failed_tick);
+                    spdlog::info("TIME-TO-READ-MONITOR: Everything is fine");
                 } else  // Some tick took too long
                 {
                     failed_ticks.emplace_back(failed_tick);
                     spdlog::warn("TIME-TO-READ-MONITOR: tick {} took too long!", failed_tick);
+                    tick_last_read = failed_tick;
                 }
+            }
+
+            if (!failed_ticks.empty())
+            {
+                pqxx::work W(db.getConnection());
+
+                std::ostringstream oss;
+                oss << ", ARRAY[";
+                for (size_t i = 0; i < failed_ticks.size(); ++i) {
+                    if (i != 0) oss << ",";
+                    oss << failed_ticks[i];
+                }
+                oss << "]";
+                auto q_array =  oss.str();
+
+                // Insert into monitor_logs
+                std::string q = "INSERT INTO monitor_logs (tick_n, time_to_read) "
+                "VALUES (" + std::to_string(tick_last_read) + q_array + ") "
+                "ON CONFLICT (tick_n) DO UPDATE SET "
+                    "time_to_read = array_append(monitor_logs.time_to_read, " + q_array + ");";
+
+                W.exec(q);
+                W.commit();
             }
 
 

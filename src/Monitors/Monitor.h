@@ -40,6 +40,8 @@ protected:
     Database db;        ///< Connection to Database
     boost::thread t;    ///< Thread for execution of monitor
     int tick_last_read = 0;
+
+    void WriteToDB(const std::string& query);
 };
 
 /**
@@ -110,7 +112,7 @@ private:
      * \brief Checks the verification status of each zone.
      * \param N A nontransaction object for executing the query.
      */
-    void checkZoneVerification(pqxx::nontransaction& N);
+    void checkZoneVerification();
 
     /**
      * \brief Checks the coverage of the entire area.
@@ -122,7 +124,7 @@ private:
      * \param N A nontransaction object for executing the query.
      * \return A vector of arrays, each containing the zone ID, tick number, and drone ID.
      */
-    std::vector<std::array<int,3>> getZoneVerification(pqxx::nontransaction& N);
+    std::vector<std::array<int,3>> getZoneVerification();
 };
 
 /**

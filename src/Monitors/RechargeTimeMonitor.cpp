@@ -4,8 +4,8 @@
  * Once the monitor finds a drone with the 'CHARGE_COMPLETE' state, it checks if delta_time >= 3214 && delta_time <= 4821,
  * where:
  * - delta_time = end_tick - start_tick and
- * - 3214 = number of ticks for 2 hours
- * - 4821 = number of ticks for 3 hours
+ * - 2975 = number of ticks for 2 hours
+ * - 4463 = number of ticks for 3 hours
  */
 
 #include "Monitor.h"
@@ -35,13 +35,23 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
                 if (const int end_tick = drone.second.second; end_tick == -1) {
                     spdlog::warn("RECHARGE-MONITOR: Drone {} is still charging", drone_id);
                 } else {
-                    if (const int delta_time = end_tick - start_tick; delta_time >= 3214 && delta_time <= 4821) {
-                        spdlog::info("RECHARGE-MONITOR: Drone {} has been charging for {} minutes", drone_id, (delta_time * 2.24) / 60);
+                    if (const int delta_time = end_tick - start_tick; delta_time >= 2975 && delta_time <= 4463) {
+                        spdlog::info("RECHARGE-MONITOR: Drone {} has charged for {} minutes", drone_id, (delta_time * TICK_TIME_SIMULATED) / 60);
                     } else {
-                        spdlog::warn("RECHARGE-MONITOR: Drone {} has been charging for {} minutes...wrong amount of time", drone_id, (delta_time * 2.24) / 60);
+                        spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time", drone_id, (delta_time * 2.24) / 60);
+
+                        // Insert into monitor_logs
+                        std::string q = "INSERT INTO monitor_logs (tick_n, recharge_drone_id, recharge_duration) "
+                        "VALUES (" + std::to_string(end_tick) + ", ARRAY[" + std::to_string(drone_id) + "], ARRAY[" + std::to_string(delta_time) + ") "
+                        "ON CONFLICT (tick_n) DO UPDATE SET "
+                            "recharge_drone_id = array_append(monitor_logs.recharge_drone_id, " + std::to_string(drone_id) + "), "
+                            "recharge_duration = array_append(monitor_logs.recharge_duration, " + std::to_string(delta_time) + ");";
+
+                        W.exec(q);
                     }
                 }
             }
+            W.commit();
 
             // Sleep for 20 seconds
             boost::this_thread::sleep_for(boost::chrono::seconds(20));
