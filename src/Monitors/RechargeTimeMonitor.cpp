@@ -38,7 +38,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
                     if (const int delta_time = end_tick - start_tick; delta_time >= 2975 && delta_time <= 4463) {
                         spdlog::info("RECHARGE-MONITOR: Drone {} has charged for {} minutes", drone_id, (delta_time * TICK_TIME_SIMULATED) / 60);
                     } else {
-                        spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time", drone_id, (delta_time * 2.24) / 60);
+                        spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time", drone_id, (delta_time * TICK_TIME_SIMULATED) / 60);
 
                         // Insert into monitor_logs
                         std::string q = "INSERT INTO monitor_logs (tick_n, recharge_drone_id, recharge_duration) "

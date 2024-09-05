@@ -13,7 +13,8 @@ The right column will have to be managed differently than the rest of the zones_
 namespace drones {
     // The zone is created with global vertex coords.
     DroneZone::DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &coords, Redis &redis)
-            : zone_id(zone_id), vertex_coords(coords), zone_redis(redis) {
+            : zone_redis(redis), vertex_coords(coords), drone_status_queue(10), zone_id(zone_id) {
+
         // Create drone path
         CreateDronePath();
         UploadPathToRedis();
@@ -337,6 +338,7 @@ namespace drones {
                                 if (drone->getDroneId() == fault.drone_id) {
                                     // Reconnect the drone
                                     drone->setConnectedToSys(true);
+                                    drone->setDroneState(drone_state_enum::WORKING);
                                 }
                             }
 

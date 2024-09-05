@@ -10,7 +10,7 @@
 #define TICK_TIME_SIMULATED 2.42f
 #define DRONE_STEP_SIZE 20.0f
 #define ZONE_NUMBER 750
-
+z
 // Variables used for synchronization of processes
 extern std::string sync_counter_key;
 extern std::string sync_channel;

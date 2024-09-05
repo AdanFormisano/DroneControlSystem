@@ -8,12 +8,15 @@
 #include <cmath>
 #include <queue>
 #include <vector>
+#include <boost/interprocess/ipc/message_queue.hpp>
+#include <boost/lockfree/queue.hpp>
 
 #include "../../utils/utils.h"
 #include "../globals.h"
 #include "sw/redis++/redis++.h"
 
 using namespace sw::redis;
+using namespace boost::interprocess;
 
 namespace drones {
 class DroneZone;
@@ -22,18 +25,20 @@ class Drone;
 
 namespace drones {
 class DroneManager {
-   public:
+public:
     Redis &shared_redis;
-    std::array<std::array<std::pair<float, float>, 4>, ZONE_NUMBER> zones_vertex;  // Array of all the zones_vertex' vertex_coords_sqr, NOT global coords
-    std::unordered_map<int, std::shared_ptr<DroneZone>> zones;                     // Vector of all the DroneZones
-    std::vector<boost::thread> zone_threads;                                       // Vector of all the DroneZones threads
+    std::array<std::array<std::pair<float, float>, 4>, ZONE_NUMBER> zones_vertex;   // Array of all the zones_vertex' vertex_coords_sqr, NOT global coords
+    std::unordered_map<int, std::shared_ptr<DroneZone>> zones;                      // Vector of all the DroneZones
+    std::vector<boost::thread> zone_threads;                                        // Vector of all the DroneZones threads
+    message_queue mq;
 
     explicit DroneManager(Redis &);
 
     void Run();                        // Main execution loop
     void CalculateGlobalZoneCoords();  // Calculates the global coords of the zones_vertex
+    void DroneStatusDispatcher();      // Dispatcher for the drones' status messages
 
-   private:
+private:
     int tick_n = 0;
     int column_n = 0;
 
@@ -43,18 +48,19 @@ class DroneManager {
 };
 
 class DroneZone {
-   public:
+public:
     int tick_n = 0;
     Redis &zone_redis;
     std::string redis_zone_id;
-    std::array<std::pair<float, float>, 4> vertex_coords;  // Global coords that define the zone
-    std::pair<float, float> path_furthest_point;           // Furthest point of the drone path from the base
-    float charge_needed_to_base;                           // Charge needed for a drone to go from the furthest point of the zone to base
-    std::vector<std::shared_ptr<Drone>> drones;            // Vector of drones owned by the zone
-    std::vector<std::pair<float, float>> drone_path;       // Drone path in global coords
-    int drone_path_index = 0;                              // Index of the current position in the drone_path
-    std::array<float, 124> drone_path_charge{};            // Charge needed to go back to the base for every point in the drone_path
-    std::vector<drone_state_enum> last_drones_state;       // Vector of the last state of the drones
+    std::array<std::pair<float, float>, 4> vertex_coords;           // Global coords that define the zone
+    std::pair<float, float> path_furthest_point;                    // Furthest point of the drone path from the base
+    float charge_needed_to_base;                                    // Charge needed for a drone to go from the furthest point of the zone to base
+    std::vector<std::shared_ptr<Drone>> drones;                     // Vector of drones owned by the zone
+    std::vector<std::pair<float, float>> drone_path;                // Drone path in global coords
+    int drone_path_index = 0;                                       // Index of the current position in the drone_path
+    std::array<float, 124> drone_path_charge{};                     // Charge needed to go back to the base for every point in the drone_path
+    std::vector<drone_state_enum> last_drones_state;                // Vector of the last state of the drones
+    boost::lockfree::queue<drone_state_enum> drone_status_queue;    // Queue for the drone status messages
 
     DroneZone(int zone_id, std::array<std::pair<float, float>, 4> &zone_coords, Redis &redis);
 
@@ -74,7 +80,7 @@ class DroneZone {
                           std::pair<float, float> fault_coords,
                           int tick_start, int tick_end, int reconnect_tick);  // Create a drone fault
 
-   private:
+private:
     const int zone_id;
     int new_drone_id = 1;
     bool drone_is_working = false;
@@ -104,7 +110,7 @@ class DroneZone {
 };
 
 class Drone {
-   public:
+public:
     float drone_charge_to_base = 0.0f;
 
     Drone(int drone_id, DroneZone &droneZone);
@@ -128,7 +134,7 @@ class Drone {
     void Run();                       // Main execution loop
     void CalculateSwapFinalCoords();  // Calculate the final coords of the swap
 
-   private:
+private:
     int tick_n;
     Redis &drone_redis;
     std::string redis_id;
@@ -158,6 +164,7 @@ class Drone {
     void UploadStatus();                        // Upload the drone status to the Redis server
     void SendChargeRequest();                   // Sends a charge request to the base
     drone_state_enum CheckDroneStateOnRedis();  // Check the drone state from the Redis server
+    drone_state_enum CheckDroneState();         // Check the drone state
     bool Exists();                              // Check if the drone exists on the Redis server
 };
 }  // namespace drones

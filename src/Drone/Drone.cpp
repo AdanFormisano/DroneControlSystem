@@ -106,8 +106,8 @@ void Drone::Run() {
         drone_redis.hincrby("zone:" + std::to_string(dz.getZoneId()) + ":drones_alive_history", std::to_string(tick_n), 1);
 
         // Check its status in the Redis DB
-        drone_state = CheckDroneStateOnRedis();
-
+        // drone_state = CheckDroneStateOnRedis();
+        drone_state = CheckDroneState();
         if (!connected_to_sys) {
             auto status = utils::CaccaPupu(drone_state);
             spdlog::warn("Tick {} Drone {} is not connected (status: {})", tick_n, drone_id, status);
@@ -536,6 +536,16 @@ drone_state_enum Drone::CheckDroneStateOnRedis() {
         new_state = utils::stringToDroneStateEnum(state.value());
     }
 
+    return new_state;
+}
+
+// Check the status of the drone from the
+drone_state_enum Drone::CheckDroneState()
+{
+    drone_state_enum new_state;
+
+    // Pop the status from the queue into new_state if the queue is not empty
+    new_state = dz.drone_status_queue.pop(new_state) ? new_state : drone_state;
     return new_state;
 }
 }  // namespace drones
