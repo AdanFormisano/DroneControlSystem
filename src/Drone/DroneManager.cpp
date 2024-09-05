@@ -31,12 +31,14 @@ namespace drones {
             try {
                 // Get the real-time start of the tick
                 auto tick_start = std::chrono::steady_clock::now();
-
                 // Create the threads for the zones_vertex every 5 ticks
                 // This is done to avoid creating all the threads at once
                 if (tick_n <= 20 && tick_n % 5 == 0) {
                     CreateZoneThreads();
                 }
+
+                // Dispatch any DroneStatus messages
+                DroneStatusDispatcher();
 
                 // Check if DC asked for new drones
                 CheckNewDrones();
@@ -51,7 +53,6 @@ namespace drones {
                     spdlog::warn("DroneManager tick took too long");
 //                    break;
                 }
-
                 // Get sim_running from Redis
                 sim_running = (shared_redis.get("sim_running") == "true");
                 ++tick_n;
@@ -63,7 +64,7 @@ namespace drones {
         }
     }
 
-    DroneManager::DroneManager(Redis &redis) : shared_redis(redis) {}
+    DroneManager::DroneManager(Redis &redis) : shared_redis(redis), mq(open_or_create, "drone_status_queue", 100, sizeof(DroneStatusMessage)) {}
 
     // For every zone calculated create a Zone object
     void DroneManager::CreateZones() {
@@ -172,5 +173,28 @@ namespace drones {
             zones[i]->SpawnThread(tick_n);
         }
         column_n += 150;
+    }
+
+    void DroneManager::DroneStatusDispatcher()
+    {
+        try
+        {
+        DroneStatusMessage msg;
+        unsigned int priority;
+        message_queue::size_type recvd_size;
+
+        if (!mq.try_receive(&msg, sizeof(msg), recvd_size, priority))
+        {
+        } else
+        {
+            if(!zones[msg.target_zone]->drone_status_queue.push(msg.status))
+            {
+                spdlog::error("IPC: Error pushing message to queue from TestGenerator");
+            }
+        }
+        } catch (interprocess_exception &e)
+        {
+            spdlog::error("IPC: Error in DroneStatusDispatcher: {}", e.what());
+        }
     }
 } // namespace drones

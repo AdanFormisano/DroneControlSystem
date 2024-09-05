@@ -1,3 +1,6 @@
+ ☐ poolthread for drones execution
+ ☐ IPC between TestGenerator and Drone Process/Threads
+
 Review:
     ☐ DroneZone
     ☐ Drone
@@ -22,7 +25,7 @@ High Priority:
             e.g. "Tick 1: executed" "Tick 2: errors [insert errors]"
     ☐ Monitors:
         ☐ Check how prof implemented his monitors
-        ☐ DB table for monitors where the entries are only failed ticks
+        ✔ DB table for monitors where the entries are only failed ticks @done (24-09-02 18:09)
         ☐ Monitors should read only unread entries from db
         ☐ Write better docs
         ☐ Every monitors' main execution while-loop needs to check if the simulation is running isntead of while-trueing

@@ -27,7 +27,7 @@ enum class drone_state_enum {
     NONE
 };
 
-constexpr std::array<const char *, static_cast<std::size_t>(drone_state_enum::NONE)> drone_state_str = {
+constexpr std::array drone_state_str = {
     "IDLE_IN_BASE",
     "TO_ZONE",
     "WORKING",
@@ -38,6 +38,13 @@ constexpr std::array<const char *, static_cast<std::size_t>(drone_state_enum::NO
     "NOT_CONNECTED",
     "DEAD",
     "FAULT_SWAP"
+};
+
+// Message structure for IPC TestGenerator <=> DroneManager
+struct DroneStatusMessage
+{
+    int target_zone;
+    drone_state_enum status;
 };
 
 namespace utils {
