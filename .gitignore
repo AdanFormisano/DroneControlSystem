@@ -1,8 +1,8 @@
 # VScode settings
-.vscode/
+/.vscode/
 
 # CLion settings
-.idea/
+/.idea/
 
 /src/Database/.idea/
 
