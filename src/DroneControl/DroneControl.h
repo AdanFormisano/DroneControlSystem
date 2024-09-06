@@ -21,6 +21,7 @@ namespace drone_control {
         void Run();                 // Run the DroneControl process
         void ReadDataStream();      // Read the stream of data sent from drones on Redis
         void WorkOnStream(const std::vector<std::pair<std::string, std::string>> &data); // Parse the stream data
+        void WorkOnStreamDump(const std::vector<std::pair<std::string, std::string>> &data); // Parse the stream data
         void FaultAck();            // Acknowladge all drone faults sent from DroneZones
 
     private:

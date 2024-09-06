@@ -17,7 +17,6 @@ add_executable(DroneControlSystem
         src/Drone/DroneZone.cpp
         src/Drone/DroneManager.cpp
         src/Drone/DroneManager.h
-        src/globals.cpp
         src/globals.h
         src/Database/Database.cpp
         src/Database/Database.h
@@ -35,13 +34,15 @@ add_executable(DroneControlSystem
         src/Monitors/CoverageMonitor.cpp
         src/Monitors/DroneChargeMonitor.cpp
         src/Monitors/TimeToReadDataMonitor.cpp
+        src/Scanner/ScannerManager.cpp
+        src/Scanner/ScannerManager.h
 )
 
 option(DEBUG "Enable debug mode" OFF)
 
 if (DEBUG)
     target_compile_definitions(DroneControlSystem PRIVATE DEBUG)
-endif()
+endif ()
 
 # Add spdlog dependency
 include(FetchContent)

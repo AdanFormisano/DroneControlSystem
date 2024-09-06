@@ -1,8 +1,8 @@
 #include "TestGenerator.h"
 #include <spdlog/spdlog.h>
 
-TestGenerator::TestGenerator(Redis &redis) :
-        test_redis(redis), mq(open_only, "drone_status_queue"), gen(rd()), dis(0, 1), dis_zone(0, ZONE_NUMBER - 1),
+TestGenerator::TestGenerator(Redis& redis) :
+    test_redis(redis), mq(open_only, "drone_status_queue"), gen(rd()), dis(0, 1), dis_zone(0, ZONE_NUMBER - 1),
     dis_tick(1, 20)
 {
     spdlog::info("Creating TestGenerator object");
@@ -24,7 +24,7 @@ TestGenerator::TestGenerator(Redis &redis) :
         // test_redis.hset("drone:" + std::to_string(drone_id), "status", "DEAD");
         DroneStatusMessage msg = {zone_id, drone_state_enum::DEAD};
         mq.send(&msg, sizeof(msg), 0);
-        
+
         spdlog::warn("Drone {} exploded", drone_id);
     };
 
@@ -59,9 +59,10 @@ TestGenerator::TestGenerator(Redis &redis) :
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
-void TestGenerator::Run() {
-    while (true) {
-
+void TestGenerator::Run()
+{
+    while (true)
+    {
         // Generate a random float between 0 and 1 to decide the scenario
         float randomValue = generateRandomFloat();
 
@@ -69,7 +70,8 @@ void TestGenerator::Run() {
         auto it = scenarios.upper_bound(randomValue);
 
         // If such a key exists, execute the corresponding function
-        if (it != scenarios.end()) {
+        if (it != scenarios.end())
+        {
             it->second();
         }
 
@@ -78,17 +80,20 @@ void TestGenerator::Run() {
     }
 }
 
-DroneInfo TestGenerator::ChooseRandomDrone() {
+DroneInfo TestGenerator::ChooseRandomDrone()
+{
     // Choose a random zone
     int zone_id = dis_zone(gen);
 
     // Get a random drone from the zone's redis db
     auto v = test_redis.srandmember("zone:" + std::to_string(zone_id) + ":drones_alive");
-    if (!v.has_value()) {
+    if (!v.has_value())
+    {
         spdlog::error("No drones in zone {}", zone_id);
         return {0, 0};
     }
-    if (v == std::nullopt) {
+    if (v == std::nullopt)
+    {
         spdlog::error("No alive drones found for zone {}", zone_id);
         return {0, 0};
     }
@@ -96,6 +101,7 @@ DroneInfo TestGenerator::ChooseRandomDrone() {
     return {zone_id, std::stoi(v.value())};
 }
 
-int TestGenerator::ChooseRandomTick() {
+int TestGenerator::ChooseRandomTick()
+{
     return dis_tick(gen);
 }

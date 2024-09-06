@@ -22,8 +22,8 @@ class Buffer : public boost::basic_lockable_adapter<boost::mutex> {
 public:
     ~Buffer();
 
-    void WriteToBuffer(drone_data_ext &data);
-    drone_data_ext ReadFromBuffer();
+    void WriteToBuffer(DroneData& data);
+    DroneData ReadFromBuffer();
     void ClearBuffer();
     void WriteFault(drone_fault &fault) { faults.push_back(fault); }
     std::vector<drone_fault> GetFaults() { return faults; }
@@ -33,7 +33,7 @@ public:
     size_t getFaultsSize() { return faults.size(); }
 
 private:
-    std::queue<drone_data_ext> buffer;
+    std::queue<DroneData> buffer;
     std::vector<drone_fault> faults;
 };
 
