@@ -138,6 +138,13 @@ struct DroneData
     }
 };
 
+struct TG_data
+{
+    int drone_id;
+    drone_state_enum state;
+    int reconnect_tick;
+};
+
 struct drone_fault
 {
     std::string fault_state;

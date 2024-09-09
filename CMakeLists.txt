@@ -36,6 +36,8 @@ add_executable(DroneControlSystem
         src/Monitors/TimeToReadDataMonitor.cpp
         src/Scanner/ScannerManager.cpp
         src/Scanner/ScannerManager.h
+        src/Scanner/SyncedScannerManager.cpp
+        src/Scanner/SyncedScannerManager.h
 )
 
 option(DEBUG "Enable debug mode" OFF)

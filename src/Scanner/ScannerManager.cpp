@@ -35,10 +35,14 @@ void Wave::Run()
         spdlog::info("Wave {} created", id);
         createDrones();
 
+        // Set wave to far left of the area
+        *coords.x = -2990.0f;
+
         while (tick_n < 500)
         {
             // Get the real-time start of the tick
             auto tick_start = std::chrono::steady_clock::now();
+
 
             moveDrones();
             dumpDroneData();
@@ -69,7 +73,7 @@ void Wave::Run()
     }
 }
 
-Wave::Wave(const int wave_id, int tick, Redis& redis) : tick_n(tick), id(wave_id), shared_redis(redis)
+Wave::Wave(const int wave_id, int tick, Redis& redis) : shared_redis(redis), tick_n(tick), id(wave_id)
 {
     spdlog::info("Wave {} created", id);
 }
@@ -81,7 +85,7 @@ void Wave::createDrones()
     for (int i = 0; i < 300; ++i)
     {
         // Each drone differs by 20.0f in the y-axis
-        drones[i].id = id * 100 + i;
+        drones[i].id = id * 1000 + i;
         drones[i].position.x = 0.0f;
         drones[i].position.y = y;
         drones[i].state = drone_state_enum::IDLE_IN_BASE;
@@ -94,13 +98,15 @@ void Wave::createDrones()
 
 void Wave::moveDrones()
 {
+    *coords.x += 20.0f; // Move the wave to the right
+
     // Move the drones in the wave
     for (auto& [id, position, state, wave_id, charge] : drones)
     {
         // Move the drone to the right
-        position.x += DRONE_STEP_SIZE;
+        position.x = *coords.x;
         charge -= DRONE_CONSUMPTION_RATE;
-        // spdlog::info("TICK {} Drone {} moved to ({}, {})", tick_n, id, position.x, position.y);
+        spdlog::info("TICK {} Drone {} moved to ({}, {})", tick_n, id, position.x, position.y);
     }
 }
 

@@ -31,11 +31,12 @@ private:
 class Wave
 {
 public:
-    explicit Wave(int wave_id, int tick, Redis& redis);
+    Wave(int wave_id, int tick, Redis& redis);
 
     Redis& shared_redis;
     int tick_n = 0;
     const int id; // The id of the wave
+    std::atomic<float>
     std::array<Drone, 300> drones{}; // The drones in the wave
     // coords position {0.0f, 0.0f}; // The position of the wave
 

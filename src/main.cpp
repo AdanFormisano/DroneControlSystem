@@ -28,6 +28,8 @@
 #include <unistd.h>
 #include <iostream>
 
+#include "Scanner/SyncedScannerManager.h"
+
 using namespace sw::redis;
 
 
@@ -72,18 +74,27 @@ int main()
         {
             // In child Drones process
             // Create the Redis object for Drone
-            auto drone_redis = Redis("tcp://127.0.0.1:7777");
+            ConnectionOptions drone_connection_options;
+            drone_connection_options.host = "127.0.0.1";
+            drone_connection_options.port = 7777;
+
+            ConnectionPoolOptions drone_connection_pool_options;
+            drone_connection_pool_options.size = 7;
+            drone_connection_pool_options.wait_timeout = std::chrono::milliseconds(1000);
+
+            auto drone_redis = Redis(drone_connection_options, drone_connection_pool_options);
 
             // Sync of processes
             utils::AddThisProcessToSyncCounter(drone_redis, "Drone");
 
             // Create the DroneManager object
             // drones::DroneManager dm(drone_redis);
-            ScannerManager sm(drone_redis);
+            // ScannerManager sm(drone_redis);
+            SyncedScannerManager ssm(drone_redis);
 
             // Start simulation
             // dm.Run();
-            sm.Run();
+            ssm.Run();
         }
         else
         {
