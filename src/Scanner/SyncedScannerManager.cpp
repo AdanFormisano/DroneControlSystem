@@ -1,12 +1,15 @@
 #include "SyncedScannerManager.h"
 
-Wave::Wave(const int wave_id, Redis& shared_redis) : redis(shared_redis)
+#include "spdlog/spdlog.h"
+
+Wave::Wave(const int wave_id, Redis& shared_redis, TickSynchronizer& synchronizer) : redis(shared_redis),
+    tick_sync(synchronizer)
 {
     id = wave_id;
 
     int i = 0;
     float y = -2990; // Drone has a coverage radius of 10.0f
-    for (auto drone : drones)
+    for (auto& drone : drones)
     {
         drone.id = id * 1000 + i;
         drone.position.x = static_cast<float>(X);
@@ -17,6 +20,7 @@ Wave::Wave(const int wave_id, Redis& shared_redis) : redis(shared_redis)
         y += 20.0f;
         i++;
     }
+    spdlog::info("Wave {} created all drones", id);
 }
 
 void Wave::Move()
@@ -31,34 +35,46 @@ void Wave::Move()
 
 void Wave::UploadData()
 {
-    // A redis pipeline is used to upload the data to the redis server
-    // Create a pipeline from the group of redis connections
-    auto pipe = redis.pipeline(false);
-
-    // For each drone a redis function will be added to the pipeline
-    // When every command has been added, the pipeline will be executed
-
-    for (auto& [id, position, state, wave_id, charge] : drones)
+    try
     {
-        // Create a DroneData object
-        DroneData data(tick, id, utils::droneStateToString(state), charge, position, wave_id);
-        auto _ = data.toVector();
+        // A redis pipeline is used to upload the data to the redis server
+        // Create a pipeline from the group of redis connections
+        auto pipe = redis.pipeline(false);
 
-        // Add the command to the pipeline
-        pipe.xadd("scanner_stream", "*", _.begin(), _.end());
+        // For each drone a redis function will be added to the pipeline
+        // When every command has been added, the pipeline will be executed
+
+        for (auto& drone : drones)
+        {
+            // Create a DroneData object
+            DroneData data(tick, drone.id, utils::droneStateToString(drone.state), drone.charge, drone.position, drone.wave_id);
+            auto v = data.toVector();
+
+            // Add the command to the pipeline
+            pipe.xadd("scanner_stream", "*", v.begin(), v.end());
+            // spdlog::info("Drone {} data uploaded to Redis", drone.id);
+        }
+
+        // Redis connection is returned to the pool after the pipeline is executed
+        pipe.exec();
     }
-
-    // Redis connection is returned to the pool after the pipeline is executed
-    pipe.exec();
-
-    // TODO: add exception handling
+    catch (const ReplyError& e)
+    {
+        spdlog::error("Redis pipeline error: {}", e.what());
+    } catch (const IoError& e)
+    {
+        spdlog::error("Redis pipeline error: {}", e.what());
+    }
 }
 
 void Wave::Run()
 {
-    // TODO: fix the condition of the while loop
-    while (true)
+    tick_sync.thread_started();
+
+    // TODO: Implement states for the waves
+    while (tick < 100)
     {
+        spdlog::info("Wave {} tick {} started", id, tick);
         // Before the "normal" execution, check if SM did put any "input" inside the "queue" (aka TestGenerator scenarios' input)
 
         Move();
@@ -67,13 +83,49 @@ void Wave::Run()
         // Use atomic variable to sync with other threads
         // Each tick of the execution will be synced with the other threads. This will make writing to the DB much easier
         // because the data will be consistent/historical
+        tick_sync.tick_completed();
+        spdlog::info("Wave {} tick {} ended", id, tick);
+        tick++;
     }
+    tick_sync.thread_finished();
+    spdlog::info("Wave {} finished", id);
 }
 
 SyncedScannerManager::SyncedScannerManager(Redis& shared_redis) : shared_redis(shared_redis)
 {
-
+    spdlog::set_pattern("[%T.%e][%^%l%$][ScannerManager] %v");
+    spdlog::info("ScannerManager created");
 }
 
-// TODO: Check if it's better to use a thread-pool or a thread for each wave
+void SyncedScannerManager::Run()
+{
+    spdlog::info("ScannerManager running");
 
+    // Wait for all the processes to be ready
+    utils::NamedSyncWait(shared_redis, "Drone");
+
+    int wave_id = 0;
+
+    TickSynchronizer synchronizer;
+    ThreadPool pool(6);
+
+    synchronizer.thread_started();
+    for (int i = 0; i < 5; i++)
+    {
+        waves[wave_id] = std::make_shared<Wave>(wave_id, shared_redis, synchronizer);
+        pool.enqueue_task([this, wave_id] { waves[wave_id]->Run(); });
+        wave_id++;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+
+    // ScannerManager needs sto be synced with the wave-threads
+    while (true)
+    {
+        spdlog::info("TICK {}", tick);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        synchronizer.tick_completed();
+        spdlog::info("TICK {} completed", tick);
+        tick++;
+    }
+    synchronizer.thread_finished();
+}

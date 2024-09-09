@@ -34,10 +34,10 @@ add_executable(DroneControlSystem
         src/Monitors/CoverageMonitor.cpp
         src/Monitors/DroneChargeMonitor.cpp
         src/Monitors/TimeToReadDataMonitor.cpp
-        src/Scanner/ScannerManager.cpp
-        src/Scanner/ScannerManager.h
         src/Scanner/SyncedScannerManager.cpp
         src/Scanner/SyncedScannerManager.h
+        src/Scanner/ThreadUtils.h
+        src/Scanner/ThreadUtils.cpp
 )
 
 option(DEBUG "Enable debug mode" OFF)

@@ -2,13 +2,16 @@
 #define DRONECONTROLSYSTEM_UTILS_H
 
 #include <array>
+#include <condition_variable>
 #include <random>
 #include <unordered_map>
 #include <iostream>
 #include <csignal>
 #include <cstdlib>
+#include <functional>
 #include <mutex>
 #include <queue>
+#include <thread>
 
 #include "../src/globals.h"
 
@@ -29,42 +32,5 @@ namespace utils
     const char* droneStateToString(drone_state_enum state);
     drone_state_enum stringToDroneStateEnum(const std::string& stateStr);
     void signalHandler(int signal);
-
-    template <typename T>
-    struct synced_queue
-    {
-        std::queue<T> queue;
-        std::mutex mtx;
-
-        void push(const T& value)
-        {
-            std::lock_guard lock(mtx);
-            queue.push(value);
-        }
-
-        std::optional<T> pop()
-        {
-            std::lock_guard lock(mtx);
-            if (queue.epmty())
-            {
-                return std::nullopt;
-            }
-            T value = queue.front();
-            queue.pop();
-            return value;
-        }
-
-        [[nodiscard]] bool empty() const
-        {
-            std::lock_guard lock(mtx);
-            return queue.empty();
-        }
-
-        [[nodiscard]] size_t size() const
-        {
-            std::lock_guard lock(mtx);
-            return queue.size();
-        }
-    };
 }
 #endif // DRONECONTROLSYSTEM_UTILS_H

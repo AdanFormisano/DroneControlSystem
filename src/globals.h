@@ -103,7 +103,7 @@ struct DroneData
               coords position, int drone_wave_id)
     {
         tick_n = std::to_string(tick);
-        id = drone_id;
+        id = std::to_string(drone_id);
         status = drone_status;
         charge = std::to_string(drone_charge);
         x = std::to_string(position.x);

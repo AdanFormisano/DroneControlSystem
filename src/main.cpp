@@ -18,7 +18,6 @@
 #include "../utils/RedisUtils.h"
 #include "ChargeBase/ChargeBase.h"
 #include "Drone/DroneManager.h"
-#include "Scanner/ScannerManager.h"
 #include "DroneControl/DroneControl.h"
 #include "Monitors/Monitor.h"
 #include "TestGenerator/TestGenerator.h"
@@ -53,13 +52,13 @@ int main()
         auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
 
         // Sync of processes
-        utils::AddThisProcessToSyncCounter(drone_control_redis, "DroneControl");
+        // utils::AddThisProcessToSyncCounter(drone_control_redis, "DroneControl");
 
         // Create the DroneControl object
         drone_control::DroneControl dc(drone_control_redis);
 
         // Start simulation
-        dc.Run();
+        // dc.Run();
     }
     else
     {
@@ -79,7 +78,7 @@ int main()
             drone_connection_options.port = 7777;
 
             ConnectionPoolOptions drone_connection_pool_options;
-            drone_connection_pool_options.size = 7;
+            drone_connection_pool_options.size = 8;
             drone_connection_pool_options.wait_timeout = std::chrono::milliseconds(1000);
 
             auto drone_redis = Redis(drone_connection_options, drone_connection_pool_options);
@@ -112,7 +111,7 @@ int main()
                 auto charge_base_redis = Redis("tcp://127.0.0.1:7777");
 
                 // Sync of processes
-                utils::AddThisProcessToSyncCounter(charge_base_redis, "ChargeBase");
+                // utils::AddThisProcessToSyncCounter(charge_base_redis, "ChargeBase");
 
                 // Create the ChargeBase object
                 auto cb = charge_base::ChargeBase::getInstance(charge_base_redis);
@@ -125,7 +124,7 @@ int main()
                 utils::NamedSyncWait(charge_base_redis, "ChargeBase");
 
                 // Start simulation
-                cb->Run();
+                // cb->Run();
             }
             // else {    // In parent process create new child TestGenerator process
             //     pid_t pid_test_generator = fork();
@@ -160,10 +159,10 @@ int main()
                 CoverageMonitor zcm(main_redis);
                 DroneChargeMonitor dcm(main_redis);
                 TimeToReadDataMonitor trd(main_redis);
-                rtm.RunMonitor(); //TODO: Bring out the thread from inside the function
-                zcm.RunMonitor(); //TODO: Bring out the thread from inside the function
-                dcm.RunMonitor();
-                trd.RunMonitor();
+                // rtm.RunMonitor(); //TODO: Bring out the thread from inside the function
+                // zcm.RunMonitor(); //TODO: Bring out the thread from inside the function
+                // dcm.RunMonitor();
+                // trd.RunMonitor();
 
                 // Start simulation
                 auto sim_end_after = sim_duration_ms / tick_duration_ms;

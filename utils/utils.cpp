@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include <boost/thread/detail/move.hpp>
+
 std::default_random_engine generator;
 std::uniform_real_distribution<float> float_distribution_mten_to_ten(-10.0f, 10.0f);
 
@@ -34,4 +36,8 @@ namespace utils {
         // and then exit the program gracefully
         std::exit(signal);
     }
+
+
+
+
 }
