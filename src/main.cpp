@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <iostream>
 
+#include "DroneControl/SyncedDroneControl.h"
 #include "Scanner/SyncedScannerManager.h"
 
 using namespace sw::redis;
@@ -52,13 +53,15 @@ int main()
         auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
 
         // Sync of processes
-        // utils::AddThisProcessToSyncCounter(drone_control_redis, "DroneControl");
+        utils::AddThisProcessToSyncCounter(drone_control_redis, "DroneControl");
 
         // Create the DroneControl object
         drone_control::DroneControl dc(drone_control_redis);
+        SyncedDroneControl sdc(drone_control_redis);
 
         // Start simulation
         // dc.Run();
+        sdc.Run();
     }
     else
     {

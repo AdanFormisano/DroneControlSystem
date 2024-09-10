@@ -70,9 +70,10 @@ void Wave::UploadData()
 void Wave::Run()
 {
     tick_sync.thread_started();
+    auto start_time = std::chrono::high_resolution_clock::now();
 
     // TODO: Implement states for the waves
-    while (tick < 100)
+    while (tick < 1000)
     {
         spdlog::info("Wave {} tick {} started", id, tick);
         // Before the "normal" execution, check if SM did put any "input" inside the "queue" (aka TestGenerator scenarios' input)
@@ -88,6 +89,9 @@ void Wave::Run()
         tick++;
     }
     tick_sync.thread_finished();
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    spdlog::info("Wave {} duration: {}ms", id, duration.count());
     spdlog::info("Wave {} finished", id);
 }
 
@@ -115,14 +119,14 @@ void SyncedScannerManager::Run()
         waves[wave_id] = std::make_shared<Wave>(wave_id, shared_redis, synchronizer);
         pool.enqueue_task([this, wave_id] { waves[wave_id]->Run(); });
         wave_id++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     // ScannerManager needs sto be synced with the wave-threads
     while (true)
     {
         spdlog::info("TICK {}", tick);
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         synchronizer.tick_completed();
         spdlog::info("TICK {} completed", tick);
         tick++;

@@ -109,6 +109,7 @@ struct DroneData
         x = std::to_string(position.x);
         y = std::to_string(position.y);
         wave_id = std::to_string(drone_wave_id);
+        checked = "false";
     }
 
     DroneData(int tick_n, const std::string& id, const std::string& status, const std::string& charge,

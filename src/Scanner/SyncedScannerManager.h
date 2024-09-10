@@ -45,12 +45,7 @@ public:
 
 private:
     std::unordered_map<int, std::shared_ptr<Wave>> waves;
-    std::atomic<int> number_of_waves = 0;
-    std::atomic<int> waiting_waves = 0;
     Redis& shared_redis;
     int tick = 0;
 };
-
-
-
 #endif //SYNCEDSCANNERMANAGER_H

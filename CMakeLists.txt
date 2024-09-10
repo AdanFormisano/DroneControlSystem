@@ -38,6 +38,8 @@ add_executable(DroneControlSystem
         src/Scanner/SyncedScannerManager.h
         src/Scanner/ThreadUtils.h
         src/Scanner/ThreadUtils.cpp
+        src/DroneControl/SyncedDroneControl.cpp
+        src/DroneControl/SyncedDroneControl.h
 )
 
 option(DEBUG "Enable debug mode" OFF)

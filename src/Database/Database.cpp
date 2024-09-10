@@ -104,7 +104,7 @@ void Database::get_DB() {
                 "drone_id INT NOT NULL, "
                 "status VARCHAR(255), "
                 "charge FLOAT, "
-                "zone VARCHAR(255), "  // TODO: Change to int
+                "wave INT, "  // TODO: Change to int
                 "x FLOAT, "
                 "y FLOAT, "
                 "checked BOOLEAN, "

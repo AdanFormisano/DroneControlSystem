@@ -44,6 +44,22 @@ void Buffer::WriteToBuffer(DroneData& data)
 //     }
 // }
 
+void Buffer::WriteBatchToBuffer(std::vector<DroneData>& data)
+{
+    try
+    {
+        boost::lock_guard<Buffer> write_lock(*this);
+        for (auto& d : data)
+        {
+            buffer.push({d});
+        }
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("Error writing to the buffer: {}", e.what());
+    }
+}
+
 DroneData Buffer::ReadFromBuffer()
 {
     try
@@ -52,6 +68,26 @@ DroneData Buffer::ReadFromBuffer()
         DroneData data = buffer.front();
         buffer.pop();
         return data;
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("Error reading from the buffer: {}", e.what());
+        return {};
+    }
+}
+
+std::vector<DroneData> Buffer::GetAllData()
+{
+    try
+    {
+        boost::lock_guard<Buffer> read_lock(*this);
+        std::vector<DroneData> data_vector;
+        while (!buffer.empty())
+        {
+            data_vector.push_back(buffer.front());
+            buffer.pop();
+        }
+        return data_vector;
     }
     catch (const std::exception& e)
     {

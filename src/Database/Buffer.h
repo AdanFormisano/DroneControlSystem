@@ -23,7 +23,9 @@ public:
     ~Buffer();
 
     void WriteToBuffer(DroneData& data);
+    void WriteBatchToBuffer(std::vector<DroneData>& data);
     DroneData ReadFromBuffer();
+    std::vector<DroneData> GetAllData();
     void ClearBuffer();
     void WriteFault(drone_fault &fault) { faults.push_back(fault); }
     std::vector<drone_fault> GetFaults() { return faults; }
