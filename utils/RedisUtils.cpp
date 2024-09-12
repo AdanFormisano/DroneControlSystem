@@ -116,4 +116,31 @@ namespace utils {
             return 1;
         }
     }
+
+    // TODO Clean up unused functions
+
+    void UpdateSyncTick(Redis& redis, int tick_n)
+    {
+        // spdlog::info("Updating scanner_tick to {}", tick_n);
+        redis.set("scanner_tick", std::to_string(tick_n));
+    }
+
+    void AckSyncTick(Redis& redis, int tick_n)
+    {
+        redis.set("scanner_tick_ack", std::to_string(tick_n));
+    }
+
+
+    bool CheckSyncTickAck(Redis& redis, int tick_n)
+    {
+        auto _ = redis.get("scanner_tick_ack");
+        int current_tick = std::stoi(_.value_or("-1"));
+        return current_tick == tick_n;
+    }
+
+    int GetSyncTick(Redis& redis)
+    {
+        auto _ = redis.get("scanner_tick");
+        return std::stoi(_.value_or("-1"));
+    }
 }

@@ -31,5 +31,7 @@ private:
     void GetDronesPaths();
     void SendWaveCreationCommand();
     void Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer);
+    void SendWaveSpawnCommand();
+    void TickCompleted();
 };
 #endif //SYNCEDDRONECONTROL_H

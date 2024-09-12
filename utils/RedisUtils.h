@@ -14,6 +14,12 @@ namespace utils {
     // Used for synchronization of processes
     void AddThisProcessToSyncCounter(Redis& redis, const std::string& process_name);
     int NamedSyncWait(Redis& redis, const std::string& process_name);
+
+    // Used for synchronization of Scanner and DroneControl processes
+    void UpdateSyncTick(Redis &redis, int tick_n);
+    void AckSyncTick(Redis &redis, int tick_n);
+    bool CheckSyncTick(Redis &redis, int tick_n);
+    int GetSyncTick(Redis &redis);
 }
 
 #endif //DRONECONTROLSYSTEM_REDISUTILS_H

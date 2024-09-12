@@ -15,12 +15,12 @@
 class Wave
 {
 public:
-    Wave(int wave_id, Redis& shared_redis, TickSynchronizer& synchronizer);
+    Wave(int tick_n, int wave_id, Redis& shared_redis, TickSynchronizer& synchronizer);
 
     void Run(); // Function executed by the thread
 
-    int tick = 0;
     int X = 0; // The position of the wave
+    int starting_tick = 0; // The tick when the wave was created
     std::array<DroneData, 300> drones_data;
     synced_queue<TG_data> tg_data;
 
@@ -28,6 +28,7 @@ public:
 
 private:
     Redis& redis;
+    int tick = 0;
     int id = 0;
     std::array<Drone, 300> drones;
     TickSynchronizer& tick_sync;
@@ -41,11 +42,20 @@ class SyncedScannerManager
 public:
     explicit SyncedScannerManager(Redis& shared_redis);
 
+    TickSynchronizer synchronizer;
+    ThreadPool pool;
+
     void Run();
 
 private:
     std::unordered_map<int, std::shared_ptr<Wave>> waves;
     Redis& shared_redis;
     int tick = 0;
+    int timeout_ms = 1000;
+    int wave_id = 0;
+
+    bool CheckSyncTickAck();
+    bool CheckSpawnWave();
+    void SpawnWave();
 };
 #endif //SYNCEDSCANNERMANAGER_H

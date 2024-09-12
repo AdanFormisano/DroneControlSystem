@@ -3,7 +3,6 @@
 #include <iostream>
 
 void SyncedDroneControl::Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer) {
-    spdlog::info("Consumer {} started", consumer);
     while (true) {
         // Read from the stream using the consumer group
         try {
@@ -87,6 +86,51 @@ void SyncedDroneControl::WriteDroneDataToDB()
     }
 }
 
+void SyncedDroneControl::SendWaveSpawnCommand()
+{
+    spdlog::warn("Sending wave spawn command");
+    redis.incr("spawn_wave");
+
+    // Wait for the wave to spawn
+    while (std::stoi(redis.get("spawn_wave").value_or("-1")) != 0)
+    {
+        spdlog::warn("Waiting for wave to spawn...");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+void SyncedDroneControl::TickCompleted()
+{
+    // Tick completed, wait until the value on Redis is updated
+    auto start_time = std::chrono::high_resolution_clock::now();
+    int timeout_ms = 1000;
+
+    while (true)
+    {
+        auto v = redis.get("scanner_tick");
+        auto sync_tick = std::stoi(v.value_or("-1"));
+
+        if (sync_tick == tick_n + 1)
+        {
+            tick_n++;
+            utils::AckSyncTick(redis, tick_n);  // tick_n is the next tick in simulation
+            return;
+        }
+
+        auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
+        {
+            spdlog::error("Timeout waiting for scanner_tick");
+            tick_n = sync_tick;
+            return;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+}
+
+
+
 void SyncedDroneControl::Run()
 {
     // Get the drone paths from the database
@@ -113,8 +157,14 @@ void SyncedDroneControl::Run()
 
     while (true)
     {
-        //
+        // Spawn a Wave every 150 ticks
+        if (tick_n % 150 == 0)
+        {
+            SendWaveSpawnCommand();
+        }
+
+        // End of tick
+        TickCompleted();
+        spdlog::info("DC TICK: {}", tick_n - 1);
     }
 }
-
-// TODO: Implement sending commands to ScannerManager

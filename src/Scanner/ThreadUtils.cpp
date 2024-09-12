@@ -66,14 +66,16 @@ void TickSynchronizer::tick_completed()
     std::unique_lock lock(mtx);
     ++waiting_threads;
 
+    // spdlog::info("Active threads {} - Waiting threads {}", active_threads, waiting_threads);
+
     if (waiting_threads == active_threads)
     {
         waiting_threads = 0;
-        spdlog::info("Active threads {} - Waiting threads {}", active_threads, waiting_threads);
+        // spdlog::info("Active threads {} - Waiting threads {}", active_threads, waiting_threads);
         cv.notify_all();
     } else
     {
-        spdlog::info("Active threads {} - Waiting threads {}", active_threads, waiting_threads);
+        // spdlog::info("Active threads {} - Waiting threads {}", active_threads, waiting_threads);
         cv.wait(lock, [this] { return waiting_threads == 0; });
     }
 }

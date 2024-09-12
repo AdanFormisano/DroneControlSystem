@@ -173,9 +173,9 @@ int main()
                 while (tick_n < sim_end_after)
                 {
                     // Do simulation stuff
-                    std::cout << "Tick " << tick_n << " started" << std::endl;
+                    // std::cout << "Tick " << tick_n << " started" << std::endl;
                     std::this_thread::sleep_for(tick_duration_ms); // Sleep for 1 tick: 1 second
-                    std::cout << "Tick " << tick_n << " ended" << std::endl;
+                    // std::cout << "Tick " << tick_n << " ended" << std::endl;
                     ++tick_n;
                 }
 
