@@ -2,27 +2,26 @@
 #include <spdlog/spdlog.h>
 
 TestGenerator::TestGenerator(Redis& redis) :
-    test_redis(redis), mq(open_only, "drone_status_queue"), gen(rd()), dis(0, 1), dis_zone(0, ZONE_NUMBER - 1),
+    test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_drone(0, 299),
     dis_tick(1, 20)
 {
     spdlog::info("Creating TestGenerator object");
     // message_queue::remove("test_generator_queue");
 
     // Everything_is_fine scenario [80%]
-    scenarios[0.9f] = []()
+    scenarios[0.8f] = []()
     {
         spdlog::info("Everything is fine");
     };
 
     // Drone_failure scenario (drone stops working) [10%]
-    scenarios[0.95f] = [this]()
+    scenarios[0.9f] = [this]()
     {
         // Choose a random drone to explode
-        auto [zone_id, drone_id] = ChooseRandomDrone();
+        auto [wave_id, drone_id] = ChooseRandomDrone();
 
-        // Set the drone's status to "Exploded"
-        // test_redis.hset("drone:" + std::to_string(drone_id), "status", "DEAD");
-        DroneStatusMessage msg = {zone_id, drone_state_enum::DEAD};
+        // Send a message to ScannerManager to set the drone's status to "DEAD"
+        TG_data msg = {drone_id, wave_id, drone_state_enum::DEAD, -1};
         mq.send(&msg, sizeof(msg), 0);
 
         spdlog::warn("Drone {} exploded", drone_id);
@@ -31,27 +30,26 @@ TestGenerator::TestGenerator(Redis& redis) :
     // Connection_lost scenario (drone loses connection to the DroneControl system) [10%]
     scenarios[1.0f] = [this]()
     {
-        auto [zone_id, drone_id] = ChooseRandomDrone();
-
-        // Set the drone's status to "Connection lost"
-        // test_redis.hset("drone:" + std::to_string(drone_id), "status", "NOT_CONNECTED");
-        DroneStatusMessage msg = {zone_id, drone_state_enum::NOT_CONNECTED};
-        mq.send(&msg, sizeof(msg), 0);
+        auto [wave_id, drone_id] = ChooseRandomDrone();
 
         // Probability of reconnecting (70%) [for testing purposes 50%]
         float reconnect = generateRandomFloat();
+
         if (reconnect < 0.7f)
         {
             // Calculate when the drone will reconnect
-            spdlog::info("Drone {} will reconnect", drone_id);
-            int tick = ChooseRandomTick();
-            test_redis.hset("drones_fault:" + std::to_string(drone_id), "reconnect_tick", std::to_string(tick));
+            // Send a message to ScannerManager to set the drone's status to "RECONECTED"
+            auto reconnect_tick = ChooseRandomTick();
+            TG_data msg = {drone_id, wave_id, drone_state_enum::RECONNECTED, reconnect_tick};
+            mq.send(&msg, sizeof(msg), 0);
+            spdlog::warn("Drone {} disconnected and will reconnect at tick {}", drone_id,   reconnect_tick);
         }
         else
         {
-            // Set -1 to indicate that the drone will not reconnect
-            spdlog::info("Drone {} will not reconnect", drone_id);
-            test_redis.hset("drones_fault:" + std::to_string(drone_id), "reconnect_tick", "-1");
+            // Send a message to ScannerManager to set the drone's status to "DISCONNECTED"
+            TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1};
+            mq.send(&msg, sizeof(msg), 0);
+            spdlog::warn("Drone {} disconnected", drone_id);
         }
     };
 
@@ -82,23 +80,24 @@ void TestGenerator::Run()
 
 DroneInfo TestGenerator::ChooseRandomDrone()
 {
-    // Choose a random zone
-    int zone_id = dis_zone(gen);
 
-    // Get a random drone from the zone's redis db
-    auto v = test_redis.srandmember("zone:" + std::to_string(zone_id) + ":drones_alive");
-    if (!v.has_value())
+    // Get a random alive wave from Redis
+    auto wave_id = std::stoi(test_redis.srandmember("waves_alive").value_or("-1"));
+    spdlog::info("Wave ID: {}", wave_id);
+
+    if (wave_id == -1)
     {
-        spdlog::error("No drones in zone {}", zone_id);
-        return {0, 0};
+        // Create exception if the wave is not found
+        throw std::runtime_error("Wave not found");
+        return {};
     }
-    if (v == std::nullopt)
-    {
-        spdlog::error("No alive drones found for zone {}", zone_id);
-        return {0, 0};
-    }
-    spdlog::info("Drone chosen: {}", v.value());
-    return {zone_id, std::stoi(v.value())};
+
+    // Get a random drone from the wave
+    auto _ = dis_drone(gen);
+
+    int drone_id = wave_id * 1000 + _;
+
+    return {wave_id, drone_id};
 }
 
 int TestGenerator::ChooseRandomTick()

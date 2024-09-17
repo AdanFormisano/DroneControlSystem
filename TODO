@@ -3,3 +3,11 @@
      - An unsynced approach will be faster for the wave-threads but DC still needs to parse all of the data
      - Consumer groups can be used in DC to parse the data and keep up with large amount of data uploaded by the threads
  ☐ Implement utility function for Redis timeouts
+
+
+ Drones FST:
+     ✔ Correct movement to left side @done (24-09-17 17:25)
+         Start from (0, 0) and move to (-2990, Y), in diagonal where needed
+     ☐ Start in Idle state
+         Tick 0 drones are in (0, 0)
+     ☐ Implement fault states

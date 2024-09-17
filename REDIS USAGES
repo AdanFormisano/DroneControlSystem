@@ -36,3 +36,7 @@ REDIS USAGES
 
 ---SYSTEM---
 - sync_process_count -> A KEY used for ...
+
+
+---WAVES---
+- waves_alives						-> A SET of alive waves' IDs

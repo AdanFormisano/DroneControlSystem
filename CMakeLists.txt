@@ -9,14 +9,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 
 add_executable(DroneControlSystem
         src/main.cpp
-        src/DroneControl/DroneControl.cpp
-        src/DroneControl/DroneControl.h
-        src/Drone/Drone.cpp
         src/ChargeBase/ChargeBase.cpp
         src/ChargeBase/ChargeBase.h
-        src/Drone/DroneZone.cpp
-        src/Drone/DroneManager.cpp
-        src/Drone/DroneManager.h
+        src/DroneControl/DroneControl.cpp
+        src/DroneControl/DroneControl.h
         src/globals.h
         src/Database/Database.cpp
         src/Database/Database.h
@@ -34,12 +30,14 @@ add_executable(DroneControlSystem
         src/Monitors/CoverageMonitor.cpp
         src/Monitors/DroneChargeMonitor.cpp
         src/Monitors/TimeToReadDataMonitor.cpp
-        src/Scanner/SyncedScannerManager.cpp
-        src/Scanner/SyncedScannerManager.h
+        src/Scanner/ScannerManager.cpp
+        src/Scanner/ScannerManager.h
         src/Scanner/ThreadUtils.h
         src/Scanner/ThreadUtils.cpp
-        src/DroneControl/SyncedDroneControl.cpp
-        src/DroneControl/SyncedDroneControl.h
+        src/Scanner/Drone.cpp
+        src/Scanner/Drone.h
+        src/Scanner/DroneState.h
+        src/Scanner/DroneState.cpp
 )
 
 option(DEBUG "Enable debug mode" OFF)
@@ -47,6 +45,8 @@ option(DEBUG "Enable debug mode" OFF)
 if (DEBUG)
     target_compile_definitions(DroneControlSystem PRIVATE DEBUG)
 endif ()
+
+target_compile_definitions(DroneControlSystem PRIVATE BOOST_DATE_TIME_NO_LIB)
 
 # Add spdlog dependency
 include(FetchContent)

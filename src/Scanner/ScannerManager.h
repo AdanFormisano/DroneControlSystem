@@ -1,51 +1,70 @@
-/* The ScannerManager is responsible for managing the "wave" of drones that are sent out to scan the area.
- * Itś responsible for creating the drones.
+/* For now checkpointing is not being implemented, if threads are actually not being executed
+ * then it will be implemented.
  */
 
-#ifndef SCANNERMANAGER_H
-#define SCANNERMANAGER_H
-#include <boost/thread.hpp>
+#ifndef SYNCEDSCANNERMANAGER_H
+#define SYNCEDSCANNERMANAGER_H
+#include <thread>
 #include <vector>
 
-#include "../../utils/RedisUtils.h"
+#include "ThreadUtils.h"
 #include "../globals.h"
+#include "DroneState.h"
+#include "../../utils/utils.h"
+#include "../../utils/RedisUtils.h"
+#include "../../libs/interprocess/ipc/message_queue.hpp"
 
-using namespace sw::redis;
+using namespace boost::interprocess;
 
-class Wave;
+class Drone;
+
+class Wave
+{
+public:
+    Wave(int tick_n, int wave_id, Redis& shared_redis, TickSynchronizer& synchronizer);
+
+    void Run(); // Function executed by the thread
+
+    int X = 0; // The position of the wave
+    int starting_tick = 0; // The tick when the wave was created
+    std::array<DroneData, 300> drones_data;
+    synced_queue<TG_data> tg_data;
+    int tick = 0;
+
+    [[nodiscard]] int getId() const { return id; }
+    [[nodiscard]] int getReadyDrones() const { return ready_drones; }
+    void incrReadyDrones() { ready_drones++; }
+
+private:
+    Redis& redis;
+    int id = 0;
+    std::vector<Drone> drones;
+    TickSynchronizer& tick_sync;
+    int ready_drones = 0;
+
+    void Move();
+    void UploadData();
+};
 
 class ScannerManager
 {
 public:
     explicit ScannerManager(Redis& shared_redis);
 
-    std::vector<Wave> waves;
-    Redis& redis;
+    TickSynchronizer synchronizer;
+    ThreadPool pool;
 
     void Run();
 
 private:
-    std::vector<boost::thread> waves_threads;
-};
-
-class Wave
-{
-public:
-    Wave(int wave_id, int tick, Redis& redis);
-
+    std::unordered_map<int, std::shared_ptr<Wave>> waves;
     Redis& shared_redis;
-    int tick_n = 0;
-    const int id; // The id of the wave
-    std::atomic<float>
-    std::array<Drone, 300> drones{}; // The drones in the wave
-    // coords position {0.0f, 0.0f}; // The position of the wave
+    int tick = 0;
+    int timeout_ms = 1000;
+    int wave_id = 0;
 
-    void Run();
-
-private:
-    void createDrones(); // Creates the drones in the wave
-    void moveDrones(); // Moves the drones in the wave
-    void dumpDroneData(); // Dumps the drone data to the console
+    bool CheckSyncTickAck();
+    bool CheckSpawnWave();
+    void SpawnWave();
 };
-
-#endif  // SCANNERMANAGER_H
+#endif //SYNCEDSCANNERMANAGER_H

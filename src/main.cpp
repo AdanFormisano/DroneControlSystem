@@ -17,7 +17,6 @@
 
 #include "../utils/RedisUtils.h"
 #include "ChargeBase/ChargeBase.h"
-#include "Drone/DroneManager.h"
 #include "DroneControl/DroneControl.h"
 #include "Monitors/Monitor.h"
 #include "TestGenerator/TestGenerator.h"
@@ -27,8 +26,8 @@
 #include <unistd.h>
 #include <iostream>
 
-#include "DroneControl/SyncedDroneControl.h"
-#include "Scanner/SyncedScannerManager.h"
+#include "DroneControl/DroneControl.h"
+#include "Scanner/ScannerManager.h"
 
 using namespace sw::redis;
 
@@ -56,8 +55,8 @@ int main()
         utils::AddThisProcessToSyncCounter(drone_control_redis, "DroneControl");
 
         // Create the DroneControl object
-        drone_control::DroneControl dc(drone_control_redis);
-        SyncedDroneControl sdc(drone_control_redis);
+        DroneControl dc(drone_control_redis);
+        DroneControl sdc(drone_control_redis);
 
         // Start simulation
         // dc.Run();
@@ -92,7 +91,7 @@ int main()
             // Create the DroneManager object
             // drones::DroneManager dm(drone_redis);
             // ScannerManager sm(drone_redis);
-            SyncedScannerManager ssm(drone_redis);
+            ScannerManager ssm(drone_redis);
 
             // Start simulation
             // dm.Run();
@@ -129,71 +128,74 @@ int main()
                 // Start simulation
                 // cb->Run();
             }
-            // else {    // In parent process create new child TestGenerator process
-            //     pid_t pid_test_generator = fork();
-            //     if (pid_test_generator == -1) {
-            //         spdlog::error("Fork for TestGenerator failed");
-            //         return 1;
-            //     } else if (pid_test_generator == 0) {   // In child TestGenerator process
-            //         spdlog::set_pattern("[%T.%e][%^%l%$][TestGenerator] %v");
-            //
-            //         // Create the Redis object for TestGenerator
-            //         auto test_redis = Redis("tcp://127.0.0.1:7777");
-            //
-            //         // Create the TestGenerator object
-            //         TestGenerator tg(test_redis);
-            //
-            //         spdlog::info("TestGenerator started");
-            //
-            //         // Start test generation
-            //         tg.Run();
-            //     }
             else
             {
-                // In Main process
-                auto main_redis = Redis("tcp://127.0.0.1:7777");
+                // In parent process create new child TestGenerator process
+                pid_t pid_test_generator = fork();
+                if (pid_test_generator == -1) {
+                    spdlog::error("Fork for TestGenerator failed");
+                    return 1;
+                } else if (pid_test_generator == 0) {   // In child TestGenerator process
+                    spdlog::set_pattern("[%T.%e][%^%l%$][TestGenerator] %v");
 
-                // Sync of processes
-                utils::AddThisProcessToSyncCounter(main_redis, "Main");
-                utils::NamedSyncWait(main_redis, "Main");
+                    // Create the Redis object for TestGenerator
+                    auto test_redis = Redis("tcp://127.0.0.1:7777");
 
-                // Start monitors
-                RechargeTimeMonitor rtm(main_redis);
-                CoverageMonitor zcm(main_redis);
-                DroneChargeMonitor dcm(main_redis);
-                TimeToReadDataMonitor trd(main_redis);
-                // rtm.RunMonitor(); //TODO: Bring out the thread from inside the function
-                // zcm.RunMonitor(); //TODO: Bring out the thread from inside the function
-                // dcm.RunMonitor();
-                // trd.RunMonitor();
+                    // Create the TestGenerator object
+                    TestGenerator tg(test_redis);
 
-                // Start simulation
-                auto sim_end_after = sim_duration_ms / tick_duration_ms;
-                int tick_n = 0;
-                while (tick_n < sim_end_after)
-                {
-                    // Do simulation stuff
-                    // std::cout << "Tick " << tick_n << " started" << std::endl;
-                    std::this_thread::sleep_for(tick_duration_ms); // Sleep for 1 tick: 1 second
-                    // std::cout << "Tick " << tick_n << " ended" << std::endl;
-                    ++tick_n;
+                    spdlog::info("TestGenerator started");
+
+                    // Start test generation
+                    tg.Run();
                 }
+                else
+                {
+                    // In Main process
+                    auto main_redis = Redis("tcp://127.0.0.1:7777");
 
-                // Use Redis to stop the simulation
-                main_redis.set("sim_running", "false");
+                    // Sync of processes
+                    utils::AddThisProcessToSyncCounter(main_redis, "Main");
+                    utils::NamedSyncWait(main_redis, "Main");
 
-                // Join monitor's thread
-                rtm.JoinThread();
-                zcm.JoinThread();
-                dcm.JoinThread();
-                trd.JoinThread();
+                    // Start monitors
+                    RechargeTimeMonitor rtm(main_redis);
+                    CoverageMonitor zcm(main_redis);
+                    DroneChargeMonitor dcm(main_redis);
+                    TimeToReadDataMonitor trd(main_redis);
+                    // rtm.RunMonitor(); //TODO: Bring out the thread from inside the function
+                    // zcm.RunMonitor(); //TODO: Bring out the thread from inside the function
+                    // dcm.RunMonitor();
+                    // trd.RunMonitor();
 
-                // FIXME: This is a placeholder for the monitor process,
-                // without it the main process will exit and
-                // the children will be terminated
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                std::cout << "Exiting..." << std::endl;
-                // }
+                    // Start simulation
+                    auto sim_end_after = sim_duration_ms / tick_duration_ms;
+                    int tick_n = 0;
+                    while (tick_n < sim_end_after)
+                    {
+                        // Do simulation stuff
+                        // std::cout << "Tick " << tick_n << " started" << std::endl;
+                        std::this_thread::sleep_for(tick_duration_ms); // Sleep for 1 tick: 1 second
+                        // std::cout << "Tick " << tick_n << " ended" << std::endl;
+                        ++tick_n;
+                    }
+
+                    // Use Redis to stop the simulation
+                    main_redis.set("sim_running", "false");
+
+                    // Join monitor's thread
+                    rtm.JoinThread();
+                    zcm.JoinThread();
+                    dcm.JoinThread();
+                    trd.JoinThread();
+
+                    // FIXME: This is a placeholder for the monitor process,
+                    // without it the main process will exit and
+                    // the children will be terminated
+                    std::this_thread::sleep_for(std::chrono::seconds(10));
+                    std::cout << "Exiting..." << std::endl;
+                    // }
+                }
             }
         }
     }

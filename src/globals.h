@@ -44,30 +44,28 @@ struct drone_data
 // Enum for the state of the drone
 enum class drone_state_enum
 {
-    IDLE_IN_BASE, // Drone is in the base, is idle and is fully charged (stopped charging)
-    TO_ZONE, // Drone is moving to zone
+    IDLE, // Drone is in the base, is idle and is fully charged (stopped charging)
+    TO_STARTING_LINE, // Drone is moving to zone
+    READY,
     WORKING,
     TO_BASE, // Drone is moving to base
-    WAITING_CHARGE, // Drone is in the base, is idle, is not fully charged and is watching for a charging station
-    TO_ZONE_FOLLOWING,
-    FOLLOWING,
-    NOT_CONNECTED,
+    DISCONNECTED,
+    RECONNECTED,
     DEAD,
-    FAULT_SWAP,
+    CHARGING,
     NONE
 };
 
 constexpr std::array drone_state_str = {
-    "IDLE_IN_BASE",
-    "TO_ZONE",
+    "IDLE",
+    "TO_STARTING_LINE",
+    "READY",
     "WORKING",
     "TO_BASE",
-    "WAITING_CHARGE",
-    "TO_ZONE_FOLLOWING",
-    "FOLLOWING",
-    "NOT_CONNECTED",
+    "DISCONNECTED",
+    "RECONNECTED",
     "DEAD",
-    "FAULT_SWAP"
+    "CHARGING"
 };
 
 /**
@@ -77,14 +75,14 @@ constexpr std::array drone_state_str = {
  * This structure holds the essential information about a drone, including its
  * unique identifier, current position, state, wave identifier, and charge level.
  */
-struct Drone
-{
-    int id{}; ///< Unique identifier for the drone.
-    coords position = {0.0f, 0.0f}; ///< Current position of the drone in global coordinates.
-    drone_state_enum state = drone_state_enum::IDLE_IN_BASE; ///< Current state of the drone.
-    int wave_id{}; ///< Identifier for the wave the drone is part of.
-    float charge = 100.0f; ///< Current charge level of the drone, in percentage.
-};
+// struct Drone
+// {
+//     int id{}; ///< Unique identifier for the drone.
+//     coords position = {0.0f, 0.0f}; ///< Current position of the drone in global coordinates.
+//     drone_state_enum state = drone_state_enum::IDLE_IN_BASE; ///< Current state of the drone.
+//     int wave_id{}; ///< Identifier for the wave the drone is part of.
+//     float charge = 100.0f; ///< Current charge level of the drone, in percentage.
+// };
 
 struct DroneData
 {
@@ -141,9 +139,10 @@ struct DroneData
 
 struct TG_data
 {
-    int drone_id;
-    drone_state_enum state;
-    int reconnect_tick;
+    int drone_id;           // ID of the drone
+    int wave_id;            // ID of the wave
+    drone_state_enum new_state; // New state of the drone
+    int reconnect_tick;     // Contains the tick when the drone reconnected (-1 if not reconnecting)
 };
 
 struct drone_fault

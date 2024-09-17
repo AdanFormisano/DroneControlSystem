@@ -11,7 +11,7 @@ template <typename T>
 struct synced_queue
 {
     std::queue<T> queue;
-    std::mutex mtx;
+    mutable std::mutex mtx;
 
     void push(const T& value)
     {
@@ -22,7 +22,7 @@ struct synced_queue
     std::optional<T> pop()
     {
         std::lock_guard lock(mtx);
-        if (queue.epmty())
+        if (queue.empty())
         {
             return std::nullopt;
         }

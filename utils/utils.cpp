@@ -17,15 +17,15 @@ namespace utils {
     };
 
     drone_state_enum stringToDroneStateEnum(const std::string& stateStr) {
-        if (stateStr == "IDLE_IN_BASE") return drone_state_enum::IDLE_IN_BASE;
-        if (stateStr == "TO_ZONE") return drone_state_enum::TO_ZONE;
+        if (stateStr == "IDLE") return drone_state_enum::IDLE;
+        if (stateStr == "TO_STARTING_LINE") return drone_state_enum::TO_STARTING_LINE;
+        if (stateStr == "READY") return drone_state_enum::READY;
         if (stateStr == "WORKING") return drone_state_enum::WORKING;
         if (stateStr == "TO_BASE") return drone_state_enum::TO_BASE;
-        if (stateStr == "WAITING_CHARGE") return drone_state_enum::WAITING_CHARGE;
-        if (stateStr == "TO_ZONE_FOLLOWING") return drone_state_enum::TO_ZONE_FOLLOWING;
-        if (stateStr == "FOLLOWING") return drone_state_enum::FOLLOWING;
-        if (stateStr == "NOT_CONNECTED") return drone_state_enum::NOT_CONNECTED;
+        if (stateStr == "DISCONNECTED") return drone_state_enum::DISCONNECTED;
+        if (stateStr == "RECONNECTED") return drone_state_enum::RECONNECTED;
         if (stateStr == "DEAD") return drone_state_enum::DEAD;
+        if (stateStr == "CHARGING") return drone_state_enum::CHARGING;
         return drone_state_enum::NONE;
     }
 
