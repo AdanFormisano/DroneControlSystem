@@ -58,7 +58,7 @@ private:
     std::unordered_map<int, std::shared_ptr<Wave>> waves;
     Redis &shared_redis;
     int tick = 0;
-    int timeout_ms = 1000;
+    int timeout_ms = 3000;
     int wave_id = 0;
 
     bool CheckSyncTickAck();

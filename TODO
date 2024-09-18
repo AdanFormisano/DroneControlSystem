@@ -5,9 +5,12 @@
  ☐ Implement utility function for Redis timeouts
 
 
- Drones FST:
+ Drones FSM:
      ✔ Correct movement to left side @done (24-09-17 17:25)
          Start from (0, 0) and move to (-2990, Y), in diagonal where needed
      ☐ Start in Idle state
          Tick 0 drones are in (0, 0)
      ☐ Implement fault states
+
+SM:
+    ☐ On timeout should stay on same tick
