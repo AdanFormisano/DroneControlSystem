@@ -38,6 +38,8 @@ add_executable(DroneControlSystem
         src/Scanner/Drone.h
         src/Scanner/DroneState.h
         src/Scanner/DroneState.cpp
+        src/Scanner/Wave.cpp
+        src/Scanner/Wave.h
 )
 
 option(DEBUG "Enable debug mode" OFF)
