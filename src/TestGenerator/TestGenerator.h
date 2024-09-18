@@ -1,18 +1,17 @@
 #ifndef DRONECONTROLSYSTEM_TESTGENERATOR_H
 #define DRONECONTROLSYSTEM_TESTGENERATOR_H
-#include <map>
-#include <functional>
-#include <random>
-#include "../../libs/interprocess/ipc/message_queue.hpp"
-#include "../globals.h"
+#include "../../libs/boost/interprocess/ipc/message_queue.hpp"
 #include "../../utils/utils.h"
+#include "../globals.h"
 #include "sw/redis++/redis++.h"
+#include <functional>
+#include <map>
+#include <random>
 
 using namespace sw::redis;
 using namespace boost::interprocess;
 
-struct DroneInfo
-{
+struct DroneInfo {
     int wave_id;
     int drone_id;
 };
@@ -42,4 +41,4 @@ private:
     int ChooseRandomTick();
 };
 
-#endif //DRONECONTROLSYSTEM_TESTGENERATOR_H
+#endif // DRONECONTROLSYSTEM_TESTGENERATOR_H

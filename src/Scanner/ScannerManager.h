@@ -7,25 +7,24 @@
 #include <thread>
 #include <vector>
 
-#include "ThreadUtils.h"
+#include "../../libs/boost/interprocess/ipc/message_queue.hpp"
+#include "../../utils/RedisUtils.h"
+#include "../../utils/utils.h"
 #include "../globals.h"
 #include "DroneState.h"
-#include "../../utils/utils.h"
-#include "../../utils/RedisUtils.h"
-#include "../../libs/interprocess/ipc/message_queue.hpp"
+#include "ThreadUtils.h"
 
 using namespace boost::interprocess;
 
 class Drone;
 
-class Wave
-{
+class Wave {
 public:
-    Wave(int tick_n, int wave_id, Redis& shared_redis, TickSynchronizer& synchronizer);
+    Wave(int tick_n, int wave_id, Redis &shared_redis, TickSynchronizer &synchronizer);
 
     void Run(); // Function executed by the thread
 
-    int X = 0; // The position of the wave
+    int X = 0;             // The position of the wave
     int starting_tick = 0; // The tick when the wave was created
     std::array<DroneData, 300> drones_data;
     synced_queue<TG_data> tg_data;
@@ -36,20 +35,19 @@ public:
     void incrReadyDrones() { ready_drones++; }
 
 private:
-    Redis& redis;
+    Redis &redis;
     int id = 0;
     std::vector<Drone> drones;
-    TickSynchronizer& tick_sync;
+    TickSynchronizer &tick_sync;
     int ready_drones = 0;
 
     void Move();
     void UploadData();
 };
 
-class ScannerManager
-{
+class ScannerManager {
 public:
-    explicit ScannerManager(Redis& shared_redis);
+    explicit ScannerManager(Redis &shared_redis);
 
     TickSynchronizer synchronizer;
     ThreadPool pool;
@@ -58,7 +56,7 @@ public:
 
 private:
     std::unordered_map<int, std::shared_ptr<Wave>> waves;
-    Redis& shared_redis;
+    Redis &shared_redis;
     int tick = 0;
     int timeout_ms = 1000;
     int wave_id = 0;
@@ -67,4 +65,4 @@ private:
     bool CheckSpawnWave();
     void SpawnWave();
 };
-#endif //SYNCEDSCANNERMANAGER_H
+#endif // SYNCEDSCANNERMANAGER_H

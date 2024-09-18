@@ -61,27 +61,24 @@ find_package(Boost REQUIRED COMPONENTS thread)
 find_package(Boost REQUIRED COMPONENTS chrono)
 find_package(Boost REQUIRED COMPONENTS system)
 
+include_directories(${CMAKE_SOURCE_DIR}/libs)
+
+
 # <------------ add hiredis dependency --------------->
 find_path(HIREDIS_HEADER hiredis)
 target_include_directories(DroneControlSystem PUBLIC ${HIREDIS_HEADER})
-# target_include_directories(Drone PUBLIC ${HIREDIS_HEADER})
 
 find_library(HIREDIS_LIB hiredis)
 target_link_libraries(DroneControlSystem ${HIREDIS_LIB})
-# target_link_libraries(Drone ${HIREDIS_LIB})
 
 # <------------ add redis-plus-plus dependency -------------->
-# NOTE: this should be *sw* NOT *redis++*
 find_path(REDIS_PLUS_PLUS_HEADER sw)
 target_include_directories(DroneControlSystem PUBLIC ${REDIS_PLUS_PLUS_HEADER})
-# target_include_directories(Drone PUBLIC ${REDIS_PLUS_PLUS_HEADER})
 
 find_library(REDIS_PLUS_PLUS_LIB redis++)
 target_link_libraries(DroneControlSystem ${REDIS_PLUS_PLUS_LIB})
-# target_link_libraries(Drone ${REDIS_PLUS_PLUS_LIB})
 
 target_link_libraries(DroneControlSystem spdlog::spdlog)
-# target_link_libraries(Drone spdlog::spdlog)
 
 # <------------ libpqxx dependency -------------->
 find_path(LIBPQXX_HEADER pqxx)

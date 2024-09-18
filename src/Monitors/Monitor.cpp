@@ -27,26 +27,20 @@ Monitor::Monitor(Redis &redis) : shared_redis(redis) {
     db.ConnectToDB("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
 }
 
-int Monitor::JoinThread()
-{
-    if (t.joinable())
-    {
+int Monitor::JoinThread() {
+    if (t.joinable()) {
         t.join();
         return EXIT_SUCCESS;
     }
     return EXIT_FAILURE;
 }
 
-void Monitor::WriteToDB(const std::string& query)
-{
-    try
-    {
+void Monitor::WriteToDB(const std::string &query) {
+    try {
         pqxx::work W(db.getConnection());
         W.exec(query);
         W.commit();
-    }
-    catch (const std::exception &e)
-    {
+    } catch (const std::exception &e) {
         spdlog::error("Error writing to DB: {}", e.what());
     }
 }
@@ -62,14 +56,12 @@ void CoverageMonitor::RunMonitor() {
     t = boost::thread(&CoverageMonitor::checkCoverage, this);
 }
 
-void DroneChargeMonitor::RunMonitor()
-{
+void DroneChargeMonitor::RunMonitor() {
     // Create a thread to run the monitor
     t = boost::thread(&DroneChargeMonitor::checkDroneCharge, this);
 }
 
-void TimeToReadDataMonitor::RunMonitor()
-{
+void TimeToReadDataMonitor::RunMonitor() {
     // Create a thread to run the monitor
     t = boost::thread(&TimeToReadDataMonitor::checkTimeToReadData, this);
 }
