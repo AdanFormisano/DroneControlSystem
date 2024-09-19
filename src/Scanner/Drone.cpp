@@ -1,6 +1,6 @@
 #include "Drone.h"
 
-Drone::Drone(int id, const int wave_id, Wave *ctx) : id(id), wave_id(wave_id), ctx(ctx) {
+Drone::Drone(int id, const int wave_id, Wave& ctx) : id(id), wave_id(wave_id), ctx(ctx) {
     spdlog::info("Drone {} created", id);
 }
 

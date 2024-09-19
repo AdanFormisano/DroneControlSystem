@@ -4,6 +4,9 @@
 #include <array>
 #include "Drone.h"
 #include "ThreadUtils.h"
+#include <sw/redis++/redis++.h>
+
+using namespace sw::redis;
 
 class Drone;
 
