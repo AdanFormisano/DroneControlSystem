@@ -13,45 +13,36 @@
 
 using namespace sw::redis;
 
-namespace charge_base {
-// Forward declaration of Drone to resolve circular dependency
-//  Singleton pattern
-    class ChargeBase {
-    private:
-        // std::unordered_map<std::string, std::string> drone_data;
-        struct ext_drone_data {
-            drone_data base_data;
-            float charge_rate{};
-            std::pair<int, int> charge_start; // first is drone's tick, second is ChargeBase's tick
-        };
+class ChargeBase
+{
+public:
+    // Prevent copy construction and assignment
+    ChargeBase() = delete;
+    // Destructor
+    ~ChargeBase() = default;
 
-        std::mt19937 engine;
-        Redis &redis;
-        std::string current_stream_id = "0-0";
-        std::unordered_map<std::string, ext_drone_data> charging_drones;
-        int tick_n = 0;
+    int tick_n = 0;
 
-        ChargeBase(Redis &redis);
+    //not thread safe thought does it really need to be?
+    static ChargeBase* getInstance(Redis& redis);
+    void SetEngine(std::random_device&);
+    void ChargeDrone();
+    void ChargeDroneMegaSpeed();
+    void ReleaseDrone(ChargingDroneData& drone_data);
+    void Run();
 
-        void ReadChargeStream();
-        void SetChargeData(const std::vector<std::pair<std::string, std::string>> &data);
-        void IncrementZoneHistory(int zone_id, int tick);
-        float getChargeRate();
+private:
+    std::mt19937 engine;
+    Redis& redis;
+    std::string current_stream_id = "0-0";
+    std::unordered_map<int, ChargingDroneData> charging_drones;
 
-    public:
-        // Prevent copy construction and assignment
-        ChargeBase() = delete;
-        // Destructor
-        ~ChargeBase() = default;
+    ChargeBase(Redis& redis);
 
-        //not thread safe thought does it really need to be?
-        static ChargeBase *getInstance(Redis &redis);
-        void SetEngine(std::random_device &);
-        void ChargeDrone();
-        void ChargeDroneMegaSpeed();
-        void releaseDrone(ext_drone_data &);
+    void TickCompleted();
+    void ReadChargeStream();
+    void SetChargeData(const std::vector<std::pair<std::string, std::string>>& data);
+    float getChargeRate();
+};
 
-        void Run();
-    };
-}
 #endif //DRONECONTROLSYSTEM_CHARGEBASE_H

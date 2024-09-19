@@ -113,10 +113,10 @@ int main()
                 auto charge_base_redis = Redis("tcp://127.0.0.1:7777");
 
                 // Sync of processes
-                // utils::AddThisProcessToSyncCounter(charge_base_redis, "ChargeBase");
+                utils::AddThisProcessToSyncCounter(charge_base_redis, "ChargeBase");
 
                 // Create the ChargeBase object
-                auto cb = charge_base::ChargeBase::getInstance(charge_base_redis);
+                auto cb = ChargeBase::getInstance(charge_base_redis);
 
                 // Set the charge rate for the charging slots
                 thread_local std::random_device rd;
@@ -126,7 +126,7 @@ int main()
                 utils::NamedSyncWait(charge_base_redis, "ChargeBase");
 
                 // Start simulation
-                // cb->Run();
+                cb->Run();
             }
             else
             {

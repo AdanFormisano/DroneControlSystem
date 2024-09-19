@@ -11,10 +11,13 @@ bool ScannerManager::CheckSyncTickAck()
     while (true)
     {
         auto v = shared_redis.get("scanner_tick_ack");
-        int current_tick = std::stoi(v.value_or("-2"));
+        int n_waiting = std::stoi(v.value_or("-1"));
         // spdlog::info("Checking scanner_tick_ack: {} - {}", current_tick, tick);
 
-        if (current_tick == tick)
+        // auto sync_tick = std::stoi(shared_redis.lpop("scanner_tick_ack").value_or("-1"));   // Tick to which everyone need to sync
+        // auto n_waiting = std::stoi(shared_redis.lpop("scanner_tick_ack").value_or("-1"));   // Processes waiting
+
+        if (n_waiting == 2)
         {
             return true;
         }
@@ -24,7 +27,7 @@ bool ScannerManager::CheckSyncTickAck()
         if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
         {
             spdlog::error("Timeout waiting for scanner_tick_ack");
-            if (current_tick == -1)
+            if (n_waiting == -1)
             {
                 spdlog::error("Error getting scanner_tick_ack");
                 return false;

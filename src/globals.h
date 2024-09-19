@@ -5,6 +5,7 @@
 #include <chrono>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #define DRONE_CONSUMPTION_RATE 0.00672f // Normal consumption rate
@@ -25,12 +26,14 @@ inline auto sim_duration_ms = std::chrono::milliseconds(3000000); // duration of
 inline float coord_min = -2980.0f;
 inline float coord_max = 2980.0f;
 
-struct coords {
+struct coords
+{
     float x;
     float y;
 };
 
-struct drone_data {
+struct drone_data
+{
     int id;
     std::string status;
     float charge;
@@ -41,8 +44,9 @@ struct drone_data {
 };
 
 // Enum for the state of the drone
-enum class drone_state_enum {
-    IDLE,             // Drone is in the base, is idle and is fully charged (stopped charging)
+enum class drone_state_enum
+{
+    IDLE, // Drone is in the base, is idle and is fully charged (stopped charging)
     TO_STARTING_LINE, // Drone is moving to zone
     READY,
     WORKING,
@@ -63,7 +67,8 @@ constexpr std::array drone_state_str = {
     "DISCONNECTED",
     "RECONNECTED",
     "DEAD",
-    "CHARGING"};
+    "CHARGING"
+};
 
 /**
  * \struct Drone
@@ -81,7 +86,8 @@ constexpr std::array drone_state_str = {
 //     float charge = 100.0f; ///< Current charge level of the drone, in percentage.
 // };
 
-struct DroneData {
+struct DroneData
+{
     std::string tick_n;
     std::string id;
     std::string status;
@@ -93,8 +99,9 @@ struct DroneData {
 
     DroneData() = default;
 
-    DroneData(int tick, const int drone_id, const std::string &drone_status, float drone_charge,
-              coords position, int drone_wave_id) {
+    DroneData(int tick, const int drone_id, const std::string& drone_status, float drone_charge,
+              coords position, int drone_wave_id)
+    {
         tick_n = std::to_string(tick);
         id = std::to_string(drone_id);
         status = drone_status;
@@ -105,8 +112,8 @@ struct DroneData {
         checked = "false";
     }
 
-    DroneData(int tick_n, const std::string &id, const std::string &status, const std::string &charge,
-              std::pair<float, float> position, const std::string &zone_id, const std::string &checked)
+    DroneData(int tick_n, const std::string& id, const std::string& status, const std::string& charge,
+              std::pair<float, float> position, const std::string& zone_id, const std::string& checked)
         : tick_n(std::to_string(tick_n)),
           id(id),
           status(status),
@@ -114,9 +121,12 @@ struct DroneData {
           x(std::to_string(position.first)),
           y(std::to_string(position.second)),
           wave_id(zone_id),
-          checked(checked) {}
+          checked(checked)
+    {
+    }
 
-    [[nodiscard]] std::vector<std::pair<std::string, std::string>> toVector() const {
+    [[nodiscard]] std::vector<std::pair<std::string, std::string>> toVector() const
+    {
         return {
             {"tick_n", tick_n},
             {"id", id},
@@ -125,18 +135,60 @@ struct DroneData {
             {"x", x},
             {"y", y},
             {"wave_id", wave_id},
-            {"checked", checked}};
+            {"checked", checked}
+        };
     }
 };
 
-struct TG_data {
-    int drone_id;               // ID of the drone
-    int wave_id;                // ID of the wave
-    drone_state_enum new_state; // New state of the drone
-    int reconnect_tick;         // Contains the tick when the drone reconnected (-1 if not reconnecting)
+struct ChargingDroneData
+{
+    int id;
+    int wave_id;
+    float charge;
+    drone_state_enum state;
+    float charge_rate;
+
+    ChargingDroneData() = default;
+    ChargingDroneData(int id, int wave_id, float charge, drone_state_enum state, float charge_rate)
+        : id(id), wave_id(wave_id), charge(charge), state(state), charge_rate(charge_rate) {};
 };
 
-struct drone_fault {
+struct ChargingStreamData
+{
+    std::string id;
+    std::string wave_id;
+    std::string charge;
+    std::string state;
+
+    ChargingStreamData(int drone_id, int drone_wave_id, float drone_charge, std::string drone_state)
+    {
+        id = std::to_string(drone_id);
+        wave_id = std::to_string(drone_wave_id);
+        charge = std::to_string(drone_charge);
+        state = std::move(drone_state);
+    }
+
+    [[nodiscard]] std::vector<std::pair<std::string, std::string>> toVector() const
+    {
+        return {
+            {"id", id},
+            {"wave_id", wave_id},
+            {"charge", charge},
+            {"state", state}
+        };
+    }
+};
+
+struct TG_data
+{
+    int drone_id; // ID of the drone
+    int wave_id; // ID of the wave
+    drone_state_enum new_state; // New state of the drone
+    int reconnect_tick; // Contains the tick when the drone reconnected (-1 if not reconnecting)
+};
+
+struct drone_fault
+{
     std::string fault_state;
     int drone_id;
     int zone_id;

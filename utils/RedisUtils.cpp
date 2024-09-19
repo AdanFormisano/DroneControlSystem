@@ -123,11 +123,15 @@ namespace utils {
     {
         // spdlog::info("Updating scanner_tick to {}", tick_n);
         redis.set("scanner_tick", std::to_string(tick_n));
+
+        // std::pair tick_ack = {tick_n, 0};
+        // redis.rpush("scanner_tick_ack", tick_ack.first, tick_ack.second);
     }
 
     void AckSyncTick(Redis& redis, int tick_n)
     {
-        redis.set("scanner_tick_ack", std::to_string(tick_n));
+        // redis.set("scanner_tick_ack", std::to_string(tick_n));
+        redis.incr("scanner_tick_ack");
     }
 
 

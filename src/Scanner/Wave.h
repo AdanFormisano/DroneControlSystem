@@ -13,6 +13,7 @@ public:
 
     void Run(); // Function executed by the thread
 
+    Redis &redis;
     int X = 0;             // The position of the wave
     int starting_tick = 0; // The tick when the wave was created
     std::array<DroneData, 300> drones_data;
@@ -24,7 +25,6 @@ public:
     void incrReadyDrones() { ready_drones++; }
 
 private:
-    Redis &redis;
     int id = 0;
     std::vector<Drone> drones;
     TickSynchronizer &tick_sync;
@@ -34,8 +34,4 @@ private:
     void UploadData();
     void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick);
 };
-
-
-
-
 #endif //WAVE_H
