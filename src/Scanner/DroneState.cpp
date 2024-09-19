@@ -161,16 +161,32 @@ void Charging::enter(Drone* drone)
 // TODO: Correctly implement the Charging state
 void Charging::run(Drone* drone)
 {
-    // Check if the drone is fully charged
-    if (drone->charge >= 100.0f)
-    {
-        // Change the state to IDLE_IN_BASE
-        drone->setState(Idle::getInstance());
-    }
-    // TODO: In Charging state the drone should be destroyed and its data uploaded onto Redis
+    // Upload to Redis drones' information for ChargeBase
+    ChargingStreamData data(drone->id, drone->wave_id, drone->charge, utils::droneStateToString(drone_state_enum::CHARGING));
+    auto v = data.toVector();
+    drone->ctx.redis.xadd("charging_stream", "*", v.begin(), v.end());
+}
+
+DroneState& Dead::getInstance()
+{
+    static Dead instance;
+    return instance;
 }
 
 void Dead::run(Drone* drone)
 {
     spdlog::info("[TestGenerator] TICK {} Drone {} is dead", drone->tick_drone, drone->id);
 }
+
+DroneState& Disconnected::getInstance()
+{
+    static Disconnected instance;
+    return instance;
+}
+
+DroneState& Reconnected::getInstance()
+{
+    static Reconnected instance;
+    return instance;
+}
+
