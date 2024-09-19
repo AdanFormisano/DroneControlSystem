@@ -105,6 +105,7 @@ class Dead : public DroneState
 {
 public:
     void enter(Drone* drone) {};
+    void run(Drone* drone) override;
     void exit(Drone* drone) {};
     static DroneState& getInstance();
     drone_state_enum getState() override { return drone_state_enum::DEAD; }
@@ -152,5 +153,28 @@ private:
     HighConsumption(const HighConsumption& other);
     HighConsumption& operator=(const HighConsumption& other);
 };
+
+inline DroneState& getDroneState(drone_state_enum state) {
+    switch (state) {
+    case drone_state_enum::TO_STARTING_LINE:
+        return ToStartingLine::getInstance();
+    case drone_state_enum::READY:
+        return Ready::getInstance();
+    case drone_state_enum::WORKING:
+        return Working::getInstance();
+    case drone_state_enum::TO_BASE:
+        return ToBase::getInstance();
+    case drone_state_enum::CHARGING:
+        return Charging::getInstance();
+    case drone_state_enum::DEAD:
+        return Dead::getInstance();
+    case drone_state_enum::DISCONNECTED:
+        return Disconnected::getInstance();
+    case drone_state_enum::RECONNECTED:
+        return Reconnected::getInstance();
+    default:
+        throw std::invalid_argument("Invalid drone state");
+    }
+}
 
 #endif //DRONESTATE_H

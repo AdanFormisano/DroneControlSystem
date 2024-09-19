@@ -32,6 +32,7 @@ private:
 
     void Move();
     void UploadData();
+    void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick);
 };
 
 

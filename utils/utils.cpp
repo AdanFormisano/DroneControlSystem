@@ -36,8 +36,4 @@ namespace utils {
         // and then exit the program gracefully
         std::exit(signal);
     }
-
-
-
-
 }

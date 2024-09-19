@@ -92,6 +92,13 @@ void Wave::UploadData()
     }
 }
 
+void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick)
+{
+    // Set the drone state to the new state parameter
+    int drone_id = wave_drone_id % 1000;    // Get the drone id from the wave_drone_id
+    drones[drone_id].setState(getDroneState(state));
+}
+
 void Wave::Run()
 {
     spdlog::info("Wave {} started", id);
@@ -114,12 +121,11 @@ void Wave::Run()
             // Get the message from the queue
             auto msg = tg_data.pop().value();
             spdlog::info("[TestGenerator] Drone has new state {}", msg.drone_id, utils::droneStateToString(msg.new_state));
+
+            setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick);
         }
 
-
-        // Move();
-        // UploadData();
-
+        // Execute the wave
         for (auto& drone : drones)
         {
             // Execute the current state
