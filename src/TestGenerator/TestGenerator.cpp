@@ -1,22 +1,18 @@
 #include "TestGenerator.h"
 #include <spdlog/spdlog.h>
 
-TestGenerator::TestGenerator(Redis& redis) :
-    test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_drone(0, 299),
-    dis_tick(1, 20)
-{
+TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_drone(0, 299),
+                                             dis_tick(1, 20) {
     spdlog::info("Creating TestGenerator object");
     // message_queue::remove("test_generator_queue");
 
     // Everything_is_fine scenario [80%]
-    scenarios[0.8f] = []()
-    {
+    scenarios[0.8f] = []() {
         spdlog::info("Everything is fine");
     };
 
     // Drone_failure scenario (drone stops working) [10%]
-    scenarios[0.9f] = [this]()
-    {
+    scenarios[0.9f] = [this]() {
         // Choose a random drone to explode
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
@@ -28,24 +24,20 @@ TestGenerator::TestGenerator(Redis& redis) :
     };
 
     // Connection_lost scenario (drone loses connection to the DroneControl system) [10%]
-    scenarios[1.0f] = [this]()
-    {
+    scenarios[1.0f] = [this]() {
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
         // Probability of reconnecting (70%) [for testing purposes 50%]
         float reconnect = generateRandomFloat();
 
-        if (reconnect < 0.7f)
-        {
+        if (reconnect < 0.7f) {
             // Calculate when the drone will reconnect
             // Send a message to ScannerManager to set the drone's status to "RECONECTED"
             auto reconnect_tick = ChooseRandomTick();
-            TG_data msg = {drone_id, wave_id, drone_state_enum::RECONNECTED, reconnect_tick};
+            TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, reconnect_tick};
             mq.send(&msg, sizeof(msg), 0);
-            spdlog::warn("Drone {} disconnected and will reconnect at tick {}", drone_id,   reconnect_tick);
-        }
-        else
-        {
+            spdlog::warn("Drone {} disconnected and will reconnect after {} tick", drone_id, reconnect_tick);
+        } else {
             // Send a message to ScannerManager to set the drone's status to "DISCONNECTED"
             TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1};
             mq.send(&msg, sizeof(msg), 0);
@@ -57,10 +49,8 @@ TestGenerator::TestGenerator(Redis& redis) :
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
-void TestGenerator::Run()
-{
-    while (true)
-    {
+void TestGenerator::Run() {
+    while (true) {
         // Generate a random float between 0 and 1 to decide the scenario
         float randomValue = generateRandomFloat();
 
@@ -68,8 +58,7 @@ void TestGenerator::Run()
         auto it = scenarios.upper_bound(randomValue);
 
         // If such a key exists, execute the corresponding function
-        if (it != scenarios.end())
-        {
+        if (it != scenarios.end()) {
             it->second();
         }
 
@@ -78,15 +67,13 @@ void TestGenerator::Run()
     }
 }
 
-DroneInfo TestGenerator::ChooseRandomDrone()
-{
+DroneInfo TestGenerator::ChooseRandomDrone() {
 
     // Get a random alive wave from Redis
     auto wave_id = std::stoi(test_redis.srandmember("waves_alive").value_or("-1"));
     spdlog::info("Wave ID: {}", wave_id);
 
-    if (wave_id == -1)
-    {
+    if (wave_id == -1) {
         // Create exception if the wave is not found
         throw std::runtime_error("Wave not found");
         return {};
@@ -100,7 +87,6 @@ DroneInfo TestGenerator::ChooseRandomDrone()
     return {wave_id, drone_id};
 }
 
-int TestGenerator::ChooseRandomTick()
-{
+int TestGenerator::ChooseRandomTick() {
     return dis_tick(gen);
 }

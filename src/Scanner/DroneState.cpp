@@ -184,9 +184,44 @@ DroneState& Disconnected::getInstance()
     return instance;
 }
 
-DroneState& Reconnected::getInstance()
-{
+void Disconnected::enter(Drone *drone) {
+    drone->hidden_coords = drone->position;
+    drone->hidden_charge = drone->charge;
+    spdlog::info("[TestGenerator] TICK {} Drone {} is disconnected", drone->tick_drone, drone->id);
+    drone->disconnected_tick = drone->tick_drone;
+}
+
+void Disconnected::run(Drone *drone) {
+    if (drone->reconnect_tick != -1) {
+
+        // TODO: update hidden coords and charge
+
+        if (drone->tick_drone >= drone->reconnect_tick + drone->disconnected_tick) {
+            drone->setState(Reconnected::getInstance());
+        }
+    } else {
+        if (drone->tick_drone >= drone->disconnected_tick + 20) {
+            drone->setState(Dead::getInstance());
+        }
+    }
+}
+
+DroneState &Reconnected::getInstance() {
     static Reconnected instance;
     return instance;
 }
 
+void Reconnected::enter(Drone *drone) {
+    spdlog::info("[TestGenerator] TICK {} Drone {} is reconnected", drone->tick_drone, drone->id);
+}
+
+void Reconnected::run(Drone *drone) {
+    // Change the state to IDLE
+    drone->setState(Idle::getInstance());
+
+    // Settare coords corrette
+    //
+}
+
+// var ⊇ info del drone da distruggere
+// Drone in dead state, esprime di voler essere eliminato ⇒

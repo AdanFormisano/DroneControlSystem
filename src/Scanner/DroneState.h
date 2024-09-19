@@ -118,10 +118,10 @@ private:
 class Disconnected : public DroneState
 {
 public:
-    void enter(Drone* drone) {};
-    void run(Drone* drone) {};
-    void exit(Drone* drone) {};
-    static DroneState& getInstance();
+    void enter(Drone *drone) override;
+    void exit(Drone *drone) {};
+    void run(Drone *drone) override;
+    static DroneState &getInstance();
     drone_state_enum getState() override { return drone_state_enum::DISCONNECTED; }
 private:
     Disconnected() {}
@@ -132,10 +132,10 @@ private:
 class Reconnected : public DroneState
 {
 public:
-    void enter(Drone* drone) {};
-    void run(Drone* drone) {};
-    void exit(Drone* drone) {};
-    static DroneState& getInstance();
+    void enter(Drone *drone) override;
+    void exit(Drone *drone) {};
+    void run(Drone *drone) override;
+    static DroneState &getInstance();
     drone_state_enum getState() override { return drone_state_enum::RECONNECTED; }
 private:
     Reconnected() {}
