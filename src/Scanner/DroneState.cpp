@@ -1,14 +1,4 @@
 #include "DroneState.h"
-void Charging::run(Drone* drone)
-{
-    // Check if the drone is fully charged
-    if (drone->charge >= 100.0f)
-    {
-        // Change the state to IDLE_IN_BASE
-        drone->setState(Idle::getInstance());
-    }
-    // TODO: In Charging state the drone should be destroyed and its data uploaded onto Redis
-}
 
 DroneState& Idle::getInstance()
 {
@@ -166,4 +156,21 @@ DroneState& Charging::getInstance()
 void Charging::enter(Drone* drone)
 {
     // spdlog::info("TICK {} Drone {} is charging", drone->tick_drone, drone->id);
+}
+
+// TODO: Correctly implement the Charging state
+void Charging::run(Drone* drone)
+{
+    // Check if the drone is fully charged
+    if (drone->charge >= 100.0f)
+    {
+        // Change the state to IDLE_IN_BASE
+        drone->setState(Idle::getInstance());
+    }
+    // TODO: In Charging state the drone should be destroyed and its data uploaded onto Redis
+}
+
+void Dead::run(Drone* drone)
+{
+    spdlog::info("[TestGenerator] TICK {} Drone {} is dead", drone->tick_drone, drone->id);
 }
