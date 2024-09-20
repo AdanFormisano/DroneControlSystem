@@ -11,3 +11,5 @@
 /cmake-build-debug/
 /cmake-build-debug_light/
 /cmake-build-debug-lite/
+.idea/misc.xml
+.idea/vcs.xml
