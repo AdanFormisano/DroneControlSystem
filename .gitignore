@@ -2,14 +2,14 @@
 /.vscode/
 
 # CLion settings
-/.idea/
+.idea/
 
 /src/Database/.idea/
 
 # For now remove build directory
-/build/
-/cmake-build-debug/
-/cmake-build-debug_light/
-/cmake-build-debug-lite/
+build/
+cmake-build-debug/
+cmake-build-debug_light/
+cmake-build-debug-lite/
 .idea/misc.xml
 .idea/vcs.xml
