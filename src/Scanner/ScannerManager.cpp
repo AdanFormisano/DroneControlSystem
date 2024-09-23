@@ -97,9 +97,6 @@ void ScannerManager::Run()
     unsigned int priority;
     message_queue::size_type recvd_size;
 
-    // Wait for all the processes to be ready
-    utils::NamedSyncWait(shared_redis, "Drone");
-
     // Create or open the semaphore for synchronization
     sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
     sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);

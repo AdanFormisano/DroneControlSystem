@@ -52,9 +52,6 @@ int main()
         // Create the Redis object for DroneControl
         auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
 
-        // Sync of processes
-        utils::AddThisProcessToSyncCounter(drone_control_redis, "DroneControl");
-
         // Create the DroneControl object
         DroneControl dc(drone_control_redis);
         DroneControl sdc(drone_control_redis);
@@ -86,9 +83,6 @@ int main()
 
             auto drone_redis = Redis(drone_connection_options, drone_connection_pool_options);
 
-            // Sync of processes
-            utils::AddThisProcessToSyncCounter(drone_redis, "Drone");
-
             // Create the DroneManager object
             // drones::DroneManager dm(drone_redis);
             // ScannerManager sm(drone_redis);
@@ -113,18 +107,12 @@ int main()
                 // Create the Redis object for ChargeBase
                 auto charge_base_redis = Redis("tcp://127.0.0.1:7777");
 
-                // Sync of processes
-                utils::AddThisProcessToSyncCounter(charge_base_redis, "ChargeBase");
-
                 // Create the ChargeBase object
                 auto cb = ChargeBase::getInstance(charge_base_redis);
 
                 // Set the charge rate for the charging slots
                 thread_local std::random_device rd;
                 cb->SetEngine(rd); // TODO: Check if every slot has the same charge rate
-
-                // Sync of processes
-                utils::NamedSyncWait(charge_base_redis, "ChargeBase");
 
                 // Start simulation
                 cb->Run();
@@ -154,10 +142,6 @@ int main()
                 {
                     // In Main process
                     auto main_redis = Redis("tcp://127.0.0.1:7777");
-
-                    // Sync of processes
-                    utils::AddThisProcessToSyncCounter(main_redis, "Main");
-                    utils::NamedSyncWait(main_redis, "Main");
 
                     // Start monitors
                     RechargeTimeMonitor rtm(main_redis);
@@ -196,6 +180,7 @@ int main()
                         sem_wait(sem_cb);
 
                         ++tick_n;
+                        // std::this_thread::sleep_for(std::chrono::milliseconds(500));     <-- Use this to slow down the simulation and check if the system is actuallyy synced
                         spdlog::info("=====================================");
                     }
 

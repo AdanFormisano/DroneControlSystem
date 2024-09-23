@@ -115,8 +115,6 @@ void DroneControl::Run() {
     // Get the drone paths from the database
     // GetDronesPaths();
 
-    utils::NamedSyncWait(redis, "DroneControl");
-
     // Create or open the semaphore for synchronization
     sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
     sem_t *sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);
