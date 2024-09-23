@@ -20,6 +20,7 @@ void ToStartingLine::enter(Drone *drone) {
 
 void ToStartingLine::run(Drone *drone) {
     // Check if the drone has reached the starting line
+    spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
     if (drone->position.x == -2990) {
         // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
         // Change the state to READY
@@ -149,20 +150,68 @@ void Disconnected::enter(Drone *drone) {
     drone->disconnected_tick = drone->tick_drone;
 }
 
+void Disconnected::hidden_to_starting_line(Drone *drone) {
+    drone->hidden_charge -= DRONE_CONSUMPTION_RATE;
+    if (drone->dir.x * DRONE_STEP_SIZE + drone->hidden_coords.x <= -2990) {
+        drone->hidden_coords.x = -2990;
+        drone->hidden_coords.y = drone->starting_line.y;
+        drone->ctx.incrReadyDrones();
+        drone->previous = drone_state_enum::READY;
+    } else {
+        drone->hidden_coords.x += drone->dir.x * DRONE_STEP_SIZE;
+        drone->hidden_coords.y += drone->dir.y * DRONE_STEP_SIZE;
+    }
+}
+
+void Disconnected::hidden_ready(Drone *drone) {
+    drone->hidden_charge -= DRONE_CONSUMPTION_RATE;
+    if (drone->ctx.getReadyDrones() >= 300) {
+        drone->previous= drone_state_enum::WORKING;
+    }
+}
+
+void Disconnected::hidden_working(Drone *drone) {
+    drone->hidden_charge -= DRONE_CONSUMPTION_RATE;
+    drone->hidden_coords.x += DRONE_STEP_SIZE;
+    if (drone->hidden_coords.x >= 2990) {
+        drone->previous = drone_state_enum::TO_BASE;
+    }
+}
+
+void Disconnected::hidden_to_base(Drone *drone) {
+    drone->hidden_charge -= DRONE_CONSUMPTION_RATE;
+    drone->hidden_coords.x += drone->dir.x * DRONE_STEP_SIZE;
+    drone->hidden_coords.y += -drone->dir.y * DRONE_STEP_SIZE; // Movimento "indietro"
+    if (drone->hidden_coords.x <= 0) {
+        drone->setState(Charging::getInstance());
+    }
+}
+
 void Disconnected::run(Drone *drone) {
-    // Conta 20 tick a prescindere dalla sua riconnessione/non riconnessione
     if (drone->reconnect_tick != -1) {
-
-        /* Check stato prec, poi (direzione posizione) drone
-         se stato prec == TO_STARTING_LINE -> dir, pos val x
-         se stato prec == READY -> dir, pos val y, ...*/
-
-        // Consumo drone
+        switch (drone->previous) {
+            case drone_state_enum::TO_STARTING_LINE:
+                hidden_to_starting_line(drone);
+            break;
+            case drone_state_enum::READY:
+                hidden_ready(drone);
+            break;
+            case drone_state_enum::WORKING:
+                hidden_working(drone);
+            break;
+            case drone_state_enum::TO_BASE:
+                hidden_to_base(drone);
+            break;
+            default:
+                break;
+        }
 
         if (drone->tick_drone >= drone->reconnect_tick + drone->disconnected_tick) {
             drone->setState(Reconnected::getInstance());
         }
     } else {
+        spdlog::info("[[DroneCH]] Drone {} is disconnected, coming from {}, waiting to die...", drone->id,
+            utils::droneStateToString(drone->previous));
         if (drone->tick_drone >= drone->disconnected_tick + 20) {
             drone->setState(Dead::getInstance());
         }
@@ -176,13 +225,11 @@ DroneState &Reconnected::getInstance() {
 
 void Reconnected::enter(Drone *drone) {
     spdlog::info("[TestGenerator] Drone {} reconnected at TICK {}", drone->id, drone->tick_drone);
-    // DECOMMENTARE
-    // drone->position = drone->hidden_coords;
-    // drone->charge = drone->hidden_charge;
+    drone->position = drone->hidden_coords;
+    drone->charge = drone->hidden_charge;
 }
 
 void Reconnected::run(Drone *drone) {
-
     if (drone->previous != drone_state_enum::NONE) {
         // Riporta il drone allo stato prec. la disconnessione
         switch (drone->previous) {
@@ -214,12 +261,11 @@ void Reconnected::run(Drone *drone) {
         default:
             spdlog::error("[DroneCH] Drone {}'s last state chip broken, can't recover its state before disconnection ⇒ Dead", drone->id);
             drone->setState(Dead::getInstance());
-
             break;
         }
     } else {
         spdlog::error("Drone {} has a None state where it shouldn't", drone->id);
-        drone->setState(Dead::getInstance());
+        drone->setState(Dead::getInstance()); // Garbage Collection
     }
 }
 

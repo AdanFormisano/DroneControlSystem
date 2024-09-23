@@ -13,7 +13,7 @@ void Drone::setState(DroneState &newState) {
 }
 
 void Drone::run() {
-    // spdlog::info("TICK {} of Drone {}", tick_drone, id);
+    spdlog::info("TICK {} of Drone {}", tick_drone, id);
     currentState->run(this);
     tick_drone++;
 }

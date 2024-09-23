@@ -116,6 +116,12 @@ private:
 class Disconnected : public DroneState {
 public:
     void enter(Drone *drone) override;
+
+    void hidden_to_starting_line(Drone *drone);
+    void hidden_ready(Drone *drone);
+    void hidden_working(Drone *drone);
+    void hidden_to_base(Drone *drone);
+
     void exit(Drone *drone) {};
     void run(Drone *drone) override;
     static DroneState &getInstance();
