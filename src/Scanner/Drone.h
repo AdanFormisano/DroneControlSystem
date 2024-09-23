@@ -28,7 +28,6 @@ public:
     int disconnected_tick = 0;           ///< Tick when the drone disconnected.
 
     drone_state_enum previous = drone_state_enum::NONE;
-    drone_state_enum getCurrentStateEnum() const;
 
     void run();
     [[nodiscard]] DroneState *getCurrentState() const { return currentState; }

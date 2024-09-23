@@ -132,6 +132,11 @@ void Charging::run(Drone *drone) {
     drone->ctx.redis.xadd("charging_stream", "*", v.begin(), v.end());
 }
 
+void Charging::exit(Drone *drone) {
+    // spdlog::info("TICK {} Drone {} has finished charging", drone->tick_drone, drone->id);
+    // Setto a Dead o lo faccio puntare a null, o lo elimino dal vettore
+}
+
 DroneState &Disconnected::getInstance() {
     static Disconnected instance;
     return instance;
@@ -140,15 +145,19 @@ DroneState &Disconnected::getInstance() {
 void Disconnected::enter(Drone *drone) {
     drone->hidden_coords = drone->position;
     drone->hidden_charge = drone->charge;
-    // drone->previous = drone->getCurrentStateEnum(); // Done in Drone.cpp
-    spdlog::info("[[DroneCH]] Drone {} disconnected at TICK {} Previous state: {}", drone->id, drone->tick_drone, utils::droneStateToString(drone->previous));
+    spdlog::info("[[DroneCH]] Drone {} disconnected at TICK {}. Previous state: {}", drone->id, drone->tick_drone, utils::droneStateToString(drone->previous));
     drone->disconnected_tick = drone->tick_drone;
 }
 
 void Disconnected::run(Drone *drone) {
+    // Conta 20 tick a prescindere dalla sua riconnessione/non riconnessione
     if (drone->reconnect_tick != -1) {
 
-        // TODO: update hidden coords and charge
+        /* Check stato prec, poi (direzione posizione) drone
+         se stato prec == TO_STARTING_LINE -> dir, pos val x
+         se stato prec == READY -> dir, pos val y, ...*/
+
+        // Consumo drone
 
         if (drone->tick_drone >= drone->reconnect_tick + drone->disconnected_tick) {
             drone->setState(Reconnected::getInstance());
@@ -167,45 +176,50 @@ DroneState &Reconnected::getInstance() {
 
 void Reconnected::enter(Drone *drone) {
     spdlog::info("[TestGenerator] Drone {} reconnected at TICK {}", drone->id, drone->tick_drone);
+    // DECOMMENTARE
     // drone->position = drone->hidden_coords;
     // drone->charge = drone->hidden_charge;
 }
 
 void Reconnected::run(Drone *drone) {
-    drone->position = drone->hidden_coords;
-    drone->charge = drone->hidden_charge;
 
     if (drone->previous != drone_state_enum::NONE) {
         // Riporta il drone allo stato prec. la disconnessione
         switch (drone->previous) {
         case drone_state_enum::TO_STARTING_LINE:
-            drone->setState(ToStartingLine::getInstance());
             spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
+            drone->setState(ToStartingLine::getInstance());
+            spdlog::info("BOOOTO_STARTING_LINEOOOM");
             break;
         case drone_state_enum::READY:
-            drone->setState(Ready::getInstance());
             spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
+            drone->setState(Ready::getInstance());
+            spdlog::info("BOOOOOOOOREADYOOOOOOOOOOM");
             break;
         case drone_state_enum::WORKING:
-            drone->setState(Working::getInstance());
             spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
+            drone->setState(Working::getInstance());
+            spdlog::info("BOOOOOOOWORKINGOOOOOOOM");
             break;
         case drone_state_enum::TO_BASE:
-            drone->setState(ToBase::getInstance());
             spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
+            drone->setState(ToBase::getInstance());
+            spdlog::info("BOOOOOTO_BASEOOOOOOOM");
             break;
         case drone_state_enum::CHARGING:
-            drone->setState(Charging::getInstance());
             spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
+            drone->setState(Charging::getInstance());
+            spdlog::info("BOOOOOOCHARGINGOOOOOOOM");
             break;
         default:
-            spdlog::error("[DroneCH] Drone {} could not return to its previous state ⇒ Dead", drone->id);
-            drone->setState(Dead::getInstance()); // Fallback a Dead se lo stato non è riconosciuto
+            spdlog::error("[DroneCH] Drone {}'s last state chip broken, can't recover its state before disconnection ⇒ Dead", drone->id);
+            drone->setState(Dead::getInstance());
+
             break;
         }
     } else {
-        spdlog::error("[DroneCH] Drone {}'s last state chip broken, can't recover its state before disconnection ⇒ Dead", drone->id);
-        drone->setState(Dead::getInstance()); // Fallback a Dead se ∄ stato precedente
+        spdlog::error("Drone {} has a None state where it shouldn't", drone->id);
+        drone->setState(Dead::getInstance());
     }
 }
 
@@ -215,8 +229,5 @@ DroneState &Dead::getInstance() {
 }
 
 void Dead::run(Drone *drone) {
-    spdlog::info("[TestGenerator] TICK {} Drone {} is dead", drone->tick_drone, drone->id);
+    spdlog::info("[TestGenerator] TICK {} Drone {} is dead, coming from {}", drone->tick_drone, drone->id, utils::droneStateToString(drone->previous));
 }
-
-// var ⊇ info del drone da distruggere
-// Drone in dead state, esprime di voler essere eliminato ⇒
