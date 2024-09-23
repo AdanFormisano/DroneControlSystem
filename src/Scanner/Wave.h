@@ -35,6 +35,7 @@ private:
 
     void Move();
     void UploadData();
+    int RecycleDrones();
     void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick);
 };
 #endif //WAVE_H
