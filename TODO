@@ -5,6 +5,7 @@
  
  ☐ Wave constructor using recycled drones
  ☐ Correct final charging state: wave must die => correct simulation duration (conditions)
+ ☐ Fix syncing with Redis
 
  ☐ WaveCoverageMonitor
  ☐ AreaCoverageMonitor

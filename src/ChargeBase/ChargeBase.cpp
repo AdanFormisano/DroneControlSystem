@@ -82,7 +82,7 @@ void ChargeBase::ReadChargeStream()
         auto number_items_stream = redis.command<long long>("XLEN", "charge_stream");
 
         // Reads the stream
-        redis.xread("charge_stream", current_stream_id, std::chrono::milliseconds(10),
+        redis.xread("charge_stream", current_stream_id,
             number_items_stream, std::inserter(new_result, new_result.end()));
 
         // Parses the stream
