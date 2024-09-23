@@ -16,6 +16,7 @@
  */
 
 #include "../utils/RedisUtils.h"
+#include "../utils/utils.h"
 #include "ChargeBase/ChargeBase.h"
 #include "DroneControl/DroneControl.h"
 #include "Monitors/Monitor.h"
@@ -168,16 +169,34 @@ int main()
                     // dcm.RunMonitor();
                     // trd.RunMonitor();
 
+                    // Create named semaphore for synchronization
+                    sem_t* sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);   // Used for tick synchronization
+                    sem_t* sem_sync_sc = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);   // Used for tick synchronization
+                    sem_t* sem_sync_cb = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);   // Used for tick synchronization
+                    sem_t* sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);       // Used for DroneControl end of tick synchronization
+                    sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);       // Used for ScannerManager end of tick synchronization
+                    sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);       // Used for ChargeBase end of tick synchronization
+
                     // Start simulation
                     auto sim_end_after = sim_duration_ms / tick_duration_ms;
                     int tick_n = 0;
+
+                    // Simulation loop
                     while (tick_n < sim_end_after)
                     {
-                        // Do simulation stuff
-                        // std::cout << "Tick " << tick_n << " started" << std::endl;
-                        std::this_thread::sleep_for(tick_duration_ms); // Sleep for 1 tick: 1 second
-                        // std::cout << "Tick " << tick_n << " ended" << std::endl;
+                        spdlog::info("TICK: {}", tick_n);
+                        // Release sem_sync to start the next tick
+                        sem_post(sem_sync_dc); // Signal DroneControl
+                        sem_post(sem_sync_sc); // Signal ScannerManager
+                        sem_post(sem_sync_cb); // Signal ChargeBase
+
+                        // Wait for all processes to finish the tick
+                        sem_wait(sem_dc);
+                        sem_wait(sem_sc);
+                        sem_wait(sem_cb);
+
                         ++tick_n;
+                        spdlog::info("=====================================");
                     }
 
                     // Use Redis to stop the simulation

@@ -2,8 +2,6 @@
 
 #include "spdlog/spdlog.h"
 
-
-
 bool ScannerManager::CheckSyncTickAck()
 {
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -102,19 +100,18 @@ void ScannerManager::Run()
     // Wait for all the processes to be ready
     utils::NamedSyncWait(shared_redis, "Drone");
 
+    // Create or open the semaphore for synchronization
+    sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
+    sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);
+
     synchronizer.thread_started();
-    // for (int i = 0; i < 5; i++)
-    // {
-    //     waves[wave_id] = std::make_shared<Wave>(wave_id, shared_redis, synchronizer);
-    //     pool.enqueue_task([this] { waves[wave_id]->Run(); });
-    //     wave_id++;
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // }
 
     // ScannerManager needs sto be synced with the wave-threads
     while (true)
     {
-        spdlog::info("TICK {}", tick);
+        // Wait for the semaphore to be released
+        sem_wait(sem_sync);
+        spdlog::info("TICK: {}", tick);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
@@ -124,8 +121,9 @@ void ScannerManager::Run()
             SpawnWave();
         };
 
-        // Get syze of the message queue
+        // Get size of the message queue
         auto size = mq.get_num_msg();
+        // spdlog::info("Messages in the queue: {}", size);
 
         if (size > 0)
         {
@@ -140,15 +138,13 @@ void ScannerManager::Run()
             }
         }
 
-        // Try to receive a message from the message queue
-
-        tick++;
-
-        // TODO: Combine in a single function
-        utils::UpdateSyncTick(shared_redis, tick);
-        CheckSyncTickAck();
-
+        // utils::UpdateSyncTick(shared_redis, tick);
+        // CheckSyncTickAck();
         synchronizer.tick_completed();
+
+        // Release the semaphore to signal the end of the tick
+        sem_post(sem_sc);
+        tick++;
     }
     synchronizer.thread_finished();
 }

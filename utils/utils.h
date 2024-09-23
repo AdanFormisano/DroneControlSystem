@@ -1,8 +1,7 @@
 #ifndef DRONECONTROLSYSTEM_UTILS_H
 #define DRONECONTROLSYSTEM_UTILS_H
 
-#include <array>
-#include <condition_variable>
+
 #include <random>
 #include <unordered_map>
 #include <iostream>
@@ -12,6 +11,7 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <boost/interprocess/sync/named_semaphore.hpp>
 
 #include "../src/globals.h"
 
@@ -32,5 +32,10 @@ namespace utils
     const char* droneStateToString(drone_state_enum state);
     drone_state_enum stringToDroneStateEnum(const std::string& stateStr);
     void signalHandler(int signal);
+}
+
+namespace utils_sync
+{
+    sem_t* create_or_open_semaphore(const char* name, unsigned int initial_value);
 }
 #endif // DRONECONTROLSYSTEM_UTILS_H

@@ -23,10 +23,16 @@ ChargeBase::ChargeBase(Redis& redis) : redis(redis)
 
 void ChargeBase::Run()
 {
-    // TODO: Sync with other processes
+    // Create or open the semaphore for synchronization
+    sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
+    sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);
 
     while (true)
     {
+        // Wait for the semaphore to be released
+        sem_wait(sem_sync);
+        spdlog::info("TICK: {}", tick_n);
+
         // Work
         // ChargeDrone(); // Normal charge rate
         ChargeDroneMegaSpeed(); // TESTING: Charge drones at 5x speed
@@ -34,8 +40,11 @@ void ChargeBase::Run()
 
         // Tick completed
         // sync with other processes
-        TickCompleted();
-        spdlog::info("CB TICK: {}", tick_n - 1);
+        // TickCompleted();
+
+        // Release the semaphore to signal the end of the tick
+        sem_post(sem_cb);
+        tick_n++;
     }
 }
 

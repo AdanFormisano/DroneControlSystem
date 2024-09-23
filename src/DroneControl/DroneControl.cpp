@@ -82,6 +82,7 @@ void DroneControl::SendWaveSpawnCommand() {
         spdlog::warn("Waiting for wave to spawn...");
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+    spdlog::warn("Wave spawned");
 }
 
 void DroneControl::TickCompleted() {
@@ -116,6 +117,10 @@ void DroneControl::Run() {
 
     utils::NamedSyncWait(redis, "DroneControl");
 
+    // Create or open the semaphore for synchronization
+    sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
+    sem_t *sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);
+
     std::vector<std::thread> consumers;
 
     try {
@@ -131,13 +136,20 @@ void DroneControl::Run() {
     std::thread db_thread(&DroneControl::WriteDroneDataToDB, this);
 
     while (true) {
+        // Wait for the semaphore to be released
+        sem_wait(sem_sync);
+        spdlog::info("TICK: {}", tick_n);
+
         // Spawn a Wave every 150 ticks
         if (tick_n % 150 == 0) {
             SendWaveSpawnCommand();
         }
 
         // End of tick
-        TickCompleted();
-        spdlog::info("DC TICK: {}", tick_n - 1);
+        // TickCompleted();
+
+        // Release the semaphore to signal the end of tick
+        sem_post(sem_dc);
+        tick_n++;
     }
 }

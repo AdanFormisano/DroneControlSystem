@@ -5,7 +5,10 @@
  
  ☐ Wave constructor using recycled drones
  ☐ Correct final charging state: wave must die => correct simulation duration (conditions)
+ ☐ DC "checked" calculations
+ ☐ Check when to spawn wave
  ☐ Fix syncing with Redis
+     ☐ With named_semaphores implemented Redis' use for sync (in process init) is not needed
 
  ☐ WaveCoverageMonitor
  ☐ AreaCoverageMonitor

@@ -14,7 +14,6 @@ Wave::Wave(int tick_n, const int wave_id, Redis &shared_redis, TickSynchronizer 
         drones[i].position.y = 0;
         drones[i].starting_line.x = -2990.0f;
         drones[i].starting_line.y = y;
-        drones[i].setState(ToStartingLine::getInstance());
         drones[i].tick_drone = tick;
 
         // Calculate drones' direction
@@ -24,6 +23,7 @@ Wave::Wave(int tick_n, const int wave_id, Redis &shared_redis, TickSynchronizer 
 
         drones[i].dir.x = dx / distance;
         drones[i].dir.y = dy / distance;
+        drones[i].setState(ToStartingLine::getInstance());
 
         y += 20.0f;
     }
@@ -83,7 +83,7 @@ void Wave::Run() {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // A redis pipeline is used to upload the data to the redis server
-    // Create a pipeline from the group of redis connections
+    // Create a pipeline from the group of redis co nnections
     auto pipe = redis.pipeline(false);
 
     // TODO: Implement states for the waves

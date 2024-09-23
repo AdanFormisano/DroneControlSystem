@@ -2,6 +2,8 @@
 
 #include <boost/thread/detail/move.hpp>
 
+#include "spdlog/spdlog.h"
+
 std::default_random_engine generator;
 std::uniform_real_distribution<float> float_distribution_mten_to_ten(-10.0f, 10.0f);
 
@@ -35,5 +37,19 @@ namespace utils {
         // Optionally, you can perform cleanup here
         // and then exit the program gracefully
         std::exit(signal);
+    }
+}
+
+namespace utils_sync
+{
+    sem_t* create_or_open_semaphore(const char* name, unsigned int initial_value)
+    {
+        sem_t* sem = sem_open(name, O_CREAT, 0644, initial_value);
+        if (sem == SEM_FAILED)
+        {
+            spdlog::error("Failed to create semaphore: {}", strerror(errno));
+            return nullptr;
+        }
+        return sem;
     }
 }

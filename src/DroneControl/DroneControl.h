@@ -1,6 +1,7 @@
 #ifndef SYNCEDDRONECONTROL_H
 #define SYNCEDDRONECONTROL_H
 #include "../globals.h"
+#include "../../utils/utils.h"
 #include "../../utils/RedisUtils.h"
 #include "../Database/Buffer.h"
 #include "../Database/Database.h"
@@ -14,7 +15,6 @@ public:
     Redis &redis;
 
     void Run();
-    void ReadDataStream();
     void ParseStreamData(const std::vector<std::pair<std::string, std::string>>& data, std::vector<DroneData>& drones_data);
     void WriteDroneDataToDB();
 
@@ -28,8 +28,6 @@ private:
     Database db;
     Buffer buffer;
 
-    void GetDronesPaths();
-    void SendWaveCreationCommand();
     void Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer);
     void SendWaveSpawnCommand();
     void TickCompleted();
