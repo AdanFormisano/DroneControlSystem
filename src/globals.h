@@ -125,13 +125,11 @@ struct DroneData {
             {"x", x},
             {"y", y},
             {"wave_id", wave_id},
-            {"checked", checked}
-        };
+            {"checked", checked}};
     }
 };
 
-struct ChargingDroneData
-{
+struct ChargingDroneData {
     int id;
     int wave_id;
     float charge;
@@ -143,29 +141,25 @@ struct ChargingDroneData
         : id(id), wave_id(wave_id), charge(charge), state(state), charge_rate(charge_rate) {};
 };
 
-struct ChargingStreamData
-{
+struct ChargingStreamData {
     std::string id;
     std::string wave_id;
     std::string charge;
     std::string state;
 
-    ChargingStreamData(int drone_id, int drone_wave_id, float drone_charge, std::string drone_state)
-    {
+    ChargingStreamData(int drone_id, int drone_wave_id, float drone_charge, std::string drone_state) {
         id = std::to_string(drone_id);
         wave_id = std::to_string(drone_wave_id);
         charge = std::to_string(drone_charge);
         state = std::move(drone_state);
     }
 
-    [[nodiscard]] std::vector<std::pair<std::string, std::string>> toVector() const
-    {
+    [[nodiscard]] std::vector<std::pair<std::string, std::string>> toVector() const {
         return {
             {"id", id},
             {"wave_id", wave_id},
             {"charge", charge},
-            {"state", state}
-        };
+            {"state", state}};
     }
 };
 
@@ -173,7 +167,7 @@ struct TG_data {
     int drone_id;               // ID of the drone
     int wave_id;                // ID of the wave
     drone_state_enum new_state; // New state of the drone
-    int reconnect_tick; // Contains the number of ticks after the disconnection
+    int reconnect_tick;         // Contains the number of ticks after the disconnection
     // when the drone reconnected (-1 if not reconnecting)
 };
 
