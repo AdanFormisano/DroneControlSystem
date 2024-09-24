@@ -96,6 +96,9 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
     int drone_id = wave_drone_id % 1000; // Get the drone id from the wave_drone_id
     drones[drone_id].previous = drones[drone_id].getCurrentState()->getState();
     drones[drone_id].setState(getDroneState(state));
+    drones[drone_id].reconnect_tick = reconnect_tick;
+
+    spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
 }
 
 int Wave::RecycleDrones()
@@ -134,8 +137,7 @@ void Wave::Run()
             // TODO: In theory there will only ever be a single message in the queue, maybe we can optimize this
             // Get the message from the queue
             auto msg = tg_data.pop().value();
-            spdlog::info("[TestGenerator] Drone has new state {}", msg.drone_id,
-                         utils::droneStateToString(msg.new_state));
+            spdlog::info("[TestGenerator] Drone has new state {}", utils::droneStateToString(msg.new_state));
 
             setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick);
         }

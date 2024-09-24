@@ -20,7 +20,6 @@ void ToStartingLine::enter(Drone *drone) {
 
 void ToStartingLine::run(Drone *drone) {
     // Check if the drone has reached the starting line
-    spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
     if (drone->position.x == -2990) {
         // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
         // Change the state to READY
