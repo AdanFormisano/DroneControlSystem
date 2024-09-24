@@ -112,7 +112,7 @@ void ToBase::run(Drone *drone) {
 }
 
 void ToBase::exit(Drone *drone) {
-    spdlog::info("TICK {} Drone {} has reached the base", drone->tick_drone, drone->id);
+    // spdlog::info("TICK {} Drone {} has reached the base", drone->tick_drone, drone->id);
 }
 
 DroneState &Charging::getInstance() {
@@ -130,6 +130,9 @@ void Charging::run(Drone *drone) {
     ChargingStreamData data(drone->id, drone->wave_id, drone->charge, utils::droneStateToString(drone_state_enum::CHARGING));
     auto v = data.toVector();
     drone->ctx.redis.xadd("charging_stream", "*", v.begin(), v.end());
+
+    // Drone has sent its data to Redis, now it can charge (die)
+    drone->setState(Dead::getInstance());
 }
 
 void Charging::exit(Drone *drone) {
@@ -274,5 +277,7 @@ DroneState &Dead::getInstance() {
 }
 
 void Dead::run(Drone *drone) {
-    spdlog::info("[TestGenerator] TICK {} Drone {} is dead, coming from {}", drone->tick_drone, drone->id, utils::droneStateToString(drone->previous));
+    // spdlog::info("[TestGenerator] TICK {} Drone {} is dead, coming from {}", drone->tick_drone, drone->id, utils::droneStateToString(drone->previous));
+    // spdlog::info("TICK {} Drone {} is dead", drone->tick_drone, drone->id);
+    drone->ctx.drones_to_delete.push_back(drone->id);
 }

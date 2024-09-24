@@ -12,6 +12,7 @@ class Wave;
 class Drone {
 public:
     Drone(int id, int wave_id, Wave &ctx);
+    // ~Drone();
 
     int id;                              ///< Unique identifier for the drone.
     coords position = {0.0f, 0.0f};      ///< Current position of the drone in global coordinates.

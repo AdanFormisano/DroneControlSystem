@@ -5,8 +5,8 @@
  ✔ Disconnected fault state @done (24-09-23 21:14)
  ✔ Dead fault state @done (24-09-23 21:14)
  
- ☐  Kill waves
-     ☐ Correct final charging state: wave must die => correct simulation duration (conditions)
+ ✔  Kill waves @done (24-09-24 14:58)
+     ✔ Correct final charging state: wave must die => correct simulation duration (conditions) @done (24-09-24 14:58)
  ☐ DC "checked" calculations
  ☐ Check when to spawn wave
  ✔ Wave constructor using recycled drones @done (24-09-23 18:18)

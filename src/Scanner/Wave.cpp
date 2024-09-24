@@ -20,21 +20,22 @@ Wave::Wave(int tick_n, const int wave_id, Redis& shared_redis, TickSynchronizer&
     for (int i = 0; i < 300; i++)
     {
         int drone_id = id * 1000 + i;
-        drones.emplace_back(drone_id, id, *this);
-        drones[i].position.x = 0;
-        drones[i].position.y = 0;
-        drones[i].starting_line.x = -2990.0f;
-        drones[i].starting_line.y = y;
-        drones[i].tick_drone = tick;
+
+        drones.push_back(new Drone(drone_id, id, *this));
+        drones[i]->position.x = 0;
+        drones[i]->position.y = 0;
+        drones[i]->starting_line.x = -2990.0f;
+        drones[i]->starting_line.y = y;
+        drones[i]->tick_drone = tick;
 
         // Calculate drones' direction
         float dx = -2990.0f;
         float dy = y;
         float distance = std::sqrt(dx * dx + dy * dy);
 
-        drones[i].dir.x = dx / distance;
-        drones[i].dir.y = dy / distance;
-        drones[i].setState(ToStartingLine::getInstance());
+        drones[i]->dir.x = dx / distance;
+        drones[i]->dir.y = dy / distance;
+        drones[i]->setState(ToStartingLine::getInstance());
 
         y += 20.0f;
     }
@@ -50,8 +51,8 @@ void Wave::Move()
     X += 20;
     for (auto& drone : drones)
     {
-        drone.position.x = static_cast<float>(X);
-        drone.charge -= DRONE_CONSUMPTION_RATE;
+        drone->position.x = static_cast<float>(X);
+        drone->charge -= DRONE_CONSUMPTION_RATE;
     }
 }
 
@@ -69,8 +70,8 @@ void Wave::UploadData()
         for (auto& drone : drones)
         {
             // Create a DroneData object
-            DroneData data(tick, drone.id, utils::droneStateToString(drone.getCurrentState()->getState()), drone.charge,
-                           drone.position, drone.wave_id);
+            DroneData data(tick, drone->id, utils::droneStateToString(drone->getCurrentState()->getState()), drone->charge,
+                           drone->position, drone->wave_id);
             auto v = data.toVector();
 
             // Add the command to the pipeline
@@ -94,9 +95,9 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
 {
     // Set the drone state to the new state parameter
     int drone_id = wave_drone_id % 1000; // Get the drone id from the wave_drone_id
-    drones[drone_id].previous = drones[drone_id].getCurrentState()->getState();
-    drones[drone_id].setState(getDroneState(state));
-    drones[drone_id].reconnect_tick = reconnect_tick;
+    drones[drone_id]->previous = drones[drone_id]->getCurrentState()->getState();
+    drones[drone_id]->setState(getDroneState(state));
+    drones[drone_id]->reconnect_tick = reconnect_tick;
 
     spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
 }
@@ -116,6 +117,31 @@ int Wave::RecycleDrones()
     return static_cast<int>(charged_drones_int.size());
 }
 
+void Wave::DeleteDrones()
+{
+    try
+    {
+        // Delete drones that are dead
+        for (auto& drone_id : drones_to_delete)
+        {
+            int index = drone_id % 1000;
+            // spdlog::info("Drone {} is dead", drone_id);
+            delete drones[index];
+            drones[index] = nullptr;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("Error deleting drones: {}", e.what());
+    }
+}
+
+bool Wave::AllDronesAreDead()
+{
+    // Check if all drones are dead
+    return std::ranges::all_of(drones, [](Drone * d) { return d == nullptr; });
+}
+
 void Wave::Run()
 {
     spdlog::info("Wave {} started", id);
@@ -127,7 +153,7 @@ void Wave::Run()
     auto pipe = redis.pipeline(false);
 
     // TODO: Implement states for the waves
-    while (tick < starting_tick + 1000)
+    while (!AllDronesAreDead())
     {
         spdlog::info("Wave {} tick {}", id, tick);
         // Before the "normal" execution, check if SM did put any "input" inside the "queue" (aka TestGenerator scenarios' input)
@@ -142,26 +168,35 @@ void Wave::Run()
             setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick);
         }
 
-        // Execute the wave
-        for (auto& drone : drones)
+        try
         {
-            // Execute the current state
-            drone.run();
+            // Execute the wave
+            for (auto& drone : drones)
+            {
+                if (drone != nullptr)
+                {
+                    // Execute the current state
+                    drone->run();
 
-            // Create a DroneData object
-            DroneData data(tick, drone.id, utils::droneStateToString(drone.getCurrentState()->getState()), drone.charge,
-                           drone.position, drone.wave_id);
-            auto v = data.toVector();
+                    // Create a DroneData object
+                    DroneData data(tick, drone->id, utils::droneStateToString(drone->getCurrentState()->getState()), drone->charge,
+                                   drone->position, drone->wave_id);
+                    auto v = data.toVector();
 
-            // Add the command to the pipeline
-            pipe.xadd("scanner_stream", "*", v.begin(), v.end());
-            // spdlog::info("Drone {} data uploaded to Redis", drone.id);
+                    // Add the command to the pipeline
+                    pipe.xadd("scanner_stream", "*", v.begin(), v.end());
+                    // spdlog::info("Drone {} data uploaded to Redis", drone.id);
+                }
+            }
+        }
+        catch (const std::exception &e)
+        {
+            spdlog::error("Error running wave {}: {}", id, e.what());
         }
         pipe.exec();
 
-        // Manage the drones' faults
-        // SERVE LA FUNC CHE ELIMINI I DRONI DA ELIMINARE
-        // (FAR PUNTARE A NULL I DRONI NEL VETTORE DA ELIMINARE, SENZA ELIMINARLI REALMENTE?)
+        // Delete drones that are dead
+        DeleteDrones();
 
         // Each tick of the execution will be synced with the other threads. This will make writing to the DB much easier
         // because the data will be consistent/historical

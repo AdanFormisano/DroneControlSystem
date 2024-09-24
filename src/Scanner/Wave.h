@@ -21,6 +21,7 @@ public:
     int starting_tick = 0; // The tick when the wave was created
     std::array<DroneData, 300> drones_data;
     synced_queue<TG_data> tg_data;
+    std::vector<int> drones_to_delete;
     int tick = 0;
 
     [[nodiscard]] int getId() const { return id; }
@@ -29,13 +30,15 @@ public:
 
 private:
     int id = 0;
-    std::vector<Drone> drones;
+    std::vector<Drone*> drones;
     TickSynchronizer &tick_sync;
     int ready_drones = 0;
 
+    void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick);
     void Move();
     void UploadData();
     int RecycleDrones();
-    void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick);
+    void DeleteDrones();
+    bool AllDronesAreDead();
 };
 #endif //WAVE_H
