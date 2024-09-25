@@ -152,7 +152,7 @@ void DroneControl::Run() {
         std::cout << "[DroneControl] TICK: " << tick_n << std::endl;
 
         // Spawn a Wave every 150 ticks
-        if (tick_n % 150 == 0) {
+        if (tick_n % WAVE_DISTANCE_TICKS == 0) {
             SendWaveSpawnCommand();
         }
 

@@ -8,10 +8,10 @@
 
 ============================================= 
  ☐ DC "checked" calculations
- ☐ Check when to spawn wave
  ☐ Correctly terminate the simulation
      ☐ Check if DB has all the simulated ticks
 
+ ✔ Check when to spawn wave @done (24-09-25 16:06)
  ✔  Kill waves @done (24-09-24 14:58)
      ✔ Correct final charging state: wave must die => correct simulation duration (conditions) @done (24-09-24 14:58)
  ✔ Wave constructor using recycled drones @done (24-09-23 18:18)

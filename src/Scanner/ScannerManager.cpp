@@ -97,7 +97,7 @@ void ScannerManager::Run()
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Syncing with the DC
-            if ((tick % 150) == 0 && CheckSpawnWave())
+            if ((tick % WAVE_DISTANCE_TICKS) == 0 && CheckSpawnWave())
             {
                 SpawnWave();
             };
