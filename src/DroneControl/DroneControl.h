@@ -24,12 +24,14 @@ private:
     std::string current_stream_id = "*";
     std::string stream = "scanner_stream";
     std::string group = "scanner_group";
-    std::unordered_map<int, std::vector<coords>> drones_paths;
+    std::array<std::unordered_set<coords>, 300> drones_paths{}; // Working paths for drones
+
     Database db;
     Buffer buffer;
 
-    void Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer);
+    void Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer, const std::array<std::unordered_set<coords>, 300> *drones_paths);
     void SendWaveSpawnCommand();
     void TickCompleted();
+    void GetDronePaths();
 };
 #endif //SYNCEDDRONECONTROL_H

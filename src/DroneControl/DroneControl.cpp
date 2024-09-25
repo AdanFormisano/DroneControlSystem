@@ -2,10 +2,14 @@
 
 #include <iostream>
 
-void DroneControl::Consume(Redis &redis, const std::string &stream, const std::string &group, const std::string &consumer) {
-    while (true) {
+void DroneControl::Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer,
+                           const std::array<std::unordered_set<coords>, 300> *drones_paths)
+{
+    while (true)
+    {
         // Read from the stream using the consumer group
-        try {
+        try
+        {
             // Attempt to read one message per thread per loop
             using Attrs = std::vector<std::pair<std::string, std::string>>;
             using Item = std::pair<std::string, Attrs>;
@@ -17,10 +21,26 @@ void DroneControl::Consume(Redis &redis, const std::string &stream, const std::s
             // 'count' is the number of elements read from the stream at once
             redis.xreadgroup(group, consumer, stream, ">", 300, std::inserter(result, result.end()));
 
-            for (const auto &message : result) {
-                for (const auto &item : message.second) {
-                    // std::cout << "Consumer: " << consumer << ", Message: " << item.first << " - " << item.second << std::endl;
-                    // ParseStreamData(item.second, drones_data);
+            for (const auto& message : result)
+            {
+                for (const auto& item : message.second)
+                {
+                    std::string status = item.second[2].second;
+                    int drone_id = std::stoi(item.second[1].second);
+                    const int drone_index = drone_id % 1000;
+                    const float x = std::stof(item.second[4].second);
+                    const float y = std::stof(item.second[5].second);
+                    std::string checked = "FALSE";
+
+                    // Check if a working drone is the right path position
+                    if (status == "WORKING")
+                    {
+                        // Check if the current position is inside the path array
+                        if (coords current_position = {x, y}; drones_paths->at(drone_index).contains(current_position))
+                        {
+                            checked = "TRUE";
+                        }
+                    }
 
                     drones_data.emplace_back(
                         item.second[0].second, // tick_n
@@ -30,7 +50,7 @@ void DroneControl::Consume(Redis &redis, const std::string &stream, const std::s
                         item.second[4].second, // x
                         item.second[5].second, // y
                         item.second[6].second, // wave_id
-                        item.second[7].second  // checked
+                        checked // checked
                     );
 
                     // Acknowledge the message (after processing)
@@ -38,17 +58,23 @@ void DroneControl::Consume(Redis &redis, const std::string &stream, const std::s
                 }
                 buffer.WriteBatchToBuffer(drones_data);
             }
-        } catch (const TimeoutError &e) {
+        }
+        catch (const TimeoutError& e)
+        {
             std::cerr << "Timeout while waiting for message: " << e.what() << std::endl;
-        } catch (const std::exception &e) {
+        } catch (const std::exception& e)
+        {
             std::cerr << "Error: " << e.what() << std::endl;
-        } catch (...) {
+        } catch (...)
+        {
             std::cerr << "Unknown error" << std::endl;
         }
     }
 }
 
-void DroneControl::ParseStreamData(const std::vector<std::pair<std::string, std::string>> &data, std::vector<DroneData> &drones_data) {
+void DroneControl::ParseStreamData(const std::vector<std::pair<std::string, std::string>>& data,
+                                   std::vector<DroneData>& drones_data)
+{
     DroneData temp_data;
     temp_data.tick_n = data[0].second;
     temp_data.id = data[1].second;
@@ -63,20 +89,26 @@ void DroneControl::ParseStreamData(const std::vector<std::pair<std::string, std:
     drones_data.push_back(temp_data);
 }
 
-void DroneControl::WriteDroneDataToDB() {
+void DroneControl::WriteDroneDataToDB()
+{
     spdlog::info("DB writer thread started");
-    while (true) {
+    while (true)
+    {
         // Take data from buffer
         // spdlog::info("Reading data from buffer ({} elements)", buffer.getSize());
         std::vector<DroneData> drones_data = buffer.GetAllData();
 
-        if (!drones_data.empty()) {
+        if (!drones_data.empty())
+        {
             // spdlog::info("Writing TICK {} to DB", drones_data.front().tick_n);
             std::cout << "Writing TICK " << drones_data.front().tick_n << " to DB" << std::endl;
             // Write to DB
-            std::string query = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave, x, y, checked) VALUES ";
-            for (const auto &data : drones_data) {
-                query += "(" + data.tick_n + ", " + data.id + ", '" + data.status + "', " + data.charge + ", " + data.wave_id + ", " + data.x + ", " + data.y + ", " + data.checked + "),";
+            std::string query =
+                "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave, x, y, checked) VALUES ";
+            for (const auto& data : drones_data)
+            {
+                query += "(" + data.tick_n + ", " + data.id + ", '" + data.status + "', " + data.charge + ", " + data.
+                    wave_id + ", " + data.x + ", " + data.y + ", " + data.checked + "),";
             }
             query.pop_back();
             query += ";";
@@ -85,35 +117,41 @@ void DroneControl::WriteDroneDataToDB() {
     }
 }
 
-void DroneControl::SendWaveSpawnCommand() {
+void DroneControl::SendWaveSpawnCommand()
+{
     spdlog::warn("Sending wave spawn command");
     redis.incr("spawn_wave");
 
     // Wait for the wave to spawn
-    while (std::stoi(redis.get("spawn_wave").value_or("-1")) != 0) {
+    while (std::stoi(redis.get("spawn_wave").value_or("-1")) != 0)
+    {
         spdlog::warn("Waiting for wave to spawn...");
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     spdlog::warn("Wave spawned");
 }
 
-void DroneControl::TickCompleted() {
+void DroneControl::TickCompleted()
+{
     // Tick completed, wait until the value on Redis is updated
     auto start_time = std::chrono::high_resolution_clock::now();
     int timeout_ms = 3000;
 
-    while (true) {
+    while (true)
+    {
         auto v = redis.get("scanner_tick");
         auto sync_tick = std::stoi(v.value_or("-1"));
 
-        if (sync_tick == tick_n + 1) {
+        if (sync_tick == tick_n + 1)
+        {
             tick_n++;
             utils::AckSyncTick(redis, tick_n); // tick_n is the next tick in simulation
             return;
         }
 
         auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms) {
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
+        {
             spdlog::error("Timeout waiting for scanner_tick");
             tick_n = sync_tick;
             return;
@@ -123,36 +161,68 @@ void DroneControl::TickCompleted() {
     }
 }
 
-void DroneControl::Run() {
+void DroneControl::GetDronePaths()
+{
+    // Calculate the paths for the working drones
+    int Y = -2990;
+
+    // Iterate over the drones
+    for (int i = 0; i < 300; i++)
+    {
+        coords step = {-3010.0f, static_cast<float>(Y)};
+
+        // Iterate over the steps
+        for (int j = 0; j < 299; j++)
+        {
+            step.x += 20.0f;
+            drones_paths[i].insert(step);
+        }
+        Y += 20;
+    }
+}
+
+
+void DroneControl::Run()
+{
     // Get the drone paths from the database
     // GetDronesPaths();
 
     // Create or open the semaphore for synchronization
     sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
-    sem_t *sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);
+    sem_t* sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);
+
+    // Calculate the paths for the working drones
+    GetDronePaths();
 
     std::vector<std::thread> consumers;
 
-    try {
+    try
+    {
         redis.xgroup_create(stream, group, "$", true);
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception& e)
+    {
         spdlog::error("Error creating consumer group: {}", e.what());
     }
-    for (int i = 0; i < num_consumers; i++) {
-        consumers.emplace_back(&DroneControl::Consume, this, std::ref(redis), stream, group, std::to_string(i));
+    for (int i = 0; i < num_consumers; i++)
+    {
+        consumers.emplace_back(&DroneControl::Consume, this, std::ref(redis), stream, group, std::to_string(i),
+                               &drones_paths);
     }
 
     // Create thread for writing to DB
     std::thread db_thread(&DroneControl::WriteDroneDataToDB, this);
 
-    while (true) {
+    while (true)
+    {
         // Wait for the semaphore to be released
         sem_wait(sem_sync);
         // spdlog::info("TICK: {}", tick_n);
         std::cout << "[DroneControl] TICK: " << tick_n << std::endl;
 
         // Spawn a Wave every 150 ticks
-        if (tick_n % WAVE_DISTANCE_TICKS == 0) {
+        if (tick_n % WAVE_DISTANCE_TICKS == 0)
+        {
             SendWaveSpawnCommand();
         }
 

@@ -32,7 +32,25 @@ inline float coord_max = 2980.0f;
 struct coords {
     float x;
     float y;
+
+    coords() : x(0), y(0) {}
+
+    coords(float x, float y) : x(x), y(y) {}
+
+    bool operator==(const coords& other) const {
+        return x == other.x && y == other.y;
+    }
 };
+
+// Hash function for coords
+namespace std {
+    template <>
+    struct hash<coords> {
+        std::size_t operator()(const coords& c) const {
+            return std::hash<float>()(c.x) ^ std::hash<float>()(c.y);
+        }
+    };
+}
 
 struct drone_data {
     int id;
