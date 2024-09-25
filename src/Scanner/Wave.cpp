@@ -47,16 +47,6 @@ Wave::Wave(int tick_n, const int wave_id, Redis& shared_redis, TickSynchronizer&
     std::cout << "Wave " << id << " created all drones" << std::endl;
 }
 
-void Wave::Move()
-{
-    X += 20;
-    for (auto& drone : drones)
-    {
-        drone->position.x = static_cast<float>(X);
-        drone->charge -= DRONE_CONSUMPTION_RATE;
-    }
-}
-
 void Wave::UploadData()
 {
     try
@@ -71,7 +61,8 @@ void Wave::UploadData()
         for (auto& drone : drones)
         {
             // Create a DroneData object
-            DroneData data(tick, drone->id, utils::droneStateToString(drone->getCurrentState()->getState()), drone->charge,
+            DroneData data(tick, drone->id, utils::droneStateToString(drone->getCurrentState()->getState()),
+                           drone->charge,
                            drone->position, drone->wave_id);
             auto v = data.toVector();
 
@@ -103,7 +94,8 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
     drones[drone_id]->reconnect_tick = reconnect_tick;
 
     // spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
-    std::cout << "[TestGenerator] TICK " << tick << " Drone " << wave_drone_id << " state set to " << utils::droneStateToString(state) << std::endl;
+    std::cout << "[TestGenerator] TICK " << tick << " Drone " << wave_drone_id << " state set to " <<
+        utils::droneStateToString(state) << std::endl;
 }
 
 int Wave::RecycleDrones()
@@ -144,7 +136,7 @@ void Wave::DeleteDrones()
 bool Wave::AllDronesAreDead()
 {
     // Check if all drones are dead
-    return std::ranges::all_of(drones, [](Drone * d) { return d == nullptr; });
+    return std::ranges::all_of(drones, [](Drone* d) { return d == nullptr; });
 }
 
 void Wave::Run()
@@ -158,9 +150,12 @@ void Wave::Run()
     // Create a pipeline from the group of redis co nnections
     auto pipe = redis.pipeline(false);
 
-    // TODO: Implement states for the waves
-    while (!AllDronesAreDead())
+    bool AreDroneDead = false;
+
+    while (!AreDroneDead)
     {
+        AreDroneDead = AllDronesAreDead();
+        std::cout << "Wave " << id << " tick " << tick << " drones are all dead: "<< AreDroneDead << std::endl;
         // spdlog::info("Wave {} tick {}", id, tick);
         // std::cout << "Wave " << id << " tick " << tick << std::endl;
 
@@ -172,7 +167,8 @@ void Wave::Run()
             // Get the message from the queue
             auto msg = tg_data.pop().value();
             // spdlog::info("[TestGenerator] Drone has new state {}", utils::droneStateToString(msg.new_state));
-            std::cout << "[TestGenerator] Drone has new state " << utils::droneStateToString(msg.new_state) << std::endl;
+            std::cout << "[TestGenerator] Drone has new state " << utils::droneStateToString(msg.new_state) <<
+                std::endl;
 
             setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick);
         }
@@ -188,7 +184,8 @@ void Wave::Run()
                     drone->run();
 
                     // Create a DroneData object
-                    DroneData data(tick, drone->id, utils::droneStateToString(drone->getCurrentState()->getState()), drone->charge,
+                    DroneData data(tick, drone->id, utils::droneStateToString(drone->getCurrentState()->getState()),
+                                   drone->charge,
                                    drone->position, drone->wave_id);
                     auto v = data.toVector();
 
@@ -198,21 +195,21 @@ void Wave::Run()
                 }
             }
 
-        pipe.exec();
+            pipe.exec();
 
-        // Delete drones that are dead
-        DeleteDrones();
+            // Delete drones that are dead
+            DeleteDrones();
 
-        // Each tick of the execution will be synced with the other threads. This will make writing to the DB much easier
-        // because the data will be consistent/historical
-        tick_sync.tick_completed();
-        tick++;
+            // Each tick of the execution will be synced with the other threads. This will make writing to the DB much easier
+            // because the data will be consistent/historical
+            tick_sync.tick_completed();
+            tick++;
         }
-        catch (const TimeoutError &e)
+        catch (const TimeoutError& e)
         {
             // /spdlog::error("Timeout running wave {}: {}", id, e.what());
             std::cerr << "Timeout running wave " << id << ": " << e.what() << std::endl;
-        } catch (const IoError &e)
+        } catch (const IoError& e)
         {
             // spdlog::error("IoError running wave {}: {}", id, e.what());
             std::cerr << "IoError running wave " << id << ": " << e.what() << std::endl;

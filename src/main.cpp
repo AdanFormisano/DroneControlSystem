@@ -221,11 +221,10 @@ int main()
                     trd.JoinThread();
 
                     // Wait for child processes to finish
-                    waitpid(pid_drone_control, nullptr, 0);
+                    kill(pid_test_generator, SIGTERM);
                     waitpid(pid_drone, nullptr, 0);
                     waitpid(pid_charge_base, nullptr, 0);
-                    // waitpid(pid_test_generator, nullptr, 0);
-                    kill(pid_test_generator, SIGTERM);
+                    waitpid(pid_drone_control, nullptr, 0);
 
                     // Get shutoff time
                     auto shutoff_time = std::chrono::high_resolution_clock::now();

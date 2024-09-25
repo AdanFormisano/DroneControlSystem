@@ -88,7 +88,7 @@ void DroneControl::WriteDroneDataToDB()
         if (!drones_data.empty())
         {
             // spdlog::info("Writing TICK {} to DB", drones_data.front().tick_n);
-            std::cout << "Writing TICK " << drones_data.front().tick_n << " to DB" << std::endl;
+            // std::cout << "Writing TICK " << drones_data.front().tick_n << " to DB" << std::endl;
             // Write to DB
             std::string query =
                 "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave, x, y, checked) VALUES ";
@@ -124,37 +124,6 @@ void DroneControl::SendWaveSpawnCommand()
     }
     // spdlog::warn("Wave spawned");
     std::cout << "Wave spawned" << std::endl;
-}
-
-void DroneControl::TickCompleted()
-{
-    // Tick completed, wait until the value on Redis is updated
-    auto start_time = std::chrono::high_resolution_clock::now();
-    int timeout_ms = 3000;
-
-    while (true)
-    {
-        auto v = redis.get("scanner_tick");
-        auto sync_tick = std::stoi(v.value_or("-1"));
-
-        if (sync_tick == tick_n + 1)
-        {
-            tick_n++;
-            utils::AckSyncTick(redis, tick_n); // tick_n is the next tick in simulation
-            return;
-        }
-
-        auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
-        {
-            // spdlog::error("Timeout waiting for scanner_tick");
-            std::cout << "Timeout waiting for scanner_tick" << std::endl;
-            tick_n = sync_tick;
-            return;
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    }
 }
 
 void DroneControl::GetDronePaths()
@@ -209,6 +178,7 @@ void DroneControl::Run()
 
     // Create thread for writing to DB
     std::thread db_thread(&DroneControl::WriteDroneDataToDB, this);
+    // db_thread.detach();
 
     while (tick_n < sim_duration_ticks)
     {

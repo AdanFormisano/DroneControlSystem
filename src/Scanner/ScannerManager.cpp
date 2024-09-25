@@ -125,6 +125,7 @@ void ScannerManager::Run()
 
             // Release the semaphore to signal the end of the tick
             sem_post(sem_sc);
+            std::cout << "[ScannerManager] TICK: " << tick << " finished" << std::endl;
             tick++;
         }
         catch (...)
