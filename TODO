@@ -1,26 +1,30 @@
  ☐ High consumption state
      ☐ Drone has 0% charge and dies
          Check if charge is 0%, if true send to Dead state
+
  ✔ Reconnected fault state @done (24-09-23 18:37)
  ✔ Disconnected fault state @done (24-09-23 21:14)
  ✔ Dead fault state @done (24-09-23 21:14)
- 
- ✔  Kill waves @done (24-09-24 14:58)
-     ✔ Correct final charging state: wave must die => correct simulation duration (conditions) @done (24-09-24 14:58)
+
+============================================= 
  ☐ DC "checked" calculations
  ☐ Check when to spawn wave
  ☐ Correctly terminate the simulation
      ☐ Check if DB has all the simulated ticks
 
+ ✔  Kill waves @done (24-09-24 14:58)
+     ✔ Correct final charging state: wave must die => correct simulation duration (conditions) @done (24-09-24 14:58)
  ✔ Wave constructor using recycled drones @done (24-09-23 18:18)
  ✔ Fix syncing with Redis @done (24-09-23 18:33)
     ✔ With named_semaphores implemented Redis' use for sync (in process init) is not needed @done (24-09-23 18:33)
 
+============================================= 
  ☐ TimeToReadData => SystemPerformance
      ☐ Create input for message_queue
  ☐ DroneChargeMonitor
      ☐ Fix query for drones that arrived at base
      ☐ Fix query for exploded drones
+     
  ✔ RechargeTimeMonitor @done (24-09-23 21:18)
  ✔ WaveCoverageMonitor @done (24-09-23 21:16)
  ✔ AreaCoverageMonitor @done (24-09-23 21:16)
