@@ -20,7 +20,18 @@ void DroneControl::Consume(Redis &redis, const std::string &stream, const std::s
             for (const auto &message : result) {
                 for (const auto &item : message.second) {
                     // std::cout << "Consumer: " << consumer << ", Message: " << item.first << " - " << item.second << std::endl;
-                    ParseStreamData(item.second, drones_data);
+                    // ParseStreamData(item.second, drones_data);
+
+                    drones_data.emplace_back(
+                        item.second[0].second, // tick_n
+                        item.second[1].second, // id
+                        item.second[2].second, // status
+                        item.second[3].second, // charge
+                        item.second[4].second, // x
+                        item.second[5].second, // y
+                        item.second[6].second, // wave_id
+                        item.second[7].second  // checked
+                    );
 
                     // Acknowledge the message (after processing)
                     redis.xack(stream, group, {item.first});
@@ -60,7 +71,8 @@ void DroneControl::WriteDroneDataToDB() {
         std::vector<DroneData> drones_data = buffer.GetAllData();
 
         if (!drones_data.empty()) {
-            spdlog::info("Writing TICK {} to DB", drones_data.front().tick_n);
+            // spdlog::info("Writing TICK {} to DB", drones_data.front().tick_n);
+            std::cout << "Writing TICK " << drones_data.front().tick_n << " to DB" << std::endl;
             // Write to DB
             std::string query = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave, x, y, checked) VALUES ";
             for (const auto &data : drones_data) {
@@ -136,7 +148,8 @@ void DroneControl::Run() {
     while (true) {
         // Wait for the semaphore to be released
         sem_wait(sem_sync);
-        spdlog::info("TICK: {}", tick_n);
+        // spdlog::info("TICK: {}", tick_n);
+        std::cout << "[DroneControl] TICK: " << tick_n << std::endl;
 
         // Spawn a Wave every 150 ticks
         if (tick_n % 150 == 0) {

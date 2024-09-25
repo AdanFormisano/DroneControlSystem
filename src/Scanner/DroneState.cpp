@@ -68,7 +68,7 @@ DroneState &Working::getInstance() {
 }
 
 void Working::enter(Drone *drone) {
-    spdlog::info("TICK {} Drone {} is starting work", drone->tick_drone, drone->id);
+    // spdlog::info("TICK {} Drone {} is starting work", drone->tick_drone, drone->id);
 }
 
 void Working::run(Drone *drone) {
@@ -148,7 +148,7 @@ DroneState &Disconnected::getInstance() {
 void Disconnected::enter(Drone *drone) {
     drone->hidden_coords = drone->position;
     drone->hidden_charge = drone->charge;
-    spdlog::info("[[DroneCH]] Drone {} disconnected at TICK {}. Previous state: {}", drone->id, drone->tick_drone, utils::droneStateToString(drone->previous));
+    // spdlog::info("[[DroneCH]] Drone {} disconnected at TICK {}. Previous state: {}", drone->id, drone->tick_drone, utils::droneStateToString(drone->previous));
     drone->disconnected_tick = drone->tick_drone;
 }
 
@@ -212,8 +212,7 @@ void Disconnected::run(Drone *drone) {
             drone->setState(Reconnected::getInstance());
         }
     } else {
-        spdlog::info("[[DroneCH]] Drone {} is disconnected, coming from {}, waiting to die...", drone->id,
-            utils::droneStateToString(drone->previous));
+        // spdlog::info("[[DroneCH]] Drone {} is disconnected, coming from {}, waiting to die...", drone->id, utils::droneStateToString(drone->previous));
         if (drone->tick_drone >= drone->disconnected_tick + 20) {
             drone->setState(Dead::getInstance());
         }
@@ -226,7 +225,7 @@ DroneState &Reconnected::getInstance() {
 }
 
 void Reconnected::enter(Drone *drone) {
-    spdlog::info("[TestGenerator] Drone {} reconnected at TICK {}", drone->id, drone->tick_drone);
+    // spdlog::info("[TestGenerator] Drone {} reconnected at TICK {}", drone->id, drone->tick_drone);
     drone->position = drone->hidden_coords;
     drone->charge = drone->hidden_charge;
 }

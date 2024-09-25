@@ -10,7 +10,7 @@ Wave::Wave(int tick_n, const int wave_id, Redis& shared_redis, TickSynchronizer&
     // but this doesn't meter because we are creating every new drone, hiding the fact that we are recycling some of them
     auto n_recycled_drones = RecycleDrones();
 
-    spdlog::info("Wave {} recycled {} drones", wave_id, n_recycled_drones);
+    // spdlog::info("Wave {} recycled {} drones", wave_id, n_recycled_drones);
 
     id = wave_id;
     starting_tick = tick_n;
@@ -188,11 +188,7 @@ void Wave::Run()
                     // spdlog::info("Drone {} data uploaded to Redis", drone.id);
                 }
             }
-        }
-        catch (const std::exception &e)
-        {
-            spdlog::error("Error running wave {}: {}", id, e.what());
-        }
+
         pipe.exec();
 
         // Delete drones that are dead
@@ -202,6 +198,19 @@ void Wave::Run()
         // because the data will be consistent/historical
         tick_sync.tick_completed();
         tick++;
+        }
+        catch (const TimeoutError &e)
+        {
+            // /spdlog::error("Timeout running wave {}: {}", id, e.what());
+            std::cerr << "Timeout running wave " << id << ": " << e.what() << std::endl;
+        } catch (const IoError &e)
+        {
+            // spdlog::error("IoError running wave {}: {}", id, e.what());
+            std::cerr << "IoError running wave " << id << ": " << e.what() << std::endl;
+        } catch (...)
+        {
+            std::cerr << "Unknown error running wave " << id << std::endl;
+        }
     }
 
     // Remove self from alive waves on Redis

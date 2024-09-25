@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <sw/redis++/redis.h>
 
 // #define OLD_DRONE_CONSUMPTION_RATE 0.00672f // Normal consumption rate
 #define DRONE_CONSUMPTION_RATE 0.13444f
@@ -22,6 +23,7 @@ inline std::string sync_channel = "SYNC";
 inline auto tick_duration_ms = std::chrono::milliseconds(300);
 // duration of 1 tick in milliseconds. 50ms is minimum I could set without the simulation breaking
 inline auto sim_duration_ms = std::chrono::milliseconds(3000000); // duration of the simulation in milliseconds
+inline int sim_duration_ticks = 8000;                           // duration of the simulation in ticks
 
 inline float coord_min = -2980.0f;
 inline float coord_max = 2980.0f;
@@ -66,22 +68,6 @@ constexpr std::array drone_state_str = {
     "DEAD",
     "CHARGING"};
 
-/**
- * \struct Drone
- * \brief Represents a drone in the system.
- *
- * This structure holds the essential information about a drone, including its
- * unique identifier, current position, state, wave identifier, and charge level.
- */
-// struct Drone
-// {
-//     int id{}; ///< Unique identifier for the drone.
-//     coords position = {0.0f, 0.0f}; ///< Current position of the drone in global coordinates.
-//     drone_state_enum state = drone_state_enum::IDLE_IN_BASE; ///< Current state of the drone.
-//     int wave_id{}; ///< Identifier for the wave the drone is part of.
-//     float charge = 100.0f; ///< Current charge level of the drone, in percentage.
-// };
-
 struct DroneData {
     std::string tick_n;
     std::string id;
@@ -93,6 +79,16 @@ struct DroneData {
     std::string checked = "false";
 
     DroneData() = default;
+
+    DroneData(std::string tick, std::string drone_id, std::string drone_status, std::string drone_charge, std::string drone_x, std::string drone_y, std::string drone_wave_id, std::string drone_checked)
+        : tick_n(std::move(tick)),
+          id(std::move(drone_id)),
+          status(std::move(drone_status)),
+          charge(std::move(drone_charge)),
+          x(std::move(drone_x)),
+          y(std::move(drone_y)),
+          wave_id(std::move(drone_wave_id)),
+          checked(std::move(drone_checked)) {}
 
     DroneData(int tick, const int drone_id, const std::string &drone_status, float drone_charge,
               coords position, int drone_wave_id) {

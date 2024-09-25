@@ -2,73 +2,54 @@
 
 #include "spdlog/spdlog.h"
 
-bool ScannerManager::CheckSyncTickAck()
-{
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    while (true)
-    {
-        auto v = shared_redis.get("scanner_tick_ack");
-        int n_waiting = std::stoi(v.value_or("-1"));
-        // spdlog::info("Checking scanner_tick_ack: {} - {}", current_tick, tick);
-
-        // auto sync_tick = std::stoi(shared_redis.lpop("scanner_tick_ack").value_or("-1"));   // Tick to which everyone need to sync
-        // auto n_waiting = std::stoi(shared_redis.lpop("scanner_tick_ack").value_or("-1"));   // Processes waiting
-
-        if (n_waiting == 2)
-        {
-            return true;
-        }
-
-        auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
-        // spdlog::info("Waited for {}", std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count());
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
-        {
-            spdlog::error("Timeout waiting for scanner_tick_ack");
-            if (n_waiting == -1)
-            {
-                spdlog::error("Error getting scanner_tick_ack");
-                return false;
-            }
-            spdlog::error("scanner_tick_ack is not in sync with the ScannerManager");
-            return false;
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    }
-}
-
 bool ScannerManager::CheckSpawnWave()
 {
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    // TODO: Better while condition
-    while (true)
+    try
     {
-        auto v = shared_redis.get("spawn_wave");
-        int spawn_wave = std::stoi(v.value_or("-1"));
-        // spdlog::info("Checking spawn_wave: {}", spawn_wave);
+        auto start_time = std::chrono::high_resolution_clock::now();
 
-        if (spawn_wave == 1)
+        // TODO: Better while condition
+        while (true)
         {
-            // spdlog::info("Spawn wave = {}", spawn_wave);
-            shared_redis.decr("spawn_wave");
-            return true;
-        }
+            auto v = shared_redis.get("spawn_wave");
+            int spawn_wave = std::stoi(v.value_or("-1"));
+            // spdlog::info("Checking spawn_wave: {}", spawn_wave);
 
-        auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
-        {
-            if (spawn_wave == -1)
+            if (spawn_wave == 1)
             {
-                spdlog::error("Error getting spawn_wave");
+                // spdlog::info("Spawn wave = {}", spawn_wave);
+                shared_redis.decr("spawn_wave");
+                return true;
+            }
+
+            auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
+            {
+                if (spawn_wave == -1)
+                {
+                    spdlog::error("Error getting spawn_wave");
+                    return false;
+                }
+                spdlog::error("Timeout waiting for spawn_wave");
                 return false;
             }
-            spdlog::error("Timeout waiting for spawn_wave");
-            return false;
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
+    catch (const TimeoutError& e)
+    {
+        spdlog::error("Timeout spawning wave: {}", e.what());
+    } catch (const IoError& e)
+    {
+        spdlog::error("IoError spawning wave: {}", e.what());
+    } catch (const std::exception& e)
+    {
+        spdlog::error("Error spawning wave: {}", e.what());
+    } catch (...)
+    {
+        spdlog::error("Unknown error spawning wave");
+    }
+    return false;
 }
 
 void ScannerManager::SpawnWave()
@@ -106,42 +87,50 @@ void ScannerManager::Run()
     // ScannerManager needs sto be synced with the wave-threads
     while (true)
     {
-        // Wait for the semaphore to be released
-        sem_wait(sem_sync);
-        spdlog::info("TICK: {}", tick);
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-
-        // Syncing with the DC
-        if ((tick % 150) == 0 && CheckSpawnWave())
+        try
         {
-            SpawnWave();
-        };
+            // Wait for the semaphore to be released
+            sem_wait(sem_sync);
+            // spdlog::info("TICK: {}", tick);
+            std::cout << "[ScannerManager] TICK: " << tick << std::endl;
 
-        // Get size of the message queue
-        auto size = mq.get_num_msg();
-        // spdlog::info("Messages in the queue: {}", size);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-        if (size > 0)
-        {
-            // Iterate over the message queue and receive all the messages
-            for (int i = 0; i < size; i++)
+            // Syncing with the DC
+            if ((tick % 150) == 0 && CheckSpawnWave())
             {
-                TG_data msg{};
-                mq.receive(&msg, sizeof(msg), recvd_size, priority);
+                SpawnWave();
+            };
 
-                // Append the message to the wave's queue
-                waves[msg.wave_id]->tg_data.push(msg);
+            // Get size of the message queue
+            auto size = mq.get_num_msg();
+            // spdlog::info("Messages in the queue: {}", size);
+
+            if (size > 0)
+            {
+                // Iterate over the message queue and receive all the messages
+                for (int i = 0; i < size; i++)
+                {
+                    TG_data msg{};
+                    mq.receive(&msg, sizeof(msg), recvd_size, priority);
+
+                    // Append the message to the wave's queue
+                    waves[msg.wave_id]->tg_data.push(msg);
+                }
             }
+
+            // utils::UpdateSyncTick(shared_redis, tick);
+            // CheckSyncTickAck();
+            synchronizer.tick_completed();
+
+            // Release the semaphore to signal the end of the tick
+            sem_post(sem_sc);
+            tick++;
         }
-
-        // utils::UpdateSyncTick(shared_redis, tick);
-        // CheckSyncTickAck();
-        synchronizer.tick_completed();
-
-        // Release the semaphore to signal the end of the tick
-        sem_post(sem_sc);
-        tick++;
+        catch (...)
+        {
+            std::cerr << "Error running ScannerManager" << std::endl;
+        }
     }
     synchronizer.thread_finished();
 }

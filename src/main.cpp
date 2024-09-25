@@ -37,6 +37,11 @@ int main()
 {
     spdlog::set_pattern("[%T.%e][%^%l%$][Main] %v");
 
+    ConnectionOptions connection_options;
+    connection_options.host = "127.0.0.1";
+    connection_options.port = 7777;
+    connection_options.socket_timeout = std::chrono::milliseconds(3000);
+
     // Create the DroneControl process
     pid_t pid_drone_control = fork();
     if (pid_drone_control == -1)
@@ -50,7 +55,7 @@ int main()
         spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
 
         // Create the Redis object for DroneControl
-        auto drone_control_redis = Redis("tcp://127.0.0.1:7777");
+        auto drone_control_redis = Redis(connection_options);
 
         // Create the DroneControl object
         DroneControl dc(drone_control_redis);
@@ -73,15 +78,11 @@ int main()
         {
             // In child Drones process
             // Create the Redis object for Drone
-            ConnectionOptions drone_connection_options;
-            drone_connection_options.host = "127.0.0.1";
-            drone_connection_options.port = 7777;
-
             ConnectionPoolOptions drone_connection_pool_options;
             drone_connection_pool_options.size = 8;
             drone_connection_pool_options.wait_timeout = std::chrono::milliseconds(1000);
 
-            auto drone_redis = Redis(drone_connection_options, drone_connection_pool_options);
+            auto drone_redis = Redis(connection_options, drone_connection_pool_options);
 
             // Create the DroneManager object
             // drones::DroneManager dm(drone_redis);
@@ -105,7 +106,7 @@ int main()
             {
                 // In child ChargeBase process
                 // Create the Redis object for ChargeBase
-                auto charge_base_redis = Redis("tcp://127.0.0.1:7777");
+                auto charge_base_redis = Redis(connection_options);
 
                 // Create the ChargeBase object
                 auto cb = ChargeBase::getInstance(charge_base_redis);
@@ -128,7 +129,7 @@ int main()
                     spdlog::set_pattern("[%T.%e][%^%l%$][TestGenerator] %v");
 
                     // Create the Redis object for TestGenerator
-                    auto test_redis = Redis("tcp://127.0.0.1:7777");
+                    auto test_redis = Redis(connection_options);
 
                     // Create the TestGenerator object
                     TestGenerator tg(test_redis);
@@ -141,7 +142,7 @@ int main()
                 else
                 {
                     // In Main process
-                    auto main_redis = Redis("tcp://127.0.0.1:7777");
+                    auto main_redis = Redis(connection_options);
 
                     // Start monitors
                     RechargeTimeMonitor rtm(main_redis);
@@ -166,9 +167,10 @@ int main()
                     int tick_n = 0;
 
                     // Simulation loop
-                    while (tick_n < sim_end_after)
+                    while (tick_n < sim_duration_ticks)
                     {
-                        spdlog::info("TICK: {}", tick_n);
+                        // spdlog::info("TICK: {}", tick_n);
+                        std::cout << "[Main] TICK: " << tick_n << std::endl;
                         // Release sem_sync to start the next tick
                         sem_post(sem_sync_dc); // Signal DroneControl
                         sem_post(sem_sync_sc); // Signal ScannerManager
@@ -180,7 +182,7 @@ int main()
                         sem_wait(sem_cb);
 
                         ++tick_n;
-                        // std::this_thread::sleep_for(std::chrono::milliseconds(500));     <-- Use this to slow down the simulation and check if the system is actuallyy synced
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // <-- Use this to slow down the simulation and check if the system is actuallyy synced
                         spdlog::info("=====================================");
                     }
 
@@ -196,6 +198,13 @@ int main()
                     // FIXME: This is a placeholder for the monitor process,
                     // without it the main process will exit and
                     // the children will be terminated
+
+                    // Kill the children
+                    kill(pid_drone_control, SIGTERM);
+                    kill(pid_drone, SIGTERM);
+                    kill(pid_charge_base, SIGTERM);
+                    kill(pid_test_generator, SIGTERM);
+
                     std::this_thread::sleep_for(std::chrono::seconds(10));
                     std::cout << "Exiting..." << std::endl;
                     // }

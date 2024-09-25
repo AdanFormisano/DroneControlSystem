@@ -31,7 +31,8 @@ void ChargeBase::Run()
     {
         // Wait for the semaphore to be released
         sem_wait(sem_sync);
-        spdlog::info("TICK: {}", tick_n);
+        // spdlog::info("TICK: {}", tick_n);
+        std::cout << "[Chargebase] TICK: " << tick_n << std::endl;
 
         // Work
         // ChargeDrone(); // Normal charge rate
