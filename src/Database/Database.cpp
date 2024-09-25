@@ -2,55 +2,6 @@
 
 #include <iostream>
 
-// Constructor
-Database::Database() {
-    // try {
-    //     // Connect to PostgreSQL server
-    //     pqxx::connection C("user=postgres password=admin@123 hostaddr=127.0.0.1 port=5432");
-    //     if (!C.is_open()) {
-    //         spdlog::error("Can't open connection to PostgreSQL server");
-    //         return;
-    //     }
-    //     spdlog::info("Connected to PostgreSQL server");
-    //
-    //     // Check if dcs exists
-    //     pqxx::nontransaction N(C);
-    //     auto R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'");
-    //     if (R.empty()) {
-    //         // Create dcs database and connect to it
-    //         spdlog::warn("Databse not found, creating dcs...");
-    //         pqxx::work W(C);
-    //         W.exec("CREATE DATABASE dcs");
-    //         W.commit();
-    //         ConnectToDB_(); // This sets the conn object
-    //
-    //         // Se la connessione è stata stabilita, sovrascrivere la tabella 'drone_logs'
-    //         if (conn && conn->is_open()) {
-    //             pqxx::work W(*conn);
-    //             // Eliminare la tabella se esiste
-    //             W.exec("DROP TABLE IF EXISTS drone_logs");
-    //             // Ricreare la tabella
-    //             W.exec(
-    //                 "CREATE TABLE drone_logs ("
-    //                 "tick_n INT, "
-    //                 "drone_id INT NOT NULL, "
-    //                 "status VARCHAR(255), "
-    //                 "charge FLOAT, "
-    //                 "zone VARCHAR(255), "  // TODO: Change to int
-    //                 "x FLOAT, "
-    //                 "y FLOAT, "
-    //                 "checked BOOLEAN, "
-    //                 "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
-    //             W.commit();
-    //         }
-    //     }
-    //
-    //     spdlog::info("Database object created");
-    // } catch (const std::exception &e) {
-    //     spdlog::error("Database object creation failed: {}", e.what());
-    // }
-}
-
 void Database::ConnectToDB(const std::string &dbname,
                            const std::string &user,
                            const std::string &password,
@@ -80,7 +31,8 @@ void Database::get_DB() {
         pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'");
         // Se il DB non esiste, crearlo
         if (R.empty()) {
-            spdlog::warn("Creating dcs database");
+            // spdlog::warn("Creating dcs database");
+            std::cout << "Creating dcs database" << std::endl;
             // pqxx::work W(C);
             // W.exec("CREATE DATABASE dcs;");
             // W.commit();
@@ -126,13 +78,15 @@ void Database::get_DB() {
             W.commit();
         }
     } catch (const std::exception &e) {
-        spdlog::error("Failed to get DB: {}", e.what());
+        // spdlog::error("Failed to get DB: {}", e.what());
+        std::cerr << "Failed to get DB: " << e.what() << std::endl;
     }
 }
 
 void Database::ExecuteQuery(const std::string &query) {
     if (!conn || !conn->is_open()) {
-        spdlog::error("DB connection not established for query execution");
+        // spdlog::error("DB connection not established for query execution");
+        std::cerr << "DB connection not established for query execution" << std::endl;
         return;
     }
 

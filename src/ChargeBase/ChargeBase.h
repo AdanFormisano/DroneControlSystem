@@ -39,7 +39,6 @@ private:
 
     ChargeBase(Redis& redis);
 
-    void TickCompleted();
     void ReadChargeStream();
     void SetChargeData(const std::vector<std::pair<std::string, std::string>>& data);
     float getChargeRate();

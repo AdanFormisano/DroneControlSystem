@@ -7,9 +7,8 @@
  ✔ Dead fault state @done (24-09-23 21:14)
 
 ============================================= 
- ☐ Correctly terminate the simulation
-     ☐ Check if DB has all the simulated ticks
-
+ ✔ Correctly terminate the simulation @done (24-09-25 18:15)
+     ✔ Check if DB has all the simulated ticks @done (24-09-25 18:15)
  ✔ DC "checked" calculations @done (24-09-25 18:00)
  ✔ Check when to spawn wave @done (24-09-25 16:06)
  ✔  Kill waves @done (24-09-24 14:58)

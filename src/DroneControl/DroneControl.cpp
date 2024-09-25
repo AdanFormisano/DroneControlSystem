@@ -72,27 +72,14 @@ void DroneControl::Consume(Redis& redis, const std::string& stream, const std::s
     }
 }
 
-void DroneControl::ParseStreamData(const std::vector<std::pair<std::string, std::string>>& data,
-                                   std::vector<DroneData>& drones_data)
-{
-    DroneData temp_data;
-    temp_data.tick_n = data[0].second;
-    temp_data.id = data[1].second;
-    temp_data.status = data[2].second;
-    temp_data.charge = data[3].second;
-    temp_data.x = data[4].second;
-    temp_data.y = data[5].second;
-    temp_data.wave_id = data[6].second;
-    temp_data.checked = data[7].second;
-
-    // spdlog::info("Tick {} - Drone {} ({}, {})", temp_data.tick_n, temp_data.id, temp_data.x, temp_data.y);
-    drones_data.push_back(temp_data);
-}
-
 void DroneControl::WriteDroneDataToDB()
 {
-    spdlog::info("DB writer thread started");
-    while (true)
+    // spdlog::info("DB writer thread started");
+    std::cout << "DB writer thread started" << std::endl;
+
+    int max_tick = 0;   // Maximum tick number read from the buffer
+
+    while (max_tick < sim_duration_ticks - 1)
     {
         // Take data from buffer
         // spdlog::info("Reading data from buffer ({} elements)", buffer.getSize());
@@ -107,6 +94,9 @@ void DroneControl::WriteDroneDataToDB()
                 "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave, x, y, checked) VALUES ";
             for (const auto& data : drones_data)
             {
+                // Set the maximum tick number
+                max_tick = std::max(max_tick, std::stoi(data.tick_n));
+
                 query += "(" + data.tick_n + ", " + data.id + ", '" + data.status + "', " + data.charge + ", " + data.
                     wave_id + ", " + data.x + ", " + data.y + ", " + data.checked + "),";
             }
@@ -115,20 +105,25 @@ void DroneControl::WriteDroneDataToDB()
             db.ExecuteQuery(query);
         }
     }
+    // spdlog::info("DB writer thread finished");
+    std::cout << "DB writer thread finished" << std::endl;
 }
 
 void DroneControl::SendWaveSpawnCommand()
 {
-    spdlog::warn("Sending wave spawn command");
+    // spdlog::warn("Sending wave spawn command");
+    std::cout << "Sending wave spawn command" << std::endl;
     redis.incr("spawn_wave");
 
     // Wait for the wave to spawn
     while (std::stoi(redis.get("spawn_wave").value_or("-1")) != 0)
     {
-        spdlog::warn("Waiting for wave to spawn...");
+        // spdlog::warn("Waiting for wave to spawn...");
+        std::cout << "Waiting for wave to spawn..." << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    spdlog::warn("Wave spawned");
+    // spdlog::warn("Wave spawned");
+    std::cout << "Wave spawned" << std::endl;
 }
 
 void DroneControl::TickCompleted()
@@ -152,7 +147,8 @@ void DroneControl::TickCompleted()
         auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
         if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
         {
-            spdlog::error("Timeout waiting for scanner_tick");
+            // spdlog::error("Timeout waiting for scanner_tick");
+            std::cout << "Timeout waiting for scanner_tick" << std::endl;
             tick_n = sync_tick;
             return;
         }
@@ -202,7 +198,8 @@ void DroneControl::Run()
     }
     catch (const std::exception& e)
     {
-        spdlog::error("Error creating consumer group: {}", e.what());
+        // spdlog::error("Error creating consumer group: {}", e.what());
+        std::cerr << "Error creating consumer group: " << e.what() << std::endl;
     }
     for (int i = 0; i < num_consumers; i++)
     {
@@ -213,7 +210,7 @@ void DroneControl::Run()
     // Create thread for writing to DB
     std::thread db_thread(&DroneControl::WriteDroneDataToDB, this);
 
-    while (true)
+    while (tick_n < sim_duration_ticks)
     {
         // Wait for the semaphore to be released
         sem_wait(sem_sync);
@@ -233,4 +230,16 @@ void DroneControl::Run()
         sem_post(sem_dc);
         tick_n++;
     }
+
+    // Wait for the consumers to finish
+    for (auto& consumer : consumers)
+    {
+        consumer.join();
+    }
+
+    // Wait for the DB writer thread to finish
+    db_thread.join();
+
+    // spdlog::info("DroneControl finished");
+    std::cout << "DroneControl finished" << std::endl;
 }

@@ -13,20 +13,19 @@
 
 #include "../globals.h"
 
-class Database {
-   public:
-    Database();
-
-    void ConnectToDB(const std::string &dbname,
-                     const std::string &user,
-                     const std::string &password,
-                     const std::string &hostaddr,
-                     const std::string &port);
-    void ExecuteQuery(const std::string &query);
-    pqxx::connection &getConnection() { return *conn; }
+class Database
+{
+public:
+    void ConnectToDB(const std::string& dbname,
+                     const std::string& user,
+                     const std::string& password,
+                     const std::string& hostaddr,
+                     const std::string& port);
+    void ExecuteQuery(const std::string& query);
+    pqxx::connection& getConnection() { return *conn; }
     void get_DB();
 
-   private:
+private:
     std::unique_ptr<pqxx::connection> conn;
 
     void ConnectToDB_();

@@ -43,7 +43,8 @@ Wave::Wave(int tick_n, const int wave_id, Redis& shared_redis, TickSynchronizer&
     // Self add alive wave on Redis
     redis.sadd("waves_alive", std::to_string(id));
 
-    spdlog::info("Wave {} created all drones", id);
+    // spdlog::info("Wave {} created all drones", id);
+    std::cout << "Wave " << id << " created all drones" << std::endl;
 }
 
 void Wave::Move()
@@ -84,10 +85,12 @@ void Wave::UploadData()
     }
     catch (const ReplyError& e)
     {
-        spdlog::error("Redis pipeline error: {}", e.what());
+        // spdlog::error("Redis pipeline error: {}", e.what());
+        std::cerr << "Redis pipeline error: " << e.what() << std::endl;
     } catch (const IoError& e)
     {
-        spdlog::error("Redis pipeline error: {}", e.what());
+        // spdlog::error("Redis pipeline error: {}", e.what());
+        std::cerr << "Redis pipeline error: " << e.what() << std::endl;
     }
 }
 
@@ -99,7 +102,8 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
     drones[drone_id]->setState(getDroneState(state));
     drones[drone_id]->reconnect_tick = reconnect_tick;
 
-    spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
+    // spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
+    std::cout << "[TestGenerator] TICK " << tick << " Drone " << wave_drone_id << " state set to " << utils::droneStateToString(state) << std::endl;
 }
 
 int Wave::RecycleDrones()
@@ -132,7 +136,8 @@ void Wave::DeleteDrones()
     }
     catch (const std::exception& e)
     {
-        spdlog::error("Error deleting drones: {}", e.what());
+        // spdlog::error("Error deleting drones: {}", e.what());
+        std::cerr << "Error deleting drones: " << e.what() << std::endl;
     }
 }
 
@@ -144,7 +149,8 @@ bool Wave::AllDronesAreDead()
 
 void Wave::Run()
 {
-    spdlog::info("Wave {} started", id);
+    // spdlog::info("Wave {} started", id);
+    std::cout << "Wave " << id << " started" << std::endl;
     tick_sync.thread_started();
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -155,7 +161,9 @@ void Wave::Run()
     // TODO: Implement states for the waves
     while (!AllDronesAreDead())
     {
-        spdlog::info("Wave {} tick {}", id, tick);
+        // spdlog::info("Wave {} tick {}", id, tick);
+        // std::cout << "Wave " << id << " tick " << tick << std::endl;
+
         // Before the "normal" execution, check if SM did put any "input" inside the "queue" (aka TestGenerator scenarios' input)
         // Check if there is any message in the queue
         if (!tg_data.empty())
@@ -163,7 +171,8 @@ void Wave::Run()
             // TODO: In theory there will only ever be a single message in the queue, maybe we can optimize this
             // Get the message from the queue
             auto msg = tg_data.pop().value();
-            spdlog::info("[TestGenerator] Drone has new state {}", utils::droneStateToString(msg.new_state));
+            // spdlog::info("[TestGenerator] Drone has new state {}", utils::droneStateToString(msg.new_state));
+            std::cout << "[TestGenerator] Drone has new state " << utils::droneStateToString(msg.new_state) << std::endl;
 
             setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick);
         }
@@ -219,6 +228,8 @@ void Wave::Run()
     tick_sync.thread_finished();
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    spdlog::info("Wave {} duration: {}ms", id, duration.count());
-    spdlog::info("Wave {} finished", id);
+    // spdlog::info("Wave {} duration: {}ms", id, duration.count());
+    // spdlog::info("Wave {} finished", id);
+    std::cout << "Wave " << id << " duration: " << duration.count() << "ms" << std::endl;
+    std::cout << "Wave " << id << " finished" << std::endl;
 }

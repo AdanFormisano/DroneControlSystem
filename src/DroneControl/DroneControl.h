@@ -15,7 +15,6 @@ public:
     Redis &redis;
 
     void Run();
-    void ParseStreamData(const std::vector<std::pair<std::string, std::string>>& data, std::vector<DroneData>& drones_data);
     void WriteDroneDataToDB();
 
 private:

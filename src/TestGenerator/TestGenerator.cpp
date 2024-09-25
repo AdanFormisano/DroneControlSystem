@@ -3,12 +3,13 @@
 
 TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_drone(0, 299),
                                              dis_tick(1, 20) {
-    spdlog::info("Creating TestGenerator object");
+    // spdlog::info("Creating TestGenerator object");
+    std::cout << "Creating TestGenerator" << std::endl;
     // message_queue::remove("test_generator_queue");
 
     // Everything_is_fine scenario [80%]
     scenarios[0.8f] = []() {
-        spdlog::info("Everything is fine");
+        // spdlog::info("Everything is fine");
     };
 
     // Drone_failure scenario (drone stops working) [10%]
@@ -20,7 +21,8 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
         TG_data msg = {drone_id, wave_id, drone_state_enum::DEAD, -1};
         mq.send(&msg, sizeof(msg), 0);
 
-        spdlog::warn("Drone {} exploded", drone_id);
+        // spdlog::warn("Drone {} exploded", drone_id);
+        std::cout << "Drone " << drone_id << " exploded" << std::endl;
     };
 
     // Connection_lost scenario (drone loses connection to the DroneControl system) [10%]
@@ -36,12 +38,14 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
             auto reconnect_tick = ChooseRandomTick();
             TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, reconnect_tick};
             mq.send(&msg, sizeof(msg), 0);
-            spdlog::warn("Drone {} disconnected and will reconnect after {} tick", drone_id, reconnect_tick);
+            // spdlog::warn("Drone {} disconnected and will reconnect after {} tick", drone_id, reconnect_tick);
+            std::cout << "Drone " << drone_id << " disconnected and will reconnect after " << reconnect_tick << " tick" << std::endl;
         } else {
             // Send a message to ScannerManager to set the drone's status to "DISCONNECTED"
             TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1};
             mq.send(&msg, sizeof(msg), 0);
-            spdlog::warn("Drone {} disconnected", drone_id);
+            // spdlog::warn("Drone {} disconnected", drone_id);
+            std::cout << "Drone " << drone_id << " disconnected" << std::endl;
         }
     };
 

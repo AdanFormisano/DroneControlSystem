@@ -85,7 +85,7 @@ void ScannerManager::Run()
     synchronizer.thread_started();
 
     // ScannerManager needs sto be synced with the wave-threads
-    while (true)
+    while (tick < sim_duration_ticks)
     {
         try
         {
@@ -133,4 +133,7 @@ void ScannerManager::Run()
         }
     }
     synchronizer.thread_finished();
+
+    // spdlog::info("ScannerManager finished");
+    std::cout << "ScannerManager finished" << std::endl;
 }

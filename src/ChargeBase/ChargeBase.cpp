@@ -17,8 +17,9 @@ ChargeBase* ChargeBase::getInstance(Redis& redis)
 
 ChargeBase::ChargeBase(Redis& redis) : redis(redis)
 {
-    spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
-    spdlog::info("ChargeBase process starting");
+    // spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
+    // spdlog::info("ChargeBase process starting");
+    std::cout << "[ChargeBase] ChargeBase process starting" << std::endl;
 }
 
 void ChargeBase::Run()
@@ -27,7 +28,7 @@ void ChargeBase::Run()
     sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
     sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);
 
-    while (true)
+    while (tick_n < sim_duration_ticks)
     {
         // Wait for the semaphore to be released
         sem_wait(sem_sync);
@@ -47,32 +48,9 @@ void ChargeBase::Run()
         sem_post(sem_cb);
         tick_n++;
     }
-}
 
-void ChargeBase::TickCompleted() {
-    // Tick completed, wait until the value on Redis is updated
-    auto start_time = std::chrono::high_resolution_clock::now();
-    int timeout_ms = 3000;
-
-    while (true) {
-        auto v = redis.get("scanner_tick");
-        auto sync_tick = std::stoi(v.value_or("-1"));
-
-        if (sync_tick == tick_n + 1) {
-            tick_n++;
-            utils::AckSyncTick(redis, tick_n); // tick_n is the next tick in simulation
-            return;
-        }
-
-        auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms) {
-            spdlog::error("Timeout waiting for scanner_tick");
-            tick_n = sync_tick;
-            return;
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    }
+    // spdlog::info("ChargeBase process finished");
+    std::cout << "[ChargeBase] ChargeBase process finished" << std::endl;
 }
 
 // Read the charge_stream and adds the drones to the vector of drones to charge
@@ -114,12 +92,13 @@ void ChargeBase::ReadChargeStream()
             current_stream_id = item.second.back().first;
         }
         // Trim the stream
-        spdlog::info("{} entries read from charge_stream. Trimming the stream.", number_items_stream);
+        // spdlog::info("{} entries read from charge_stream. Trimming the stream.", number_items_stream);
         redis.command<long long>("XTRIM", "charge_stream", "MINID", current_stream_id);
     }
     catch (const Error& e)
     {
-        spdlog::error("Error reading the stream: {}", e.what());
+         // splog::error("Error reading the stream: {}", e.what());
+        std::cerr << "[ChargeBase] Error reading the stream: " << e.what() << std::endl;
     }
 }
 

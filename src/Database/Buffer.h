@@ -10,14 +10,6 @@
 
 using namespace sw::redis;
 
-struct drone_data_ext {
-    drone_data data;
-    bool check;
-    int tick_n;
-};
-
-class MiniBuffer;
-
 class Buffer : public boost::basic_lockable_adapter<boost::mutex> {
 public:
     ~Buffer();
@@ -38,27 +30,4 @@ private:
     std::queue<DroneData> buffer;
     std::vector<drone_fault> faults;
 };
-
-class MiniBuffer : public Buffer {
-public:
-    explicit MiniBuffer(int tick_n) : id(tick_n) {}
-
-    void WriteBlockToDB(Database &db, int size);
-
-    int getID() const { return id; }
-
-private:
-    int id;
-};
-
-class MiniBufferContainer : public boost::basic_lockable_adapter<boost::mutex> {
-public:
-    boost::mutex mutex; // Mutex to protect access to the container
-
-    std::map<int, std::shared_ptr<MiniBuffer>> mini_buffers;
-    boost::condition_variable cv;
-};
-
-void DispatchDroneData(Buffer &buffer, MiniBufferContainer &mini_buffers, Redis &redis);
-void WriteToDB(MiniBufferContainer &mini_buffers, Database &db, Redis &redis);
 #endif // DRONECONTROLSYSTEM_BUFFER_H

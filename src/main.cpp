@@ -26,6 +26,7 @@
 #include <sw/redis++/redis++.h>
 #include <unistd.h>
 #include <iostream>
+#include <sys/wait.h>
 
 #include "DroneControl/DroneControl.h"
 #include "Scanner/ScannerManager.h"
@@ -46,7 +47,8 @@ int main()
     pid_t pid_drone_control = fork();
     if (pid_drone_control == -1)
     {
-        spdlog::error("Fork for DroneControl failed");
+        // spdlog::error("Fork for DroneControl failed");
+        std::cerr << "Fork for DroneControl failed" << std::endl;
         return 1;
     }
     else if (pid_drone_control == 0)
@@ -71,7 +73,8 @@ int main()
         pid_t pid_drone = fork();
         if (pid_drone == -1)
         {
-            spdlog::error("Fork for Drone failed");
+            // spdlog::error("Fork for Drone failed");
+            std::cerr << "Fork for Drone failed" << std::endl;
             return 1;
         }
         else if (pid_drone == 0)
@@ -99,7 +102,8 @@ int main()
             pid_t pid_charge_base = fork();
             if (pid_charge_base == -1)
             {
-                spdlog::error("Fork for ChargeBase failed");
+                // spdlog::error("Fork for ChargeBase failed");
+                std::cerr << "Fork for ChargeBase failed" << std::endl;
                 return 1;
             }
             else if (pid_charge_base == 0)
@@ -122,10 +126,15 @@ int main()
             {
                 // In parent process create new child TestGenerator process
                 pid_t pid_test_generator = fork();
-                if (pid_test_generator == -1) {
-                    spdlog::error("Fork for TestGenerator failed");
+                if (pid_test_generator == -1)
+                {
+                    // spdlog::error("Fork for TestGenerator failed");
+                    std::cerr << "Fork for TestGenerator failed" << std::endl;
                     return 1;
-                } else if (pid_test_generator == 0) {   // In child TestGenerator process
+                }
+                else if (pid_test_generator == 0)
+                {
+                    // In child TestGenerator process
                     spdlog::set_pattern("[%T.%e][%^%l%$][TestGenerator] %v");
 
                     // Create the Redis object for TestGenerator
@@ -134,7 +143,8 @@ int main()
                     // Create the TestGenerator object
                     TestGenerator tg(test_redis);
 
-                    spdlog::info("TestGenerator started");
+                    // spdlog::info("TestGenerator started");
+                    std::cout << "TestGenerator started" << std::endl;
 
                     // Start test generation
                     tg.Run();
@@ -155,16 +165,25 @@ int main()
                     // trd.RunMonitor();
 
                     // Create named semaphore for synchronization
-                    sem_t* sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);   // Used for tick synchronization
-                    sem_t* sem_sync_sc = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);   // Used for tick synchronization
-                    sem_t* sem_sync_cb = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);   // Used for tick synchronization
-                    sem_t* sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);       // Used for DroneControl end of tick synchronization
-                    sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);       // Used for ScannerManager end of tick synchronization
-                    sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);       // Used for ChargeBase end of tick synchronization
+                    sem_t* sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
+                    // Used for tick synchronization
+                    sem_t* sem_sync_sc = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
+                    // Used for tick synchronization
+                    sem_t* sem_sync_cb = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
+                    // Used for tick synchronization
+                    sem_t* sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);
+                    // Used for DroneControl end of tick synchronization
+                    sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);
+                    // Used for ScannerManager end of tick synchronization
+                    sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);
+                    // Used for ChargeBase end of tick synchronization
 
                     // Start simulation
                     auto sim_end_after = sim_duration_ms / tick_duration_ms;
                     int tick_n = 0;
+
+                    // Start timewatch
+                    auto start_time = std::chrono::high_resolution_clock::now();
 
                     // Simulation loop
                     while (tick_n < sim_duration_ticks)
@@ -182,9 +201,15 @@ int main()
                         sem_wait(sem_cb);
 
                         ++tick_n;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(10));     // <-- Use this to slow down the simulation and check if the system is actuallyy synced
-                        spdlog::info("=====================================");
+                        std::this_thread::sleep_for(std::chrono::milliseconds(20)); // <-- Use this to slow down the simulation and check if the system is actuallyy synced
+                        // spdlog::info("=====================================");
+                        std::cout << "=====================================" << std::endl;
                     }
+                    // Stop time watch
+                    auto end_time = std::chrono::high_resolution_clock::now();
+                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+                    // spdlog::info("Simulation duration: {} ms", duration);
+                    std::cout << "Simulation duration: " << duration << " ms" << std::endl;
 
                     // Use Redis to stop the simulation
                     main_redis.set("sim_running", "false");
@@ -195,19 +220,21 @@ int main()
                     dcm.JoinThread();
                     trd.JoinThread();
 
-                    // FIXME: This is a placeholder for the monitor process,
-                    // without it the main process will exit and
-                    // the children will be terminated
-
-                    // Kill the children
-                    kill(pid_drone_control, SIGTERM);
-                    kill(pid_drone, SIGTERM);
-                    kill(pid_charge_base, SIGTERM);
+                    // Wait for child processes to finish
+                    waitpid(pid_drone_control, nullptr, 0);
+                    waitpid(pid_drone, nullptr, 0);
+                    waitpid(pid_charge_base, nullptr, 0);
+                    // waitpid(pid_test_generator, nullptr, 0);
                     kill(pid_test_generator, SIGTERM);
+
+                    // Get shutoff time
+                    auto shutoff_time = std::chrono::high_resolution_clock::now();
+                    auto shutoff_duration = std::chrono::duration_cast<std::chrono::milliseconds>(shutoff_time - start_time).count();
+                    // spdlog::info("Entire system duration: {} ms", shutoff_duration);
+                    std::cout << "Entire system duration: " << shutoff_duration << " ms" << std::endl;
 
                     std::this_thread::sleep_for(std::chrono::seconds(10));
                     std::cout << "Exiting..." << std::endl;
-                    // }
                 }
             }
         }
