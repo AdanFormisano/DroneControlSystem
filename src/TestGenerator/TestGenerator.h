@@ -30,6 +30,7 @@ private:
     std::random_device rd;
     std::mt19937 gen;
     std::uniform_real_distribution<> dis;
+    std::uniform_real_distribution<> dis_charge;
     std::uniform_int_distribution<> dis_drone;
     std::uniform_int_distribution<> dis_tick;
 

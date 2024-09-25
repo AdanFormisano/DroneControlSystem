@@ -34,8 +34,7 @@ private:
     TickSynchronizer &tick_sync;
     int ready_drones = 0;
 
-    void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick);
-    void Move();
+    void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick, float high_consumption_factor);
     void UploadData();
     int RecycleDrones();
     void DeleteDrones();

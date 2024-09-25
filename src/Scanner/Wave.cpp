@@ -85,13 +85,19 @@ void Wave::UploadData()
     }
 }
 
-void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick)
+void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick, float high_consumption_factor)
 {
     // Set the drone state to the new state parameter
     int drone_id = wave_drone_id % 1000; // Get the drone id from the wave_drone_id
     drones[drone_id]->previous = drones[drone_id]->getCurrentState()->getState();
-    drones[drone_id]->setState(getDroneState(state));
+
+    if(state!=drone_state_enum::NONE)
+    {
+        drones[drone_id]->setState(getDroneState(state));
+    }
+
     drones[drone_id]->reconnect_tick = reconnect_tick;
+    drones[drone_id]->high_consumption_factor = high_consumption_factor;
 
     // spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
     std::cout << "[TestGenerator] TICK " << tick << " Drone " << wave_drone_id << " state set to " <<
@@ -170,7 +176,7 @@ void Wave::Run()
             std::cout << "[TestGenerator] Drone has new state " << utils::droneStateToString(msg.new_state) <<
                 std::endl;
 
-            setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick);
+            setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick, msg.high_consumption_factor);
         }
 
         try

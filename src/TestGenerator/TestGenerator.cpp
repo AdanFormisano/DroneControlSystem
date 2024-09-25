@@ -1,7 +1,7 @@
 #include "TestGenerator.h"
 #include <spdlog/spdlog.h>
 
-TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_drone(0, 299),
+TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_charge(1, 2), dis_drone(0, 299),
                                              dis_tick(1, 20) {
     // spdlog::info("Creating TestGenerator object");
     std::cout << "Creating TestGenerator" << std::endl;
@@ -12,13 +12,29 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
         // spdlog::info("Everything is fine");
     };
 
+    // High_consumption [5%]
+    scenarios[0.85f] = [this]() {
+        // Choose a random drone to increase its consumption rate
+        auto [wave_id, drone_id] = ChooseRandomDrone();
+
+        // Generate a random high consumption factor between 1 and 2
+        float high_consumption_factor = dis_charge(gen);
+
+        // Send a message to ScannerManager to set the drone's high consumption factor
+        TG_data msg = {drone_id, wave_id, drone_state_enum::NONE, -1, high_consumption_factor};
+        mq.send(&msg, sizeof(msg), 0);
+
+        spdlog::warn("Drone {} has high consumption factor of {}", drone_id, high_consumption_factor);
+    };
+
+
     // Drone_failure scenario (drone stops working) [10%]
     scenarios[0.9f] = [this]() {
         // Choose a random drone to explode
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
         // Send a message to ScannerManager to set the drone's status to "DEAD"
-        TG_data msg = {drone_id, wave_id, drone_state_enum::DEAD, -1};
+        TG_data msg = {drone_id, wave_id, drone_state_enum::DEAD, -1, 1};
         mq.send(&msg, sizeof(msg), 0);
 
         // spdlog::warn("Drone {} exploded", drone_id);
@@ -36,13 +52,13 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
             // Calculate when the drone will reconnect
             // Send a message to ScannerManager to set the drone's status to "RECONECTED"
             auto reconnect_tick = ChooseRandomTick();
-            TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, reconnect_tick};
+            TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, reconnect_tick, 1};
             mq.send(&msg, sizeof(msg), 0);
             // spdlog::warn("Drone {} disconnected and will reconnect after {} tick", drone_id, reconnect_tick);
             std::cout << "Drone " << drone_id << " disconnected and will reconnect after " << reconnect_tick << " tick" << std::endl;
         } else {
             // Send a message to ScannerManager to set the drone's status to "DISCONNECTED"
-            TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1};
+            TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1, 1};
             mq.send(&msg, sizeof(msg), 0);
             // spdlog::warn("Drone {} disconnected", drone_id);
             std::cout << "Drone " << drone_id << " disconnected" << std::endl;

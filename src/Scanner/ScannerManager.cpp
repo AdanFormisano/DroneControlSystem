@@ -2,31 +2,25 @@
 
 #include "spdlog/spdlog.h"
 
-bool ScannerManager::CheckSpawnWave()
-{
-    try
-    {
+bool ScannerManager::CheckSpawnWave() {
+    try {
         auto start_time = std::chrono::high_resolution_clock::now();
 
         // TODO: Better while condition
-        while (true)
-        {
+        while (true) {
             auto v = shared_redis.get("spawn_wave");
             int spawn_wave = std::stoi(v.value_or("-1"));
             // spdlog::info("Checking spawn_wave: {}", spawn_wave);
 
-            if (spawn_wave == 1)
-            {
+            if (spawn_wave == 1) {
                 // spdlog::info("Spawn wave = {}", spawn_wave);
                 shared_redis.decr("spawn_wave");
                 return true;
             }
 
             auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms)
-            {
-                if (spawn_wave == -1)
-                {
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > timeout_ms) {
+                if (spawn_wave == -1) {
                     spdlog::error("Error getting spawn_wave");
                     return false;
                 }
@@ -35,25 +29,19 @@ bool ScannerManager::CheckSpawnWave()
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
-    }
-    catch (const TimeoutError& e)
-    {
+    } catch (const TimeoutError &e) {
         spdlog::error("Timeout spawning wave: {}", e.what());
-    } catch (const IoError& e)
-    {
+    } catch (const IoError &e) {
         spdlog::error("IoError spawning wave: {}", e.what());
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception &e) {
         spdlog::error("Error spawning wave: {}", e.what());
-    } catch (...)
-    {
+    } catch (...) {
         spdlog::error("Unknown error spawning wave");
     }
     return false;
 }
 
-void ScannerManager::SpawnWave()
-{
+void ScannerManager::SpawnWave() {
     // Capture the current wave_id by value
     int current_wave_id = wave_id;
 
@@ -63,14 +51,12 @@ void ScannerManager::SpawnWave()
     wave_id++;
 }
 
-ScannerManager::ScannerManager(Redis& shared_redis) : shared_redis(shared_redis), pool(10)
-{
+ScannerManager::ScannerManager(Redis &shared_redis) : shared_redis(shared_redis), pool(10) {
     spdlog::set_pattern("[%T.%e][%^%l%$][ScannerManager] %v");
     spdlog::info("ScannerManager created");
 }
 
-void ScannerManager::Run()
-{
+void ScannerManager::Run() {
     spdlog::info("ScannerManager running");
 
     // Create IPC message queue
@@ -79,16 +65,14 @@ void ScannerManager::Run()
     message_queue::size_type recvd_size;
 
     // Create or open the semaphore for synchronization
-    sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
-    sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);
+    sem_t *sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
+    sem_t *sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);
 
     synchronizer.thread_started();
 
     // ScannerManager needs sto be synced with the wave-threads
-    while (tick < sim_duration_ticks)
-    {
-        try
-        {
+    while (tick < sim_duration_ticks) {
+        try {
             // Wait for the semaphore to be released
             sem_wait(sem_sync);
             // spdlog::info("TICK: {}", tick);
@@ -97,8 +81,7 @@ void ScannerManager::Run()
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Syncing with the DC
-            if ((tick % WAVE_DISTANCE_TICKS) == 0 && CheckSpawnWave())
-            {
+            if ((tick % WAVE_DISTANCE_TICKS) == 0 && CheckSpawnWave()) {
                 SpawnWave();
             };
 
@@ -106,11 +89,9 @@ void ScannerManager::Run()
             auto size = mq.get_num_msg();
             // spdlog::info("Messages in the queue: {}", size);
 
-            if (size > 0)
-            {
+            if (size > 0) {
                 // Iterate over the message queue and receive all the messages
-                for (int i = 0; i < size; i++)
-                {
+                for (int i = 0; i < size; i++) {
                     TG_data msg{};
                     mq.receive(&msg, sizeof(msg), recvd_size, priority);
 
@@ -127,9 +108,7 @@ void ScannerManager::Run()
             sem_post(sem_sc);
             std::cout << "[ScannerManager] TICK: " << tick << " finished" << std::endl;
             tick++;
-        }
-        catch (...)
-        {
+        } catch (...) {
             std::cerr << "Error running ScannerManager" << std::endl;
         }
     }

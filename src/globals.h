@@ -180,11 +180,12 @@ struct ChargingStreamData {
 };
 
 struct TG_data {
-    int drone_id;               // ID of the drone
-    int wave_id;                // ID of the wave
-    drone_state_enum new_state; // New state of the drone
-    int reconnect_tick;         // Contains the number of ticks after the disconnection
+    int drone_id;                  // ID of the drone
+    int wave_id;                   // ID of the wave
+    drone_state_enum new_state;    // New state of the drone
+    int reconnect_tick;            // Contains the number of ticks after the disconnection
     // when the drone reconnected (-1 if not reconnecting)
+    float high_consumption_factor; // Multiplies the drone consumption value
 };
 
 struct drone_fault {
