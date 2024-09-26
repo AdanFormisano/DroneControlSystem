@@ -20,7 +20,8 @@ class ScannerManager {
 public:
     explicit ScannerManager(Redis &shared_redis);
 
-    TickSynchronizer synchronizer;
+    // TickSynchronizer synchronizer;
+    ThreadSemaphore synchronizer;
     ThreadPool pool;
 
     void Run();
@@ -32,7 +33,6 @@ private:
     int timeout_ms = 2000;
     int wave_id = 0;
 
-    bool CheckSyncTickAck();
     bool CheckSpawnWave();
     void SpawnWave();
 };

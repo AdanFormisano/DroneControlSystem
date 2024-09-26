@@ -2,7 +2,7 @@
 #include <spdlog/spdlog.h>
 
 TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_charge(1, 2), dis_drone(0, 299),
-                                             dis_tick(1, 20) {
+                                             dis_tick(1, 20){
     // spdlog::info("Creating TestGenerator object");
     std::cout << "Creating TestGenerator" << std::endl;
     // message_queue::remove("test_generator_queue");
@@ -69,7 +69,16 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
+// Signal handler function
+void signalHandler(int signum) {
+    std::cout << "[TestGenerator] Received signal " << signum << ", exiting gracefully..." << std::endl;
+    // Clean up and terminate the process
+    exit(signum);
+}
+
 void TestGenerator::Run() {
+    signal(SIGTERM, signalHandler);
+
     while (true) {
         // Generate a random float between 0 and 1 to decide the scenario
         float randomValue = generateRandomFloat();

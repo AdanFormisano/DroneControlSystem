@@ -75,8 +75,24 @@ public:
 private:
     std::mutex mtx;
     std::condition_variable cv;
-    int active_threads;
-    int waiting_threads;
+    std::atomic<int> active_threads;
+    std::atomic<int> waiting_threads;
+};
+
+class ThreadSemaphore
+{
+public:
+    ThreadSemaphore() : sem(0), active_threads(0) {}
+
+    void add_thread();
+    void remove_thread();
+    void sync();
+
+private:
+    std::counting_semaphore<> sem;
+    std::mutex mtx;
+    std::atomic_int active_threads;
+    std::atomic_int waiting_threads = 0;
 };
 
 #endif //THREADUTILS_H

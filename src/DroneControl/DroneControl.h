@@ -5,6 +5,7 @@
 #include "../../utils/RedisUtils.h"
 #include "../Database/Buffer.h"
 #include "../Database/Database.h"
+#include "../Database/NewBuffer.h"
 
 using namespace sw::redis;
 
@@ -24,13 +25,15 @@ private:
     std::string stream = "scanner_stream";
     std::string group = "scanner_group";
     std::array<std::unordered_set<coords>, 300> drones_paths{}; // Working paths for drones
+    std::atomic_bool sim_running{true};
+
+    std::mutex tick_mutex;
 
     Database db;
-    Buffer buffer;
+    NewBuffer buffer;
 
     void Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer, const std::array<std::unordered_set<coords>, 300> *drones_paths);
     void SendWaveSpawnCommand();
-    void TickCompleted();
     void GetDronePaths();
 };
 #endif //SYNCEDDRONECONTROL_H

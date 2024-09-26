@@ -1,7 +1,6 @@
- ☐ High consumption state
-     ☐ Drone has 0% charge and dies
+ ✔ High consumption state @done (24-09-25 22:15)
+     ✔ Drone has 0% charge and dies @done (24-09-25 22:15)
          Check if charge is 0%, if true send to Dead state
-
  ✔ Reconnected fault state @done (24-09-23 18:37)
  ✔ Disconnected fault state @done (24-09-23 21:14)
  ✔ Dead fault state @done (24-09-23 21:14)

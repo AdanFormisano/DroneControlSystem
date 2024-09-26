@@ -1,7 +1,7 @@
 #include "Wave.h"
 
-Wave::Wave(int tick_n, const int wave_id, Redis& shared_redis, TickSynchronizer& synchronizer) :
-    redis(shared_redis), tick(tick_n), tick_sync(synchronizer)
+Wave::Wave(int tick_n, int wave_id, Redis& shared_redis, ThreadSemaphore* tick_sync) :
+    redis(shared_redis), tick(tick_n), id(wave_id), sem_sync(tick_sync)
 {
     // To recycle a drone means to create a new wave with the fully charged drones used in the same "position"
     // of the previous wave. But because each drone's id has its "old" wave id, we need to change it to the new wave id
@@ -94,14 +94,14 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
     if(state!=drone_state_enum::NONE)
     {
         drones[drone_id]->setState(getDroneState(state));
+        std::cout << "[TestGenerator] TICK " << tick << " Drone " << wave_drone_id << " state set to " <<
+            utils::droneStateToString(state) << std::endl;
     }
 
     drones[drone_id]->reconnect_tick = reconnect_tick;
     drones[drone_id]->high_consumption_factor = high_consumption_factor;
 
     // spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
-    std::cout << "[TestGenerator] TICK " << tick << " Drone " << wave_drone_id << " state set to " <<
-        utils::droneStateToString(state) << std::endl;
 }
 
 int Wave::RecycleDrones()
@@ -148,20 +148,19 @@ bool Wave::AllDronesAreDead()
 void Wave::Run()
 {
     // spdlog::info("Wave {} started", id);
-    std::cout << "Wave " << id << " started" << std::endl;
-    tick_sync.thread_started();
+    // std::cout << "Wave " << id << " started" << std::endl;
+    // tick_sync.thread_started();
+    sem_sync->add_thread();
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // A redis pipeline is used to upload the data to the redis server
     // Create a pipeline from the group of redis co nnections
     auto pipe = redis.pipeline(false);
 
-    bool AreDroneDead = false;
-
-    while (!AreDroneDead)
+    while (!AllDronesAreDead())
     {
-        AreDroneDead = AllDronesAreDead();
-        std::cout << "Wave " << id << " tick " << tick << " drones are all dead: "<< AreDroneDead << std::endl;
+        // std::cout << "[" << std::this_thread::get_id() << "] Wave " << id << " - TICK " << tick << " just started" << std::endl;
+        // std::cout << "Wave " << id << " tick " << tick << " drones are all dead: "<< AreDroneDead << std::endl;
         // spdlog::info("Wave {} tick {}", id, tick);
         // std::cout << "Wave " << id << " tick " << tick << std::endl;
 
@@ -203,12 +202,17 @@ void Wave::Run()
 
             pipe.exec();
 
+            // auto last_reply = replies.get<std::string>(-1);
+
+            // std::cout << "Wave " << id << " - Last reply: " << last_reply << std::endl;
+
             // Delete drones that are dead
             DeleteDrones();
 
             // Each tick of the execution will be synced with the other threads. This will make writing to the DB much easier
             // because the data will be consistent/historical
-            tick_sync.tick_completed();
+            // tick_sync.tick_completed();
+            sem_sync->sync();
             tick++;
         }
         catch (const TimeoutError& e)
@@ -228,7 +232,8 @@ void Wave::Run()
     // Remove self from alive waves on Redis
     redis.srem("waves_alive", std::to_string(id));
 
-    tick_sync.thread_finished();
+    // tick_sync.thread_finished();
+    sem_sync->remove_thread();
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     // spdlog::info("Wave {} duration: {}ms", id, duration.count());

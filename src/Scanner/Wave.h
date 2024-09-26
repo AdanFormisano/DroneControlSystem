@@ -12,7 +12,7 @@ class Drone;
 
 class Wave {
 public:
-    Wave(int tick_n, int wave_id, Redis &shared_redis, TickSynchronizer &synchronizer);
+    Wave(int tick_n, int wave_id, Redis &shared_redis, ThreadSemaphore *tick_sync);
 
     void Run(); // Function executed by the thread
 
@@ -31,7 +31,8 @@ public:
 private:
     int id = 0;
     std::vector<Drone*> drones;
-    TickSynchronizer &tick_sync;
+    // TickSynchronizer &tick_sync;
+    ThreadSemaphore *sem_sync;
     int ready_drones = 0;
 
     void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick, float high_consumption_factor);

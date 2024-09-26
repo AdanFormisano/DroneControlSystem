@@ -24,7 +24,7 @@ inline std::string sync_channel = "SYNC";
 inline auto tick_duration_ms = std::chrono::milliseconds(300);
 // duration of 1 tick in milliseconds. 50ms is minimum I could set without the simulation breaking
 inline auto sim_duration_ms = std::chrono::milliseconds(3000000); // duration of the simulation in milliseconds
-inline int sim_duration_ticks = 8000;                           // duration of the simulation in ticks
+inline int sim_duration_ticks = 6000;                           // duration of the simulation in ticks
 
 inline float coord_min = -2980.0f;
 inline float coord_max = 2980.0f;

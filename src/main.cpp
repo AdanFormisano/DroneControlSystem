@@ -201,38 +201,35 @@ int main()
                         sem_wait(sem_cb);
 
                         ++tick_n;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(20)); // <-- Use this to slow down the simulation and check if the system is actuallyy synced
                         // spdlog::info("=====================================");
                         std::cout << "=====================================" << std::endl;
                     }
                     // Stop time watch
-                    auto end_time = std::chrono::high_resolution_clock::now();
-                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-                    // spdlog::info("Simulation duration: {} ms", duration);
-                    std::cout << "Simulation duration: " << duration << " ms" << std::endl;
+                    auto sim_end_time = std::chrono::high_resolution_clock::now();
 
                     // Use Redis to stop the simulation
                     main_redis.set("sim_running", "false");
 
                     // Join monitor's thread
-                    rtm.JoinThread();
-                    zcm.JoinThread();
-                    dcm.JoinThread();
-                    trd.JoinThread();
+                    // rtm.JoinThread();
+                    // zcm.JoinThread();
+                    // dcm.JoinThread();
+                    // trd.JoinThread();
 
                     // Wait for child processes to finish
                     kill(pid_test_generator, SIGTERM);
+                    waitpid(pid_drone_control, nullptr, 0);
                     waitpid(pid_drone, nullptr, 0);
                     waitpid(pid_charge_base, nullptr, 0);
-                    waitpid(pid_drone_control, nullptr, 0);
 
                     // Get shutoff time
                     auto shutoff_time = std::chrono::high_resolution_clock::now();
                     auto shutoff_duration = std::chrono::duration_cast<std::chrono::milliseconds>(shutoff_time - start_time).count();
-                    // spdlog::info("Entire system duration: {} ms", shutoff_duration);
+                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(sim_end_time - start_time).count();
+                    std::cout << "Simulation duration: " << duration << " ms" << std::endl;
                     std::cout << "Entire system duration: " << shutoff_duration << " ms" << std::endl;
 
-                    std::this_thread::sleep_for(std::chrono::seconds(10));
+                    std::this_thread::sleep_for(std::chrono::seconds(5));
                     std::cout << "Exiting..." << std::endl;
                 }
             }

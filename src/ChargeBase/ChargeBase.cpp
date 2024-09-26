@@ -50,7 +50,7 @@ void ChargeBase::Run()
     }
 
     // spdlog::info("ChargeBase process finished");
-    std::cout << "[ChargeBase] ChargeBase process finished" << std::endl;
+    std::cout << "[ChargeBase] finished" << std::endl;
 }
 
 // Read the charge_stream and adds the drones to the vector of drones to charge
