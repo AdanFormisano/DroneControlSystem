@@ -11,5 +11,6 @@ build/
 cmake-build-debug/
 cmake-build-debug_light/
 cmake-build-debug-lite/
+cmake-build-release/
 .idea/misc.xml
 .idea/vcs.xml
