@@ -264,7 +264,7 @@ void DroneControl::GetDronePaths()
         coords step = {-3010.0f, static_cast<float>(Y)};
 
         // Iterate over the steps
-        for (int j = 0; j < 299; j++)
+        for (int j = 0; j < 300; j++)
         {
             step.x += 20.0f;
             drones_paths[i].insert(step);

@@ -8,12 +8,12 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
     // message_queue::remove("test_generator_queue");
 
     // Everything_is_fine scenario [80%]
-    scenarios[0.8f] = []() {
+    scenarios[0.4f] = []() {
         // spdlog::info("Everything is fine");
     };
 
     // High_consumption [5%]
-    scenarios[0.85f] = [this]() {
+    scenarios[0.6f] = [this]() {
         // Choose a random drone to increase its consumption rate
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
@@ -29,7 +29,7 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
 
 
     // Drone_failure scenario (drone stops working) [10%]
-    scenarios[0.9f] = [this]() {
+    scenarios[0.8f] = [this]() {
         // Choose a random drone to explode
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
@@ -38,7 +38,7 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
         mq.send(&msg, sizeof(msg), 0);
 
         // spdlog::warn("Drone {} exploded", drone_id);
-        std::cout << "Drone " << drone_id << " exploded" << std::endl;
+        std::cout << "[TestGenerator] Drone " << drone_id << " exploded" << std::endl;
     };
 
     // Connection_lost scenario (drone loses connection to the DroneControl system) [10%]
@@ -55,13 +55,13 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
             TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, reconnect_tick, 1};
             mq.send(&msg, sizeof(msg), 0);
             // spdlog::warn("Drone {} disconnected and will reconnect after {} tick", drone_id, reconnect_tick);
-            std::cout << "Drone " << drone_id << " disconnected and will reconnect after " << reconnect_tick << " tick" << std::endl;
+            std::cout << "[TestGenerator] Drone " << drone_id << " disconnected and will reconnect after " << reconnect_tick << " tick" << std::endl;
         } else {
             // Send a message to ScannerManager to set the drone's status to "DISCONNECTED"
             TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1, 1};
             mq.send(&msg, sizeof(msg), 0);
             // spdlog::warn("Drone {} disconnected", drone_id);
-            std::cout << "Drone " << drone_id << " disconnected" << std::endl;
+            std::cout << "[TestGenerator] Drone " << drone_id << " disconnected" << std::endl;
         }
     };
 

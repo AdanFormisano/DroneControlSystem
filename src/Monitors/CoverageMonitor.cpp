@@ -6,6 +6,8 @@
  *
  * checkAreaCoverage(): This monitor checks that all the zones of the 6x6 Km area are verified for every given tick.
  */
+#include <iostream>
+
 #include "Monitor.h"
 
 /**
@@ -17,50 +19,52 @@
 void CoverageMonitor::checkCoverage()
 {
     spdlog::info("COVERAGE-MONITOR: Initiated...");
-    boost::this_thread::sleep_for(boost::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
     try
     {
         // TODO: Use better condition
-        while(true)
+        while (true)
         {
-            checkZoneVerification();
+            checkWaveVerification();
             checkAreaCoverage();
 
             // Sleep for 20 seconds
-            boost::this_thread::sleep_for(boost::chrono::seconds(20));
+            boost::this_thread::sleep_for(boost::chrono::seconds(15));
         }
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         spdlog::error("COVERAGE-MONITOR: {}", e.what());
     }
 }
 
-void CoverageMonitor::checkZoneVerification()
+void CoverageMonitor::checkWaveVerification()
 {
-    spdlog::info("COVERAGE-MONITOR: Checking zone verification...");
+    spdlog::info("COVERAGE-MONITOR: Checking wave verification...");
 
-    if (auto failed_zones = getZoneVerification(); failed_zones.empty())
+    if (auto failed_waves = getWaveVerification(); failed_waves.empty())
     {
-        spdlog::info("COVERAGE-MONITOR: No zone failed until tick {}", tick_last_read); // TODO: Better english pls
-    } else
+        spdlog::info("COVERAGE-MONITOR: No wave failed until tick {}", tick_last_read); // TODO: Better english pls
+    }
+    else
     {
-        for (const auto &zone : failed_zones)
+        for (const auto& wave : failed_waves)
         {
-            int zone_id = zone[0];
-            int tick_n = zone[1];
-            int drone_id = zone[2];
+            int wave_id = wave[0];
+            int tick_n = wave[1];
+            int drone_id = wave[2];
 
             // Enqueue failed checks
             failed_ticks.insert(tick_n);
 
-            spdlog::warn("COVERAGE-MONITOR: Zone {} was not verified by drone {} at tick {}", zone_id, drone_id, tick_n);
+            spdlog::warn("COVERAGE-MONITOR: Wave {} was not verified by drone {} at tick {}", wave_id, drone_id,
+                         tick_n);
 
-            std::string q = "INSERT INTO monitor_logs (tick_n, zone_cover) "
-                    "VALUES (" + std::to_string(tick_n) + ", ARRAY[" + std::to_string(zone_id) + "]) "
-                    "ON CONFLICT (tick_n) DO UPDATE SET "
-                        "zone_cover = array_append(monitor_logs.zone_cover, " + std::to_string(zone_id) + ");";
+            std::string q = "INSERT INTO monitor_logs (tick_n, wave_cover) "
+                "VALUES (" + std::to_string(tick_n) + ", ARRAY[" + std::to_string(wave_id) + "]) "
+                "ON CONFLICT (tick_n) DO UPDATE SET "
+                "wave_cover = array_append(monitor_logs.wave_cover, " + std::to_string(wave_id) + ");";
 
             WriteToDB(q);
         }
@@ -75,44 +79,69 @@ void CoverageMonitor::checkAreaCoverage()
     if (!failed_ticks.empty())
     {
         std::string f;
-        for (const auto &tick : failed_ticks)
+        for (const auto& tick : failed_ticks)
         {
             f += std::to_string(tick) + ", ";
 
             std::string q = "INSERT INTO monitor_logs (tick_n, area_cover) "
-                        "VALUES (" + std::to_string(tick) + ", 'FAILED') "
-                        "ON CONFLICT (tick_n) DO UPDATE SET "
-                            "area_cover = 'FAILED';";
-            WriteToDB(q);   // This will maybe cause a lot of overhead
+                "VALUES (" + std::to_string(tick) + ", 'FAILED') "
+                "ON CONFLICT (tick_n) DO UPDATE SET "
+                "area_cover = 'FAILED';";
+            WriteToDB(q); // This will maybe cause a lot of overhead
         }
         f.resize(f.size() - 2);
         spdlog::warn("COVERAGE-MONITOR: Failed ticks: {}", f);
 
         failed_ticks.clear();
-    } else {
-        spdlog::info("COVERAGE-MONITOR: All zones were verified until tick {}", tick_last_read);
+    }
+    else
+    {
+        spdlog::info("COVERAGE-MONITOR: All waves were verified until tick {}", tick_last_read);
     }
 }
 
-std::vector<std::array<int,3>>CoverageMonitor::getZoneVerification()
+std::vector<std::array<int, 3>> CoverageMonitor::getWaveVerification()
 {
-    pqxx::nontransaction N(db.getConnection());
+    pqxx::work txn(db.getConnection()); // Begin a transaction
 
-    // Get the zones that were verified
-        auto r = N.exec("SELECT zone, tick_n, drone_id FROM drone_logs "
-               "WHERE status = 'WORKING' AND checked = FALSE AND tick_n > " + std::to_string(tick_last_read) +
-               " ORDER BY tick_n DESC");
+    //Run the main query
+    auto r = txn.exec(
+        "SELECT wave, tick_n, drone_id "
+        "FROM drone_logs "
+        "WHERE status = 'WORKING' AND checked = FALSE AND tick_n > " + std::to_string(tick_last_read) + " "
+        "ORDER BY tick_n DESC;"
+    );
+
+    // Get the maximum tick in the entire table
+    auto max_tick_result = txn.exec("SELECT MAX(tick_n) AS max_tick_in_db FROM drone_logs;");
+    // if (!max_tick_result[0]["max_tick_in_db"].is_null())
+    // {
+    //     tick_last_read = max_tick_result[0]["max_tick_in_db"].as<int>();
+    // }
+
+    tick_last_read = max_tick_result[0]["max_tick_in_db"].is_null() ? 0 : max_tick_result[0]["max_tick_in_db"].as<int>();
+
+    // Commit the transaction
+    txn.commit();
+
+    // Now you can process the results
+    std::cout << "[Monitor] Max Tick in DB: " << tick_last_read << std::endl;
 
     if (!r.empty())
     {
-        tick_last_read = r[0][1].as<int>();
-        // spdlog::info("COVERAGE-MONITOR: Last tick checked: {}", last_tick);
-        std::vector<std::array<int,3>> zones_not_verified; // zone_id, tick_n, drone_id
-        for (const auto &row : r)
+        std::vector<std::array<int, 3>> wave_not_verified;
+        for (const auto& row : r)
         {
-            zones_not_verified.emplace_back(std::array{row[0].as<int>(), row[1].as<int>(), row[2].as<int>()});
+
+            int wave = row["wave"].is_null() ? 0 : row["wave"].as<int>();
+            int tick_n = row["tick_n"].is_null() ? 0 : row["tick_n"].as<int>();
+            int drone_id = row["drone_id"].is_null() ? 0 : row["drone_id"].as<int>();
+
+            wave_not_verified.emplace_back(std::array{wave, tick_n, drone_id});
+
+            std::cout << "Wave: " << wave << ", Tick: " << tick_n << ", Drone ID: " << drone_id << std::endl;
         }
-        return zones_not_verified;
+        return wave_not_verified;
     }
     return {};
 }

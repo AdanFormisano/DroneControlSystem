@@ -38,7 +38,7 @@ public:
 
 protected:
     Database db;        ///< Connection to Database
-    boost::thread t;    ///< Thread for execution of monitor
+    std::thread t;    ///< Thread for execution of monitor
     int tick_last_read = 0;
 
     void WriteToDB(const std::string& query);
@@ -97,8 +97,6 @@ public:
      */
     void RunMonitor() override;
 
-    int last_tick = 0;  ///< Last tick that was checked/read from DB
-
 private:
     std::set<int> failed_ticks;
     std::vector<std::array<int,3>> failed_data;
@@ -112,7 +110,7 @@ private:
      * \brief Checks the verification status of each zone.
      * \param N A nontransaction object for executing the query.
      */
-    void checkZoneVerification();
+    void checkWaveVerification();
 
     /**
      * \brief Checks the coverage of the entire area.
@@ -124,7 +122,7 @@ private:
      * \param N A nontransaction object for executing the query.
      * \return A vector of arrays, each containing the zone ID, tick number, and drone ID.
      */
-    std::vector<std::array<int,3>> getZoneVerification();
+    std::vector<std::array<int,3>> getWaveVerification();
 };
 
 /**

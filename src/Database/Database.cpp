@@ -66,7 +66,7 @@ void Database::get_DB() {
             W.exec(
                 "CREATE TABLE monitor_logs ("
                 "tick_n INT PRIMARY KEY, "
-                "zone_cover INT[], "
+                "wave_cover INT[], "
                 "area_cover VARCHAR(255), "
                 "charge_drone_id INT[], "
                 "charge_percentage INT[], "

@@ -154,13 +154,15 @@ int main()
                     // In Main process
                     auto main_redis = Redis(connection_options);
 
+                    spdlog::set_pattern("[%T.%e][%^%l%$][Monitor] %v");
+
                     // Start monitors
                     RechargeTimeMonitor rtm(main_redis);
-                    CoverageMonitor zcm(main_redis);
+                    CoverageMonitor acm(main_redis);
                     DroneChargeMonitor dcm(main_redis);
                     TimeToReadDataMonitor trd(main_redis);
                     // rtm.RunMonitor(); //TODO: Bring out the thread from inside the function
-                    // zcm.RunMonitor(); //TODO: Bring out the thread from inside the function
+                    acm.RunMonitor(); //TODO: Bring out the thread from inside the function
                     // dcm.RunMonitor();
                     // trd.RunMonitor();
 
@@ -212,7 +214,7 @@ int main()
 
                     // Join monitor's thread
                     // rtm.JoinThread();
-                    // zcm.JoinThread();
+                    acm.JoinThread();
                     // dcm.JoinThread();
                     // trd.JoinThread();
 
