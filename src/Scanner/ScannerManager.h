@@ -7,8 +7,8 @@
 #include "../../libs/boost/interprocess/ipc/message_queue.hpp"
 #include "../../utils/RedisUtils.h"
 #include "../../utils/utils.h"
-#include "Wave.h"
 #include "ThreadUtils.h"
+#include "Wave.h"
 
 using namespace boost::interprocess;
 
@@ -29,7 +29,7 @@ private:
     std::unordered_map<int, std::shared_ptr<Wave>> waves;
     Redis &shared_redis;
     int tick = 0;
-    int timeout_ms = 2000;
+    int timeout_ms = 5000;
     int wave_id = 0;
 
     bool CheckSpawnWave() const;

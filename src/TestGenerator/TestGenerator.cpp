@@ -1,10 +1,10 @@
 #include "TestGenerator.h"
 #include "../globals.h"
-#include <spdlog/spdlog.h>
-#include <iostream>
 #include <csignal>
+#include <iostream>
+#include <spdlog/spdlog.h>
 
-TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_charge(1, 2), dis_drone(0, 299),
+TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_charge(1.5, 2), dis_drone(0, 299),
                                              dis_tick(1, 20) {
     // spdlog::info("Creating TestGenerator object");
     std::cout << "Creating TestGenerator" << std::endl;
@@ -20,17 +20,18 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
         // Choose a random drone to increase its consumption rate
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
-        // Generate a random high consumption factor between 1 and 2
+        // Generate a random high consumption factor between 1.5 and 2
         float high_consumption_factor = dis_charge(gen);
 
         // Send a message to ScannerManager to set the drone's high consumption factor
-        TG_data msg = {drone_id, wave_id, drone_state_enum::NONE, -1, high_consumption_factor};
+        TG_data msg = {drone_id, wave_id,
+                       drone_state_enum::NONE, -1, high_consumption_factor};
         mq.send(&msg, sizeof(msg), 0);
 
         spdlog::warn("Drone {} has high consumption factor of {}", drone_id, high_consumption_factor);
     };
 
-    // Drone_failure scenario (drone stops working) [10%]
+    // Drone_failure scenario (drone stops working) [5%]
     scenarios[0.9f] = [this]() {
         // Choose a random drone to explode
         auto [wave_id, drone_id] = ChooseRandomDrone();
