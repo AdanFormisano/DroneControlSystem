@@ -146,7 +146,7 @@ void Charging::run(Drone *drone) {
     ChargingStreamData data(drone->id, drone->wave_id, drone->charge,
                             utils::droneStateToString(drone_state_enum::CHARGING));
     auto v = data.toVector();
-    drone->ctx.redis.xadd("charging_stream", "*", v.begin(), v.end());
+    drone->ctx.redis.xadd("charge_stream", "*", v.begin(), v.end());
 
     // Drone has sent its data to Redis, now it can charge (die)
     drone->setState(Dead::getInstance());

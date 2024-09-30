@@ -4,10 +4,10 @@
 #include <array>
 #include <chrono>
 #include <string>
+#include <sw/redis++/redis.h>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <sw/redis++/redis.h>
 
 // #define OLD_DRONE_CONSUMPTION_RATE 0.00672f // Normal consumption rate
 #define DRONE_CONSUMPTION_RATE 0.13444f
@@ -25,7 +25,7 @@ inline std::string sync_channel = "SYNC";
 inline auto tick_duration_ms = std::chrono::milliseconds(300);
 // duration of 1 tick in milliseconds. 50ms is minimum I could set without the simulation breaking
 inline auto sim_duration_ms = std::chrono::milliseconds(3000000); // duration of the simulation in milliseconds
-inline int sim_duration_ticks = 6000;                           // duration of the simulation in ticks
+inline int sim_duration_ticks = 6000;                             // duration of the simulation in ticks
 
 inline float coord_min = -2980.0f;
 inline float coord_max = 2980.0f;
@@ -38,7 +38,7 @@ struct coords {
 
     coords(float x, float y) : x(x), y(y) {}
 
-    bool operator==(const coords& other) const {
+    bool operator==(const coords &other) const {
         return x == other.x && y == other.y;
     }
 };
@@ -46,8 +46,7 @@ struct coords {
 // Hash function for coords
 template <>
 struct std::hash<coords> {
-    std::size_t operator()(const coords& c) const noexcept
-    {
+    std::size_t operator()(const coords &c) const noexcept {
         return std::hash<float>()(c.x) ^ std::hash<float>()(c.y);
     }
 };
@@ -73,6 +72,7 @@ enum class drone_state_enum {
     RECONNECTED,
     DEAD,
     CHARGING,
+    CHARGING_COMPLETED,
     NONE
 };
 
@@ -85,7 +85,9 @@ constexpr std::array drone_state_str = {
     "DISCONNECTED",
     "RECONNECTED",
     "DEAD",
-    "CHARGING"};
+    "CHARGING",
+    "CHARGING_COMPLETED",
+};
 
 struct DroneData {
     std::string tick_n;
@@ -122,7 +124,7 @@ struct DroneData {
     }
 
     DroneData(const int tick_n, std::string id, std::string status, std::string charge,
-              const std::pair<float, float>& position, std::string zone_id, std::string checked)
+              const std::pair<float, float> &position, std::string zone_id, std::string checked)
         : tick_n(std::to_string(tick_n)),
           id(std::move(id)),
           status(std::move(status)),
@@ -180,10 +182,10 @@ struct ChargingStreamData {
 };
 
 struct TG_data {
-    int drone_id;                  // ID of the drone
-    int wave_id;                   // ID of the wave
-    drone_state_enum new_state;    // New state of the drone
-    int reconnect_tick;            // Contains the number of ticks after the disconnection
+    int drone_id;               // ID of the drone
+    int wave_id;                // ID of the wave
+    drone_state_enum new_state; // New state of the drone
+    int reconnect_tick;         // Contains the number of ticks after the disconnection
     // when the drone reconnected (-1 if not reconnecting)
     float high_consumption_factor; // Multiplies the drone consumption value
 };
