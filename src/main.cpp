@@ -27,8 +27,6 @@
 #include <unistd.h>
 #include <iostream>
 #include <sys/wait.h>
-
-#include "DroneControl/DroneControl.h"
 #include "Scanner/ScannerManager.h"
 
 using namespace sw::redis;
@@ -117,7 +115,7 @@ int main()
 
                 // Set the charge rate for the charging slots
                 thread_local std::random_device rd;
-                cb->SetEngine(rd); // TODO: Check if every slot has the same charge rate
+                cb->SetEngine(); // TODO: Check if every slot has the same charge rate
 
                 // Start simulation
                 cb->Run();
@@ -157,10 +155,10 @@ int main()
                     spdlog::set_pattern("[%T.%e][%^%l%$][Monitor] %v");
 
                     // Start monitors
-                    RechargeTimeMonitor rtm(main_redis);
-                    CoverageMonitor acm(main_redis);
-                    DroneChargeMonitor dcm(main_redis);
-                    TimeToReadDataMonitor trd(main_redis);
+                                // RechargeTimeMonitor rtm(main_redis);
+                                CoverageMonitor acm(main_redis);
+                                // DroneChargeMonitor dcm(main_redis);
+                                // TimeToReadDataMonitor trd(main_redis);
                     // rtm.RunMonitor(); //TODO: Bring out the thread from inside the function
                     acm.RunMonitor(); //TODO: Bring out the thread from inside the function
                     // dcm.RunMonitor();
@@ -181,7 +179,6 @@ int main()
                     // Used for ChargeBase end of tick synchronization
 
                     // Start simulation
-                    auto sim_end_after = sim_duration_ms / tick_duration_ms;
                     int tick_n = 0;
 
                     // Start timewatch
@@ -212,17 +209,18 @@ int main()
                     // Use Redis to stop the simulation
                     main_redis.set("sim_running", "false");
 
-                    // Join monitor's thread
-                    // rtm.JoinThread();
-                    acm.JoinThread();
-                    // dcm.JoinThread();
-                    // trd.JoinThread();
 
                     // Wait for child processes to finish
                     kill(pid_test_generator, SIGTERM);
                     waitpid(pid_drone_control, nullptr, 0);
                     waitpid(pid_drone, nullptr, 0);
                     waitpid(pid_charge_base, nullptr, 0);
+
+                    // Join monitor's thread
+                    // rtm.JoinThread();
+                    acm.JoinThread();
+                    // dcm.JoinThread();
+                    // trd.JoinThread();
 
                     // Get shutoff time
                     auto shutoff_time = std::chrono::high_resolution_clock::now();

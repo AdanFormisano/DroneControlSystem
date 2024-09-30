@@ -1,5 +1,8 @@
 #include "TestGenerator.h"
+#include "../globals.h"
 #include <spdlog/spdlog.h>
+#include <iostream>
+#include <csignal>
 
 TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_charge(1, 2), dis_drone(0, 299),
                                              dis_tick(1, 20) {
@@ -90,7 +93,6 @@ void TestGenerator::Run() {
             it->second();
         }
 
-        // Sleep for 5 seconds
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }

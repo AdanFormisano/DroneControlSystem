@@ -1,8 +1,6 @@
 #ifndef DRONECONTROLSYSTEM_TESTGENERATOR_H
 #define DRONECONTROLSYSTEM_TESTGENERATOR_H
 #include "../../libs/boost/interprocess/ipc/message_queue.hpp"
-#include "../../utils/utils.h"
-#include "../globals.h"
 #include "sw/redis++/redis++.h"
 #include <functional>
 #include <map>

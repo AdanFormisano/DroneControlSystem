@@ -16,8 +16,6 @@ add_executable(DroneControlSystem
         src/globals.h
         src/Database/Database.cpp
         src/Database/Database.h
-        src/Database/Buffer.cpp
-        src/Database/Buffer.h
         src/TestGenerator/TestGenerator.cpp
         src/TestGenerator/TestGenerator.h
         utils/RedisUtils.cpp
@@ -61,10 +59,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
-find_package(Boost REQUIRED COMPONENTS thread)
-find_package(Boost REQUIRED COMPONENTS chrono)
-find_package(Boost REQUIRED COMPONENTS system)
-
 include_directories(${CMAKE_SOURCE_DIR}/libs)
 
 
@@ -91,10 +85,4 @@ target_include_directories(DroneControlSystem PUBLIC ${LIBPQXX_HEADER})
 find_library(LIBPQXX_LIB pqxx)
 find_library(PQ_LIB pq REQUIRED)
 target_link_libraries(DroneControlSystem ${LIBPQXX_LIB} ${PQ_LIB})
-
-target_include_directories(DroneControlSystem PUBLIC ${Boost_INCLUDE_DIRS})
-target_link_libraries(DroneControlSystem ${Boost_LIBRARIES})
-target_link_libraries(DroneControlSystem ${Boost_SYSTEM_LIBRARY})
-target_link_libraries(DroneControlSystem ${Boost_THREAD_LIBRARY})
-target_link_libraries(DroneControlSystem ${Boost_CHRONO_LIBRARY})
 

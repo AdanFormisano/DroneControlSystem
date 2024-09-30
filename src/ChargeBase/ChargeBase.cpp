@@ -60,11 +60,11 @@ void ChargeBase::ReadChargeStream()
     // This NEEDS to be a vector for xread to work
     using new_Item = std::pair<std::string, new_Attrs>;
     using new_ItemStream = std::vector<new_Item>;
-    std::unordered_map<std::string, new_ItemStream> new_result;
 
     // Parse the stream and save/update the drones' data, trims the stream after reading
     try
     {
+        std::unordered_map<std::string, new_ItemStream> new_result;
         // TODO: Check of number_items_stream is necessary
         // Gets the number of items in the stream
         auto number_items_stream = redis.command<long long>("XLEN", "charge_stream");
@@ -172,7 +172,7 @@ void ChargeBase::ChargeDroneMegaSpeed()
     }
 }
 
-void ChargeBase::ReleaseDrone(ChargingDroneData& drone_data)
+void ChargeBase::ReleaseDrone(const ChargingDroneData& drone_data) const
 {
     // Add the drone to the list of charged drones for SM (to recycle drones)
     redis.sadd("charged_drones", std::to_string(drone_data.id));
@@ -183,9 +183,9 @@ void ChargeBase::ReleaseDrone(ChargingDroneData& drone_data)
     redis.xadd("scanner_stream", "*", v.begin(), v.end());
 }
 
-
-void ChargeBase::SetEngine(std::random_device& rd)
+void ChargeBase::SetEngine()
 {
+    std::random_device rd;
     engine = std::mt19937(rd());
 }
 

@@ -1,12 +1,7 @@
-//
-// Created by roryu on 23/02/2024.
-//
-
 #ifndef DRONECONTROLSYSTEM_CHARGEBASE_H
 #define DRONECONTROLSYSTEM_CHARGEBASE_H
 
 #include <vector>
-#include <optional>
 #include <spdlog/spdlog.h>
 #include "../globals.h"
 #include "sw/redis++/redis++.h"
@@ -25,10 +20,10 @@ public:
 
     //not thread safe thought does it really need to be?
     static ChargeBase* getInstance(Redis& redis);
-    void SetEngine(std::random_device&);
+    void SetEngine();
     void ChargeDrone();
     void ChargeDroneMegaSpeed();
-    void ReleaseDrone(ChargingDroneData& drone_data);
+    void ReleaseDrone(const ChargingDroneData& drone_data) const;
     void Run();
 
 private:
@@ -37,7 +32,7 @@ private:
     std::string current_stream_id = "0-0";
     std::unordered_map<int, ChargingDroneData> charging_drones;
 
-    ChargeBase(Redis& redis);
+    explicit ChargeBase(Redis& redis);
 
     void ReadChargeStream();
     void SetChargeData(const std::vector<std::pair<std::string, std::string>>& data);

@@ -8,7 +8,7 @@ Wave::Wave(int tick_n, int wave_id, Redis& shared_redis, ThreadSemaphore* tick_s
     // Basically, we need to remove from Redis (charged_drones) the drones that are going to be recycled; but the actual
     // spawning of the drones doesn't change. If there are less then 300 drones to recycle, we need to create new drones
     // but this doesn't meter because we are creating every new drone, hiding the fact that we are recycling some of them
-    auto n_recycled_drones = RecycleDrones();
+    RecycleDrones();
 
     // spdlog::info("Wave {} recycled {} drones", wave_id, n_recycled_drones);
 
@@ -47,7 +47,7 @@ Wave::Wave(int tick_n, int wave_id, Redis& shared_redis, ThreadSemaphore* tick_s
     std::cout << "Wave " << id << " created all drones" << std::endl;
 }
 
-void Wave::UploadData()
+void Wave::UploadData() const
 {
     try
     {
@@ -85,7 +85,7 @@ void Wave::UploadData()
     }
 }
 
-void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick, float high_consumption_factor)
+void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick, float high_consumption_factor) const
 {
     // Set the drone state to the new state parameter
     int drone_id = wave_drone_id % 1000; // Get the drone id from the wave_drone_id
@@ -104,7 +104,7 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
     // spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
 }
 
-int Wave::RecycleDrones()
+void Wave::RecycleDrones() const
 {
     // Get the drones that are fully charged
     std::vector<std::string> charged_drones;
@@ -116,7 +116,7 @@ int Wave::RecycleDrones()
     std::ranges::transform(charged_drones, std::back_inserter(charged_drones_int),
                            [](const std::string& str) { return std::stoi(str); });
 
-    return static_cast<int>(charged_drones_int.size());
+    // return static_cast<int>(charged_drones_int.size());
 }
 
 void Wave::DeleteDrones()
@@ -142,7 +142,7 @@ void Wave::DeleteDrones()
 bool Wave::AllDronesAreDead()
 {
     // Check if all drones are dead
-    return std::ranges::all_of(drones, [](Drone* d) { return d == nullptr; });
+    return std::ranges::all_of(drones, [](const Drone* d) { return d == nullptr; });
 }
 
 void Wave::Run()
@@ -171,9 +171,6 @@ void Wave::Run()
             // TODO: In theory there will only ever be a single message in the queue, maybe we can optimize this
             // Get the message from the queue
             auto msg = tg_data.pop().value();
-            // spdlog::info("[TestGenerator] Drone has new state {}", utils::droneStateToString(msg.new_state));
-            std::cout << "[TestGenerator] Drone has new state " << utils::droneStateToString(msg.new_state) <<
-                std::endl;
 
             setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick, msg.high_consumption_factor);
         }

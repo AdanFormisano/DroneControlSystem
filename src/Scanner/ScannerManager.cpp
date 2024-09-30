@@ -2,7 +2,7 @@
 
 #include "spdlog/spdlog.h"
 
-bool ScannerManager::CheckSpawnWave()
+bool ScannerManager::CheckSpawnWave() const
 {
     try
     {
@@ -90,7 +90,7 @@ void ScannerManager::Run()
         try
         {
             // Wait for the semaphore to be released
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            // std::this_thread::sleep_for(std::chrono::milliseconds(5));
             sem_wait(sem_sync);
             // spdlog::info("TICK: {}", tick);
             std::cout << "[ScannerManager] TICK: " << tick << std::endl;

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <sw/redis++/redis.h>
 
@@ -43,14 +44,13 @@ struct coords {
 };
 
 // Hash function for coords
-namespace std {
-    template <>
-    struct hash<coords> {
-        std::size_t operator()(const coords& c) const {
-            return std::hash<float>()(c.x) ^ std::hash<float>()(c.y);
-        }
-    };
-}
+template <>
+struct std::hash<coords> {
+    std::size_t operator()(const coords& c) const noexcept
+    {
+        return std::hash<float>()(c.x) ^ std::hash<float>()(c.y);
+    }
+};
 
 struct drone_data {
     int id;
@@ -121,16 +121,16 @@ struct DroneData {
         checked = "false";
     }
 
-    DroneData(int tick_n, const std::string &id, const std::string &status, const std::string &charge,
-              std::pair<float, float> position, const std::string &zone_id, const std::string &checked)
+    DroneData(const int tick_n, std::string id, std::string status, std::string charge,
+              const std::pair<float, float>& position, std::string zone_id, std::string checked)
         : tick_n(std::to_string(tick_n)),
-          id(id),
-          status(status),
-          charge(charge),
+          id(std::move(id)),
+          status(std::move(status)),
+          charge(std::move(charge)),
           x(std::to_string(position.first)),
           y(std::to_string(position.second)),
-          wave_id(zone_id),
-          checked(checked) {}
+          wave_id(std::move(zone_id)),
+          checked(std::move(checked)) {}
 
     [[nodiscard]] std::vector<std::pair<std::string, std::string>> toVector() const {
         return {

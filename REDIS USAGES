@@ -40,3 +40,4 @@ REDIS USAGES
 
 ---WAVES---
 - waves_alives						-> A SET of alive waves' IDs
+- charged_drones					-> A SET of fully charged and available drones

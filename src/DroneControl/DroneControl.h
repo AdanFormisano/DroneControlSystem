@@ -3,7 +3,6 @@
 #include "../globals.h"
 #include "../../utils/utils.h"
 #include "../../utils/RedisUtils.h"
-#include "../Database/Buffer.h"
 #include "../Database/Database.h"
 #include "../Database/NewBuffer.h"
 
@@ -33,7 +32,7 @@ private:
     NewBuffer buffer;
 
     void Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer, const std::array<std::unordered_set<coords>, 300> *drones_paths);
-    void SendWaveSpawnCommand();
+    void SendWaveSpawnCommand() const;
     void GetDronePaths();
 };
 #endif //SYNCEDDRONECONTROL_H

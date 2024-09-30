@@ -12,8 +12,8 @@ void DroneChargeMonitor::checkDroneCharge()
     {
         // Sleep for 5 seconds to let the zones calculate and upload the charge_needed to Redis
         spdlog::info("CHARGE-MONITOR: Initiated...");
-        boost::this_thread::sleep_for(boost::chrono::seconds(10));
-
+        // boost::this_thread::sleep_for(boost::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(10));
 
         // Get data needed to run monitor
         getChargeNeededForZones();
@@ -83,7 +83,8 @@ void DroneChargeMonitor::checkDroneCharge()
                 }
             }
             W.commit();
-            boost::this_thread::sleep_for(boost::chrono::seconds(20));
+            // boost::this_thread::sleep_for(boost::chrono::seconds(20));
+            std::this_thread::sleep_for(std::chrono::seconds(20));
         }
     }
     catch (const std::exception &e)
