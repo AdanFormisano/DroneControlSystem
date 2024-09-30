@@ -47,25 +47,21 @@ void Monitor::WriteToDB(const std::string &query) {
 
 void RechargeTimeMonitor::RunMonitor() {
     // Create a thread to run the monitor
-    // t = boost::thread(&RechargeTimeMonitor::checkDroneRechargeTime, this);
     t = std::thread(&RechargeTimeMonitor::checkDroneRechargeTime, this);
 }
 
 // Currently implemented by checking every log entry if the checked field is false
 void CoverageMonitor::RunMonitor() {
     // Create a thread to run the monitor
-    // t = boost::thread(&CoverageMonitor::checkCoverage, this);
     t = std::thread(&CoverageMonitor::checkCoverage, this);
 }
 
 void DroneChargeMonitor::RunMonitor() {
     // Create a thread to run the monitor
-    // t = boost::thread(&DroneChargeMonitor::checkDroneCharge, this);
     t = std::thread(&DroneChargeMonitor::checkDroneCharge, this);
 }
 
 void TimeToReadDataMonitor::RunMonitor() {
     // Create a thread to run the monitor
-    // t = boost::thread(&TimeToReadDataMonitor::checkTimeToReadData, this);
     t = std::thread(&TimeToReadDataMonitor::checkTimeToReadData, this);
 }

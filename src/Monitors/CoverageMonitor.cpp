@@ -24,13 +24,14 @@ void CoverageMonitor::checkCoverage()
     try
     {
         // TODO: Use better condition
-        while (true)
+        while (tick_last_read < sim_duration_ticks - 1)
         {
             checkWaveVerification();
             checkAreaCoverage();
 
             // Sleep for 20 seconds
-            boost::this_thread::sleep_for(boost::chrono::seconds(15));
+            // boost::this_thread::sleep_for(boost::chrono::seconds(15));
+            std::this_thread::sleep_for(std::chrono::seconds(15));
         }
     }
     catch (const std::exception& e)
@@ -62,9 +63,9 @@ void CoverageMonitor::checkWaveVerification()
                          tick_n);
 
             std::string q = "INSERT INTO monitor_logs (tick_n, wave_cover) "
-                "VALUES (" + std::to_string(tick_n) + ", ARRAY[" + std::to_string(wave_id) + "]) "
+                "VALUES (" + std::to_string(tick_n) + ", ARRAY[" + std::to_string(drone_id) + "]) "
                 "ON CONFLICT (tick_n) DO UPDATE SET "
-                "wave_cover = array_append(monitor_logs.wave_cover, " + std::to_string(wave_id) + ");";
+                "wave_cover = array_append(monitor_logs.wave_cover, " + std::to_string(drone_id) + ");";
 
             WriteToDB(q);
         }
@@ -105,11 +106,24 @@ std::vector<std::array<int, 3>> CoverageMonitor::getWaveVerification()
     pqxx::work txn(db.getConnection()); // Begin a transaction
 
     //Run the main query
+    // auto r = txn.exec(
+    //     "SELECT wave, tick_n, drone_id "
+    //     "FROM drone_logs "
+    //     "WHERE status = 'WORKING' AND checked = FALSE AND tick_n > " + std::to_string(tick_last_read) + " "
+    //     "ORDER BY tick_n DESC;"
+    // );
+
     auto r = txn.exec(
-        "SELECT wave, tick_n, drone_id "
+        "WITH StatusChange AS ("
+        "SELECT drone_id, tick_n, status, checked, wave, "
+        "LAG(status) OVER (PARTITION BY drone_id ORDER BY tick_n) AS prev_status "
         "FROM drone_logs "
-        "WHERE status = 'WORKING' AND checked = FALSE AND tick_n > " + std::to_string(tick_last_read) + " "
-        "ORDER BY tick_n DESC;"
+        "WHERE tick_n > " + std::to_string(tick_last_read) +
+        ") "
+        "SELECT * "
+        "FROM StatusChange "
+        "WHERE status IN ('DEAD', 'DISCONNECTED') "
+        "AND prev_status = 'WORKING';"
     );
 
     // Get the maximum tick in the entire table
@@ -119,7 +133,9 @@ std::vector<std::array<int, 3>> CoverageMonitor::getWaveVerification()
     //     tick_last_read = max_tick_result[0]["max_tick_in_db"].as<int>();
     // }
 
-    tick_last_read = max_tick_result[0]["max_tick_in_db"].is_null() ? 0 : max_tick_result[0]["max_tick_in_db"].as<int>();
+    tick_last_read = max_tick_result[0]["max_tick_in_db"].is_null()
+                         ? 0
+                         : max_tick_result[0]["max_tick_in_db"].as<int>();
 
     // Commit the transaction
     txn.commit();
@@ -132,7 +148,6 @@ std::vector<std::array<int, 3>> CoverageMonitor::getWaveVerification()
         std::vector<std::array<int, 3>> wave_not_verified;
         for (const auto& row : r)
         {
-
             int wave = row["wave"].is_null() ? 0 : row["wave"].as<int>();
             int tick_n = row["tick_n"].is_null() ? 0 : row["tick_n"].as<int>();
             int drone_id = row["drone_id"].is_null() ? 0 : row["drone_id"].as<int>();

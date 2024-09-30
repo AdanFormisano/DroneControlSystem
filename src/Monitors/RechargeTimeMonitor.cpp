@@ -57,7 +57,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
             W.commit();
 
             // Sleep for 20 seconds
-            boost::this_thread::sleep_for(boost::chrono::seconds(20));
+            std::this_thread::sleep_for(std::chrono::seconds(20));
         }
     }
     catch (const std::exception &e)
