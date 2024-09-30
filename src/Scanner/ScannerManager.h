@@ -8,7 +8,6 @@
 #include "../../utils/RedisUtils.h"
 #include "../../utils/utils.h"
 #include "Wave.h"
-#include "DroneState.h"
 #include "ThreadUtils.h"
 
 using namespace boost::interprocess;
@@ -33,7 +32,7 @@ private:
     int timeout_ms = 2000;
     int wave_id = 0;
 
-    bool CheckSpawnWave();
+    bool CheckSpawnWave() const;
     void SpawnWave();
 };
 #endif // SYNCEDSCANNERMANAGER_H

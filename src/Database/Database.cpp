@@ -83,7 +83,8 @@ void Database::get_DB() {
     }
 }
 
-void Database::ExecuteQuery(const std::string &query) {
+void Database::ExecuteQuery(const std::string &query) const
+{
     if (!conn || !conn->is_open()) {
         // spdlog::error("DB connection not established for query execution");
         std::cerr << "DB connection not established for query execution" << std::endl;

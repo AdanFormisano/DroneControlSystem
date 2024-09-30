@@ -18,7 +18,8 @@ void TimeToReadDataMonitor::checkTimeToReadData()
     try
     {
         spdlog::info("TIME-TO-READ-MONITOR: Initiated...");
-        boost::this_thread::sleep_for(boost::chrono::seconds(10));
+        // boost::this_thread::sleep_for(boost::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(10));
 
         // Create message queue
         message_queue mq(
@@ -69,17 +70,17 @@ void TimeToReadDataMonitor::checkTimeToReadData()
                 auto q_array =  oss.str();
 
                 // Insert into monitor_logs
-                std::string q = "INSERT INTO monitor_logs (tick_n, time_to_read) "
-                "VALUES (" + std::to_string(tick_last_read) + q_array + ") "
-                "ON CONFLICT (tick_n) DO UPDATE SET "
-                    "time_to_read = array_append(monitor_logs.time_to_read, " + q_array + ");";
+                std::string q = "INSERT INTO monitor_logs (tick_n, time_to_read) VALUES (";
+                q += std::to_string(tick_last_read) + q_array + ") ON CONFLICT (tick_n) DO UPDATE SET time_to_read = array_append(monitor_logs.time_to_read, ";
+                q += q_array + ");";
 
                 W.exec(q);
                 W.commit();
             }
 
 
-            boost::this_thread::sleep_for(boost::chrono::seconds(20));
+            // boost::this_thread::sleep_for(boost::chrono::seconds(20));
+            std::this_thread::sleep_for(std::chrono::seconds(20));
         }
     } catch (interprocess_exception &ex)
     {

@@ -8,11 +8,14 @@
  * - 4463 = number of ticks for 3 hours
  */
 
+#include <boost/thread.hpp>
+
 #include "Monitor.h"
 
 void RechargeTimeMonitor::checkDroneRechargeTime() {
     spdlog::info("RECHARGE-MONITOR: Initiated...");
-    boost::this_thread::sleep_for(boost::chrono::seconds(10));
+    // boost::this_thread::sleep_for(boost::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
     try
     {
@@ -36,9 +39,9 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
                     spdlog::warn("RECHARGE-MONITOR: Drone {} is still charging", drone_id);
                 } else {
                     if (const int delta_time = end_tick - start_tick; delta_time >= 2975 && delta_time <= 4463) {
-                        spdlog::info("RECHARGE-MONITOR: Drone {} has charged for {} minutes", drone_id, (delta_time * TICK_TIME_SIMULATED) / 60);
+                        spdlog::info("RECHARGE-MONITOR: Drone {} has charged for {} minutes", drone_id, (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
                     } else {
-                        spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time", drone_id, (delta_time * TICK_TIME_SIMULATED) / 60);
+                        spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time", drone_id, (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
 
                         // Insert into monitor_logs
                         std::string q = "INSERT INTO monitor_logs (tick_n, recharge_drone_id, recharge_duration) "

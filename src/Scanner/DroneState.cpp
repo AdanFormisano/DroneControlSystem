@@ -27,7 +27,6 @@ void ToStartingLine::run(Drone *drone)
     if (drone->charge <= 0)
     {
         drone->setState(Dead::getInstance());
-        return;
     }
 
     // Check if the drone has reached the starting line
@@ -75,7 +74,6 @@ void Ready::run(Drone *drone)
     if (drone->charge <= 0)
     {
         drone->setState(Dead::getInstance());
-        return;
     }
 
     if (drone->ctx.getReadyDrones() < 300)
@@ -105,7 +103,6 @@ void Working::run(Drone *drone)
     if (drone->charge <= 0)
     {
         drone->setState(Dead::getInstance());
-        return;
     }
 
     // Move to the right by 20 units
@@ -136,7 +133,6 @@ void ToBase::run(Drone *drone)
     if (drone->charge <= 0)
     {
         drone->setState(Dead::getInstance());
-        return;
     }
 
     // Check if the drone has reached the starting line
@@ -264,7 +260,6 @@ void Disconnected::run(Drone *drone)
         if (drone->charge <= 0)
         {
             drone->setState(Dead::getInstance());
-            return;
         }
 
         switch (drone->previous)

@@ -149,9 +149,16 @@ void ThreadSemaphore::sync()
         //           << " - Waiting threads: " << waiting_threads << std::endl;
         if (waiting_threads == active_threads)
         {
+            // std::cout << "Thread ID: " << std::this_thread::get_id()
+            //       << " - Active threads: " << active_threads
+            //       << " - Waiting threads: " << waiting_threads << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
             sem.release(active_threads);
             waiting_threads = 0;
         }
     }
+    // std::cout << "Thread ID: " << std::this_thread::get_id()
+    //               << " - Active threads: " << active_threads
+    //               << " - Waiting threads: " << waiting_threads << std::endl;
     sem.acquire();
 }

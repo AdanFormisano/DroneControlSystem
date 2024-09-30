@@ -6,6 +6,10 @@
  ✔ Dead fault state @done (24-09-23 21:14)
 
 ============================================= 
+ ☐ Debug case where charge is 0% and drone should go to DEAD
+ ☐ Change DEAD state to "Empty" Drone => DB will have entries for dead drones that the monitors can analyze (for the duration of the wave life)
+ ☐ Consider encreasing High_consumption factor (at least 1.5x)
+
  ✔ Correctly terminate the simulation @done (24-09-25 18:15)
      ✔ Check if DB has all the simulated ticks @done (24-09-25 18:15)
  ✔ DC "checked" calculations @done (24-09-25 18:00)
@@ -22,7 +26,9 @@
  ☐ DroneChargeMonitor
      ☐ Fix query for drones that arrived at base
      ☐ Fix query for exploded drones
+ ☐ CoverageMonitor
+     ☐ WaveCoverageMonitor
+     ☐ AreaCoverageMonitor
+     ☐ When a drone is WORKING and then disconnects the monitor should detected it as an issue
      
  ✔ RechargeTimeMonitor @done (24-09-23 21:18)
- ✔ WaveCoverageMonitor @done (24-09-23 21:16)
- ✔ AreaCoverageMonitor @done (24-09-23 21:16)

@@ -3,10 +3,9 @@
 #include <iostream>
 
 void ConsumerThreadRun(Redis& redis, std::string stream, std::string group, std::string consumer,
-                       std::array<std::unordered_set<coords>, 300>* drones_paths, NewBuffer* buffer, int* tick_n,
-                       std::mutex& tick_mutex, std::atomic_bool* sim_running)
+                       const std::array<std::unordered_set<coords>, 300>* drones_paths, NewBuffer* buffer, int* tick_n,
+                       std::mutex& tick_mutex, const std::atomic_bool* sim_running)
 {
-    int tick_c = 0;
     while (*sim_running)
     {
         // Read from the stream using the consumer group
@@ -78,8 +77,7 @@ void DroneControl::Consume(Redis& redis, const std::string& stream, const std::s
                            const std::string& consumer,
                            const std::array<std::unordered_set<coords>, 300>* drones_paths)
 {
-    long long n_pending = 0;
-    int max_tick = 0;
+    // int max_tick = 0;
     while (sim_running)
     {
         // Read from the stream using the consumer group
@@ -129,7 +127,7 @@ void DroneControl::Consume(Redis& redis, const std::string& stream, const std::s
                         checked // checked
                     );
 
-                    max_tick = std::max(max_tick, std::stoi(item.second[0].second));
+                    // max_tick = std::max(max_tick, std::stoi(item.second[0].second));
 
                     // Acknowledge the message (after processing)
                     // redis.xack(stream, group, {item.first});
@@ -170,7 +168,7 @@ void DroneControl::WriteDroneDataToDB()
     std::cout << "[DB-W] thread started" << std::endl;
 
     int max_tick = 0; // Maximum tick number read from the buffer
-    const int batch_size = 15000;
+    constexpr int batch_size = 15000;
 
     while (max_tick < sim_duration_ticks - 1)
     {
@@ -236,7 +234,7 @@ void DroneControl::WriteDroneDataToDB()
     std::cout << "[DB-W] finished" << std::endl;
 }
 
-void DroneControl::SendWaveSpawnCommand()
+void DroneControl::SendWaveSpawnCommand() const
 {
     // spdlog::warn("Sending wave spawn command");
     std::cout << "Sending wave spawn command" << std::endl;

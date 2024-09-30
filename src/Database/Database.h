@@ -1,17 +1,9 @@
 #pragma once
 #include <spdlog/spdlog.h>
 
-#include <boost/thread.hpp>
-#include <condition_variable>
-#include <map>
 #include <memory>
-#include <mutex>
 #include <pqxx/pqxx>
-#include <queue>
 #include <string>
-#include <thread>
-
-#include "../globals.h"
 
 class Database
 {
@@ -21,7 +13,7 @@ public:
                      const std::string& password,
                      const std::string& hostaddr,
                      const std::string& port);
-    void ExecuteQuery(const std::string& query);
+    void ExecuteQuery(const std::string& query) const;
     pqxx::connection& getConnection() { return *conn; }
     void get_DB();
 
