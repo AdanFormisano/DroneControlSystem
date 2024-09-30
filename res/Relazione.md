@@ -4,20 +4,20 @@
 
 - [Drone Control System](#drone-control-system)
 - [Descrizione generale](#descrizione-generale)
-    - [Di cosa si occupa Drone Control System](#di-cosa-si-occupa-drone-control-system)
-    - [Fini del sistema](#fini-del-sistema)
-    - [Schema del sistema](#schema-del-sistema)
-        - [Area da sorvegliare](#area-da-sorvegliare)
-        - [Contesto del sistema](#contesto-del-sistema)
+  - [Di cosa si occupa Drone Control System](#di-cosa-si-occupa-drone-control-system)
+  - [Fini del sistema](#fini-del-sistema)
+  - [Schema del sistema](#schema-del-sistema)
+    - [Area da sorvegliare](#area-da-sorvegliare)
+    - [Contesto del sistema](#contesto-del-sistema)
 - [User requirements](#user-requirements)
-    - [Use case utente](#use-case-utente)
+  - [Use case utente](#use-case-utente)
 - [System requirements](#system-requirements)
-    - [Use case di sistema](#use-case-di-sistema)
+  - [Use case di sistema](#use-case-di-sistema)
 - [Implementation](#implementation)
-    - [Implementazione software](#implementazione-software)
-    - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
-    - [Droni e verifica dei punti](#droni-e-verifica-dei-punti)
-    - [Outsourcing](#outsourcing)
+  - [Implementazione software](#implementazione-software)
+  - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
+  - [Droni e verifica dei punti](#droni-e-verifica-dei-punti)
+  - [Outsourcing](#outsourcing)
 - [Risultati Sperimentali](#risultati-sperimentali)
 
 ## Drone Control System
@@ -58,15 +58,46 @@ traccia è la seguente:
 Il sistema si occupa quindi di verificare che ogni punto dell'area sia sorvegliato ogni cinque minuti, e, in caso
 contrario, segnala eventuali anomalie.
 
-### Descrizione ed illustrazione del sistema
+### Modello concettuale ed illustrazione del sistema
+
+#### Modello concettuale del sistema
+
+Il sistema si compone di una **base centrale** (detta **ChargeBase**), situata esattamente al centro dell'area, che funge da punto di partenza e ricarica per i droni.  
+La **ChargeBase** è l'unico punto dell'intera area in cui i droni si trovano in uno stato di **non volo** e gestisce la ricarica di ciascun drone dopo un'operazione.
+
+1. **Partenza dei droni**:  
+   All'inizio della simulazione, tutti i droni partono dal **centro dell'area** e si dirigono verso il **lato sinistro** dell'area di sorveglianza per posizionarsi lungo una **linea di partenza** (detta `starting_line`).  
+   Durante questo spostamento, la maggior parte dei droni si muove **in diagonale** per raggiungere la propria posizione sulla linea di partenza, a eccezione di quelli che già si trovano sull'asse centrale.
+
+2. **Copertura dell'area**:  
+   Una volta raggiunta la linea di partenza, i droni si allineano e iniziano il loro volo in modalità `WORKING`, percorrendo in linea retta l'intera area fino al lato destro.  
+   Ogni drone segue una specifica linea orizzontale rispetto alla base dell'area $6x6\mathrm{\,Km}$ per garantire una copertura omogenea dell'area.
+
+3. **Ritorno alla base**:  
+   Terminata la copertura dell'area, i droni passano allo stato `TO_BASE` e tornano verso il **centro** per ricaricarsi.  
+   Come nella fase di partenza, i droni che si trovano lontani dall'_asse centrale_ si muovono **diagonalmente** per raggiungere il centro, mentre quelli allineati proseguono in linea retta.
+
+4. **Gestione degli Stati di Guasto**:  
+   Durante uno qualsiasi degli stati di volo (`TO_STARTING_LINE`, `READY`, `WORKING`, `TO_BASE`), i droni possono entrare in uno dei seguenti fault state:
+   - **EXPLODED**: Il drone subisce un malfunzionamento critico e diventa irrecuperabile.
+   - **DISCONNECTED**: Il drone perde la connessione e tenta di riconnettersi.
+   - **HIGH_CONSUMPTION**: Il drone consuma più del previsto e continua a operare fino a quando la carica non si esaurisce.
+
+I droni con stato `DISCONNECTED` possono recuperare la connessione (`RECONNECTED`) tornando quindi allo stato precedente la disconnessione, oppure passare a `DEAD` se la connessione non viene ristabilita. I droni negli stati `EXPLODED`, e `HIGH_CONSUMPTION` finiscono invece sempre nello stato `DEAD`.
+
+Si noti che `HIGH_CONSUMPTION` è un "meta-stato", se vogliamo. Infatti nel SUD non compare come uno stato vero e proprio (gli altri, ad esempio, sì, essendo definiti in classi apposite), ma è semplicemente una condizione del drone in uno stato di volo che vede il proprio consumo moltiplicato di un fattore casuale scelto in un range di valori plausibile per uno stato di alto consumo di energia.
+
+Ogni fault state è conseguenza di uno scenario attivato dal TestGenerator, che è l'entità adibita alla generazione tramite generatori pseudocasuali di avvenimenti riguardanti l'intero DroneControlSystem.
+
+#### Visualizzare il sistema
 
 La seguente è una vista ad alto livello delle componenti del sistema
 
-#### Area da sorvegliare
+##### Area da sorvegliare
 
 ![[Area da sorvegliare]](../res/drone_area.png)
 
-#### Contesto del sistema
+##### Contesto del sistema
 
 ![[Contesto del sistema]](../res/cntxt_view.png)
 
@@ -88,7 +119,7 @@ Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli
 #### Use case a vista ristretta alternativa
 
 | Drone                      | Drone Control        |
-|----------------------------|----------------------|
+| -------------------------- | -------------------- |
 | ![drone](../res/drone.png) | ![DC](../res/DC.png) |
 
 ## System requirements
@@ -123,7 +154,7 @@ implementare il sistema:
 
 ### State diagram Drone
 
-![alt text](image-3.png)
+![alt text](image-4.png)
 
 - Almeno un Message Sequence Chart UML per la comunicazione tra le
   componenti del sistema.
@@ -141,47 +172,28 @@ database PostgreSQL.
 
 ### Struttura dell'area sorvegliata
 
-Il sistema gestisce l'area da sorvegliare dividendola in varie colonne, ognuna delle quali è divisa in zone rettangolari
-impilate virtualmente una sopra l'altra.
+~~Il sistema gestisce l'area da sorvegliare dividendola in varie colonne, ognuna delle quali è divisa in zone rettangolari impilate virtualmente una sopra l'altra.~~
 
-A partire dalla richiesta nella traccia del progetto è possibile individuare _celle_ i quali punti condividono l'istante
-di tempo $t$ in cui vengono coperti dal drone. Ogni _cella_ è un quadrato di lato $20$ metri.  
-Più celle vanno dunque a formare una _zona_. In ogni zona figurano $124$ celle. Più precisamente due file (una sopra
-l'altra) di $62$ celle adiacenti creano una zona.
+~~A partire dalla richiesta nella traccia del progetto è possibile individuare _celle_ i quali punti condividono l'istante di tempo $t$ in cui vengono coperti dal drone. Ogni _cella_ è un quadrato di lato $20$ metri.  
+Più celle vanno dunque a formare una _zona_. In ogni zona figurano $124$ celle. Più precisamente due file (una sopra l'altra) di $62$ celle adiacenti creano una zona.~~
 
-Procedendo ad una velocità di $30$ km/h il drone è in grado di coprire almeno $124$ celle mantenendo soddisfatto il
-requisito che ogni punto sia verificato almeno ogni $5$ minuti.
+~~Procedendo ad una velocità di $30$ km/h il drone è in grado di coprire almeno $124$ celle mantenendo soddisfatto il requisito che ogni punto sia verificato almeno ogni $5$ minuti.~~
 
-Le zone sono in totale $150$ per colonna, e le colonne sono $5$. Le prime $4$ colonne contando da sinistra sono larghe
-come detto $62$ celle ciascuna, mentre l'ultima a destra ha larghezza minore di $52$ celle. Considerando che lo spazio
-rimanente da coprire era di meno, abbiamo scelto di rendere minore la dimensione di una delle colonne ai lati per
-semplificarci i calcoli sulle logiche di movimento dei droni, evitando di creare un'area piccola centrale (o altrove
-posta) che si occupasse di recuperare lo spazio non occupato da eventuali colonne tutte uguali ai suoi lati.
+~~Le zone sono in totale $150$ per colonna, e le colonne sono $5$. Le prime $4$ colonne contando da sinistra sono larghe come detto $62$ celle ciascuna, mentre l'ultima a destra ha larghezza minore di $52$ celle.
+Considerando che lo spazio rimanente da coprire era di meno, abbiamo scelto di rendere minore la dimensione di una delle colonne ai lati per semplificarci i calcoli sulle logiche di movimento dei droni, evitando di creare un'area piccola centrale (o altrove posta) che si occupasse di recuperare lo spazio non occupato da eventuali colonne tutte uguali ai suoi lati.~~
 
 ### Droni e verifica dei punti
 
-Come richiesto dalla traccia del progetto, ogni punto dell'area deve essere _verificato_ almeno ogni $5$ minuti, ed un
-punto è _verificato_ al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10\,\mathrm{m}$ dal punto.
-Per questa ragione abbiamo pensato di dividere l'area, a livello più basso della nostra astrazione, in celle e in zone
-dopodiché.
+~~Come richiesto dalla traccia del progetto, ogni punto dell'area deve essere _verificato_ almeno ogni $5$ minuti, ed un punto è _verificato_ al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10\,\mathrm{m}$ dal punto.
+Per questa ragione abbiamo pensato di dividere l'area, a livello più basso della nostra astrazione, in celle e in zone dopodiché.~~
 
-Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partono rispettivamente (guardando da sinistra)
-dalla $1$ª cella per il drone nella fila in alto, e della $62$ª per il drone nella fila in basso, attraversando tutte le
-celle che li separano dalla cella di partenza dell'altro drone nella zona, e raggiungendo quindi taluna.
-In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno
-il resto dei droni nelle altre zone di ogni colonna.
+~~Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partono rispettivamente (guardando da sinistra) dalla $1$ª cella per il drone nella fila in alto, e della $62$ª per il drone nella fila in basso, attraversando tutte le celle che li separano dalla cella di partenza dell'altro drone nella zona, e raggiungendo quindi taluna.
+In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno il resto dei droni nelle altre zone di ogni colonna.~~
 
-Una determinata zona è sorvegliata da un drone che parte dalla prima cella della zona più in alto a sinistra. Il drone
-attraversa in senso orario tutte le celle della zona fino a tornare alla cella di partenza &mdash; completanto tale
-ciclo in $5$ minuti.
-Il sistema, possedendo in ogni zona dei checkpoint coincidenti con le coordinate del punto centrale di ogni cella,
-monitorando le coordinate del movimento del drone, controlla se le coordinate coincidono con quelle che il drone avrebbe
-dovuto sorvolare.
+~~Una determinata zona è sorvegliata da un drone che parte dalla prima cella della zona più in alto a sinistra. Il drone attraversa in senso orario tutte le celle della zona fino a tornare alla cella di partenza &mdash; completanto tale ciclo in $5$ minuti.
+Il sistema, possedendo in ogni zona dei checkpoint coincidenti con le coordinate del punto centrale di ogni cella, monitorando le coordinate del movimento del drone, controlla se le coordinate coincidono con quelle che il drone avrebbe dovuto sorvolare.~~
 
-Il centro di controllo conserva dei checkpoint per il cammino di ogni drone. Questi ultimi sono usati per verificare la
-copertura della zona. Le coordinate ricevute dai droni in volo lungo il loro percorso vengono confrontate con quelle dei
-checkpoint. Se le coordinate dal drone non coincidono con quelle del checkpoint di turno, viene segnalata la mancata
-copertura della cella. Di conseguenza tutta l'area risulta non verificata.
+~~Il centro di controllo conserva dei checkpoint per il cammino di ogni drone. Questi ultimi sono usati per verificare la copertura della zona. Le coordinate ricevute dai droni in volo lungo il loro percorso vengono confrontate con quelle dei checkpoint. Se le coordinate dal drone non coincidono con quelle del checkpoint di turno, viene segnalata la mancata copertura della cella. Di conseguenza tutta l'area risulta non verificata.~~
 
 ### _Outsourcing_
 
@@ -190,11 +202,11 @@ altresì inevitabilmente composto, quali quelle del:
 
 - drone
 
-    - sistema di comunicazione a lungo raggio: per trasmettere dati e conferme al centro di controllo
-    - sistema di navigazione e posizionamento GPS: per determinare con precisione la posizione del drone
+  - sistema di comunicazione a lungo raggio: per trasmettere dati e conferme al centro di controllo
+  - sistema di navigazione e posizionamento GPS: per determinare con precisione la posizione del drone
 
 - centro di controllo
-    - sistema di comunicazione per ricevere dati dai droni: assicura il flusso costante di informazioni dal campo
+  - sistema di comunicazione per ricevere dati dai droni: assicura il flusso costante di informazioni dal campo
 
 Sebbene alcune di queste tecnologie e componenti siano parte dell'_environment_ del sistema (come il GPS), ognuna di
 esse rimane esterna ad esso, ed è naturalmente legata a misure di outsourcing in ogni caso imprescindibili.
