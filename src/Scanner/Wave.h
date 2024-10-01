@@ -30,8 +30,7 @@ public:
 
 private:
     int id = 0;
-    std::vector<Drone*> drones;
-    // TickSynchronizer &tick_sync;
+    std::array<std::unique_ptr<Drone>, 300> drones;
     ThreadSemaphore *sem_sync;
     int ready_drones = 0;
 

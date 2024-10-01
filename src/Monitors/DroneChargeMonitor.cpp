@@ -98,8 +98,7 @@ void DroneChargeMonitor::getChargeNeededForZones()
     // For each zone get charge_needed for each drone from Redis
     for (int z = 0; z < ZONE_NUMBER; z++)
     {
-        auto r = shared_redis.get("zone:" + std::to_string(z) + ":charge_needed_to_base");
-        if (!r.has_value())
+        if (auto r = shared_redis.get("zone:" + std::to_string(z) + ":charge_needed_to_base"); !r.has_value())
         {
             spdlog::error("Couldn't get charge_needed_to_base from Redis");
         } else

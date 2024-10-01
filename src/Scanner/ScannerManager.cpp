@@ -27,10 +27,10 @@ bool ScannerManager::CheckSpawnWave() const
             {
                 if (spawn_wave == -1)
                 {
-                    spdlog::error("Error getting spawn_wave");
+                    spdlog::error("[ScannerManager] Error getting spawn_wave");
                     return false;
                 }
-                spdlog::error("Timeout waiting for spawn_wave");
+                spdlog::error("[ScannerManager] Timeout waiting for spawn_wave");
                 return false;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -66,12 +66,12 @@ void ScannerManager::SpawnWave()
 ScannerManager::ScannerManager(Redis& shared_redis) : pool(8), shared_redis(shared_redis)
 {
     spdlog::set_pattern("[%T.%e][%^%l%$][ScannerManager] %v");
-    spdlog::info("ScannerManager created");
+    std::cout << "[ScannerManager] ScannerManager created" << std::endl;
 }
 
 void ScannerManager::Run()
 {
-    spdlog::info("ScannerManager running");
+    std::cout << "[ScannerManager] Running" << std::endl;
 
     // Create IPC message queue
     auto mq = message_queue(open_or_create, "drone_fault_queue", 100, sizeof(TG_data));
@@ -120,9 +120,9 @@ void ScannerManager::Run()
 
             // utils::UpdateSyncTick(shared_redis, tick);
             // CheckSyncTickAck();
-            // std::cout << "[ScannerManager] TICK: " << tick << " waiting synchronizer" << std::endl;
+            std::cout << "[ScannerManager] TICK: " << tick << " waiting synchronizer" << std::endl;
             synchronizer.sync();
-            // std::cout << "[ScannerManager] TICK: " << tick << " synchronizer done" << std::endl;
+            std::cout << "[ScannerManager] TICK: " << tick << " synchronizer done" << std::endl;
 
             // Release the semaphore to signal the end of the tick
             sem_post(sem_sc);

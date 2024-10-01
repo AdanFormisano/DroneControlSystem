@@ -59,11 +59,11 @@ int main()
 
         // Create the DroneControl object
         DroneControl dc(drone_control_redis);
-        DroneControl sdc(drone_control_redis);
+
+        // std::cout << "DroneControl process started" << std::endl;
 
         // Start simulation
-        // dc.Run();
-        sdc.Run();
+        dc.Run();
     }
     else
     {
@@ -152,18 +152,6 @@ int main()
                     // In Main process
                     auto main_redis = Redis(connection_options);
 
-                    spdlog::set_pattern("[%T.%e][%^%l%$][Monitor] %v");
-
-                    // Start monitors
-                                // RechargeTimeMonitor rtm(main_redis);
-                                CoverageMonitor acm(main_redis);
-                                // DroneChargeMonitor dcm(main_redis);
-                                // TimeToReadDataMonitor trd(main_redis);
-                    // rtm.RunMonitor(); //TODO: Bring out the thread from inside the function
-                    acm.RunMonitor(); //TODO: Bring out the thread from inside the function
-                    // dcm.RunMonitor();
-                    // trd.RunMonitor();
-
                     // Create named semaphore for synchronization
                     sem_t* sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
                     // Used for tick synchronization
@@ -184,11 +172,14 @@ int main()
                     // Start timewatch
                     auto start_time = std::chrono::high_resolution_clock::now();
 
+                    std::cout << "=====================================" << std::endl;
+
                     // Simulation loop
                     while (tick_n < sim_duration_ticks)
                     {
                         // spdlog::info("TICK: {}", tick_n);
                         std::cout << "[Main] TICK: " << tick_n << std::endl;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(5));
                         // Release sem_sync to start the next tick
                         sem_post(sem_sync_dc); // Signal DroneControl
                         sem_post(sem_sync_sc); // Signal ScannerManager
@@ -215,12 +206,6 @@ int main()
                     waitpid(pid_drone_control, nullptr, 0);
                     waitpid(pid_drone, nullptr, 0);
                     waitpid(pid_charge_base, nullptr, 0);
-
-                    // Join monitor's thread
-                    // rtm.JoinThread();
-                    acm.JoinThread();
-                    // dcm.JoinThread();
-                    // trd.JoinThread();
 
                     // Get shutoff time
                     auto shutoff_time = std::chrono::high_resolution_clock::now();
