@@ -130,9 +130,6 @@ void Wave::DeleteDrones()
             int index = drone_id % 1000;
             drones[index].reset(); // Reset the shared_ptr to release the memory
         }
-
-        // Clear the vector
-        drones_to_delete.clear();
     }
     catch (const std::exception& e)
     {

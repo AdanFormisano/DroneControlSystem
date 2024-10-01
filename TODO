@@ -1,9 +1,9 @@
  ☐ Script:
      ☐ Default show ticks of DCS
- ☐ Entry with state CHARGING_COMPLETED is missing from DB
+
+ ✔ Entry with state CHARGING_COMPLETED is missing from DB @done (24-10-01 14:09)
      Currently when a drone has finished charging is added to a set on Redis, but no entry in the DB is added
      => we have no actual representation of a drone finishing charging in the DB
-
  ✔ Debug case where charge is 0% and drone should go to DEAD @done (24-09-30 15:23)
  ✔ High consumption state @done (24-09-25 22:15)
      ✔ Drone has 0% charge and dies @done (24-09-25 22:15)
@@ -13,13 +13,14 @@
  ✔ Dead fault state @done (24-09-23 21:14)
 
 ============================================= 
- ✔ Debug case where charge is 0% and drone should go to DEAD
- ✔ Consider encreasing High_consumption factor (at least 1.5x)
  ☐ Find a way to exit everything even if tick number in DB is slightly less then 5999 aka number of total tick
- ☐ Create separate process for monitors
  ☐ Implement CORRECTLY timeout features throughout the project to signal a "blocked" state
  ☐ Debug why DEAD is present twice in the DB
+ ☐ When a wave is READY but a drone died before readying up, the entire wave will block in READY state
 
+ ✔ Create separate process for monitors @done (24-10-01 14:09)
+ ✔ Debug case where charge is 0% and drone should go to DEAD
+ ✔ Consider encreasing High_consumption factor (at least 1.5x)
  ✔ Consider increasing High_consumption factor (at least 1.5x) @done (24-09-30 12:07)
  ✔ Correctly terminate the simulation @done (24-09-25 18:15)
      ✔ Check if DB has all the simulated ticks @done (24-09-25 18:15)
@@ -32,17 +33,19 @@
     ✔ With named_semaphores implemented Redis' use for sync (in process init) is not needed @done (24-09-23 18:33)
 
 =============================================
- ☐ TimeToReadData => SystemPerformance
-     ☐ Create input for message_queue
+ ☐ SystemPerformance
+     Perfomance degradation %-base. More drone explodes less performance the system has
  ☐ DroneChargeMonitor
      ☐ Fix query for drones that arrived at base
      ☐ Fix query for exploded drones
  ☐ CoverageMonitor
-     ☐ WaveCoverageMonitor
-     ☐ AreaCoverageMonitor
-     ☐ Change DEAD state to "Empty" Drone => DB will have entries for dead drones that the monitors can analyze (for the duration of the wave life)
-     ☐ When a drone is WORKING and then disconnects the monitor should detected it as an issue
      ☐ Output should be the coords that the drone is not covering anymore (change also in monitor db)
          For each tick a set of coords need to be covered. If the drone dies the coords
+     ☐ Extreme cases (eg. DISCONNECTED -> WORKING)
+
+     ✔ WaveCoverageMonitor @done (24-10-01 14:09)
+     ✔ AreaCoverageMonitor @done (24-10-01 14:09)
+     ✔ Change DEAD state to "Empty" Drone => DB will have entries for dead drones that the monitors can analyze (for the duration of the wave life) @done (24-10-01 14:09)
+     ✔ When a drone is WORKING and then disconnects the monitor should detected it as an issue @done (24-10-01 14:09)
 
  ✔ RechargeTimeMonitor @done (24-09-23 21:18)
