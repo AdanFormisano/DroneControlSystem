@@ -120,9 +120,9 @@ void ScannerManager::Run()
 
             // utils::UpdateSyncTick(shared_redis, tick);
             // CheckSyncTickAck();
-            std::cout << "[ScannerManager] TICK: " << tick << " waiting synchronizer" << std::endl;
+            // std::cout << "[ScannerManager] TICK: " << tick << " waiting synchronizer" << std::endl;
             synchronizer.sync();
-            std::cout << "[ScannerManager] TICK: " << tick << " synchronizer done" << std::endl;
+            // std::cout << "[ScannerManager] TICK: " << tick << " synchronizer done" << std::endl;
 
             // Release the semaphore to signal the end of the tick
             sem_post(sem_sc);

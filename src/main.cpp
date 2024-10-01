@@ -149,73 +149,88 @@ int main()
                 }
                 else
                 {
+                    pid_t pid_monitors = fork();
                     // In Main process
-                    auto main_redis = Redis(connection_options);
-
-                    // Create named semaphore for synchronization
-                    sem_t* sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
-                    // Used for tick synchronization
-                    sem_t* sem_sync_sc = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
-                    // Used for tick synchronization
-                    sem_t* sem_sync_cb = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
-                    // Used for tick synchronization
-                    sem_t* sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);
-                    // Used for DroneControl end of tick synchronization
-                    sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);
-                    // Used for ScannerManager end of tick synchronization
-                    sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);
-                    // Used for ChargeBase end of tick synchronization
-
-                    // Start simulation
-                    int tick_n = 0;
-
-                    // Start timewatch
-                    auto start_time = std::chrono::high_resolution_clock::now();
-
-                    std::cout << "=====================================" << std::endl;
-
-                    // Simulation loop
-                    while (tick_n < sim_duration_ticks)
+                    if (pid_monitors == -1)
                     {
-                        // spdlog::info("TICK: {}", tick_n);
-                        std::cout << "[Main] TICK: " << tick_n << std::endl;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-                        // Release sem_sync to start the next tick
-                        sem_post(sem_sync_dc); // Signal DroneControl
-                        sem_post(sem_sync_sc); // Signal ScannerManager
-                        sem_post(sem_sync_cb); // Signal ChargeBase
-
-                        // Wait for all processes to finish the tick
-                        sem_wait(sem_dc);
-                        sem_wait(sem_sc);
-                        sem_wait(sem_cb);
-
-                        ++tick_n;
-                        // spdlog::info("=====================================");
-                        std::cout << "=====================================" << std::endl;
+                        std::cerr << "Fork for Monitors failed" << std::endl;
                     }
-                    // Stop time watch
-                    auto sim_end_time = std::chrono::high_resolution_clock::now();
+                    else if (pid_monitors == 0)
+                    {
+                        // In child Monitors process
+                        std::cout << "[Monitor] Monitors started" << std::endl;
 
-                    // Use Redis to stop the simulation
-                    main_redis.set("sim_running", "false");
+                        auto monitors_redis = Redis(connection_options);
+
+                        // Create the Monitors
+                        CoverageMonitor cm(monitors_redis);
+
+                        // Run the Monitors' thread
+                        cm.RunMonitor();
+                    }
+                    else
+                    {
+                        auto main_redis = Redis(connection_options);
+
+                        // Create named semaphore for synchronization
+                        sem_t* sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
+                        sem_t* sem_sync_sc = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
+                        sem_t* sem_sync_cb = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
+                        sem_t* sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);             // Used for DroneControl end of tick synchronization
+                        sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);             // Used for ScannerManager end of tick synchronization
+                        sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);             // Used for ChargeBase end of tick synchronization
+
+                        // Start simulation
+                        int tick_n = 0;
+
+                        // Start timewatch
+                        auto start_time = std::chrono::high_resolution_clock::now();
+
+                        std::cout << "=====================================" << std::endl;
+
+                        // Simulation loop
+                        while (tick_n < sim_duration_ticks)
+                        {
+                            // spdlog::info("TICK: {}", tick_n);
+                            std::cout << "[Main] TICK: " << tick_n << std::endl;
+                            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                            // Release sem_sync to start the next tick
+                            sem_post(sem_sync_dc); // Signal DroneControl
+                            sem_post(sem_sync_sc); // Signal ScannerManager
+                            sem_post(sem_sync_cb); // Signal ChargeBase
+
+                            // Wait for all processes to finish the tick
+                            sem_wait(sem_dc);
+                            sem_wait(sem_sc);
+                            sem_wait(sem_cb);
+
+                            ++tick_n;
+                            // spdlog::info("=====================================");
+                            std::cout << "=====================================" << std::endl;
+                        }
+                        // Stop time watch
+                        auto sim_end_time = std::chrono::high_resolution_clock::now();
+
+                        // Use Redis to stop the simulation
+                        main_redis.set("sim_running", "false");
 
 
-                    // Wait for child processes to finish
-                    kill(pid_test_generator, SIGTERM);
-                    waitpid(pid_drone_control, nullptr, 0);
-                    waitpid(pid_drone, nullptr, 0);
-                    waitpid(pid_charge_base, nullptr, 0);
+                        // Wait for child processes to finish
+                        kill(pid_test_generator, SIGTERM);
+                        waitpid(pid_drone_control, nullptr, 0);
+                        waitpid(pid_drone, nullptr, 0);
+                        waitpid(pid_charge_base, nullptr, 0);
 
-                    // Get shutoff time
-                    auto shutoff_time = std::chrono::high_resolution_clock::now();
-                    auto shutoff_duration = std::chrono::duration_cast<std::chrono::milliseconds>(shutoff_time - start_time).count();
-                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(sim_end_time - start_time).count();
-                    std::cout << "Simulation duration: " << duration << " ms" << std::endl;
-                    std::cout << "Entire system duration: " << shutoff_duration << " ms" << std::endl;
+                        // Get shutoff time
+                        auto shutoff_time = std::chrono::high_resolution_clock::now();
+                        auto shutoff_duration = std::chrono::duration_cast<std::chrono::milliseconds>(shutoff_time - start_time).count();
+                        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(sim_end_time - start_time).count();
+                        std::cout << "Simulation duration: " << duration << " ms" << std::endl;
+                        std::cout << "Entire system duration: " << shutoff_duration << " ms" << std::endl;
 
-                    std::this_thread::sleep_for(std::chrono::seconds(5));
-                    std::cout << "Exiting..." << std::endl;
+                        std::this_thread::sleep_for(std::chrono::seconds(5));
+                        std::cout << "Exiting..." << std::endl;
+                    }
                 }
             }
         }

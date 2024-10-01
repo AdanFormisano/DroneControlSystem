@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "Monitor.h"
+#include "../../utils/utils.h"
 
 /**
  * \brief Main function to monitor zone and area coverage.
@@ -18,12 +19,12 @@
  */
 void CoverageMonitor::checkCoverage()
 {
-    spdlog::info("COVERAGE-MONITOR: Initiated...");
+    // spdlog::info("COVERAGE-MONITOR: Initiated...");
+    std::cout << "[Monitor-CV] Initiated..." << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
     try
     {
-        // TODO: Use better condition
         while (tick_last_read < sim_duration_ticks - 1)
         {
             checkWaveVerification();
@@ -36,25 +37,25 @@ void CoverageMonitor::checkCoverage()
     }
     catch (const std::exception& e)
     {
-        spdlog::error("COVERAGE-MONITOR: {}", e.what());
+        std::cerr << "[Monitor-CV] " << e.what() << std::endl;
     }
 }
 
 void CoverageMonitor::checkWaveVerification()
 {
-    spdlog::info("COVERAGE-MONITOR: Checking wave verification...");
+    std::cout << "[Monitor-CV] Checking wave verification..." << std::endl;
 
     if (auto failed_waves = getWaveVerification(); failed_waves.empty())
     {
-        spdlog::info("COVERAGE-MONITOR: No wave failed until tick {}", tick_last_read); // TODO: Better english pls
+        std::cout << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
     }
     else
     {
         for (const auto& wave : failed_waves)
         {
-            int wave_id = wave[0];
-            int tick_n = wave[1];
-            int drone_id = wave[2];
+            int wave_id = wave.wave_id;
+            int tick_n = wave.tick_n;
+            int drone_id = wave.drone_id;
 
             // Enqueue failed checks
             failed_ticks.insert(tick_n);
@@ -74,7 +75,8 @@ void CoverageMonitor::checkWaveVerification()
 
 void CoverageMonitor::checkAreaCoverage()
 {
-    spdlog::info("COVERAGE-MONITOR: Checking area coverage...");
+    // spdlog::info("COVERAGE-MONITOR: Checking area coverage...");
+    std::cout << "[Monitor-CV] Checking area coverage..." << std::endl;
 
     // Print list of failed ticks
     if (!failed_ticks.empty())
@@ -97,34 +99,153 @@ void CoverageMonitor::checkAreaCoverage()
     }
     else
     {
-        spdlog::info("COVERAGE-MONITOR: All waves were verified until tick {}", tick_last_read);
+        // spdlog::info("COVERAGE-MONITOR: All waves were verified until tick {}", tick_last_read);
+        std::cout << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
     }
 }
 
-std::vector<std::array<int, 3>> CoverageMonitor::getWaveVerification()
+std::vector<CoverageMonitor::WaveVerification> CoverageMonitor::getWaveVerification()
 {
     pqxx::work txn(db.getConnection()); // Begin a transaction
-
+    std::cout << "[Monitor-CV] Getting wave verification" << std::endl;
     //Run the main query
     // auto r = txn.exec(
-    //     "SELECT wave, tick_n, drone_id "
+    //     "WITH StatusChange AS ("
+    //     "SELECT drone_id, tick_n, status, checked, wave, "
+    //     "LAG(status) OVER (PARTITION BY drone_id ORDER BY tick_n) AS prev_status "
     //     "FROM drone_logs "
-    //     "WHERE status = 'WORKING' AND checked = FALSE AND tick_n > " + std::to_string(tick_last_read) + " "
-    //     "ORDER BY tick_n DESC;"
+    //     "WHERE tick_n > " + std::to_string(tick_last_read) +
+    //     ") "
+    //     "SELECT * "
+    //     "FROM StatusChange "
+    //     "WHERE status IN ('DEAD', 'DISCONNECTED') "
+    //     "AND prev_status = 'WORKING';"
     // );
 
-    auto r = txn.exec(
+    auto work_disconnect_reconnect = txn.exec(
         "WITH StatusChange AS ("
-        "SELECT drone_id, tick_n, status, checked, wave, "
+        "SELECT drone_id, tick_n, status, wave, "
         "LAG(status) OVER (PARTITION BY drone_id ORDER BY tick_n) AS prev_status "
         "FROM drone_logs "
         "WHERE tick_n > " + std::to_string(tick_last_read) +
-        ") "
-        "SELECT * "
+        "), "
+        "TransitionToDisconnected AS ("
+        "SELECT drone_id, MIN(tick_n) AS first_disconnected_tick "
         "FROM StatusChange "
-        "WHERE status IN ('DEAD', 'DISCONNECTED') "
-        "AND prev_status = 'WORKING';"
+        "WHERE status = 'DISCONNECTED' "
+        "AND prev_status = 'WORKING' "
+        "GROUP BY drone_id"
+        "), "
+        "TransitionToReconnected AS ("
+        "SELECT drone_id, tick_n AS reconnect_tick, wave "
+        "FROM StatusChange "
+        "WHERE status = 'RECONNECTED' "
+        "AND prev_status = 'DISCONNECTED' "
+        "AND drone_id IN (SELECT drone_id FROM TransitionToDisconnected)"
+        ") "
+        "SELECT tr.wave, tr.drone_id, td.first_disconnected_tick, tr.reconnect_tick "
+        "FROM TransitionToReconnected tr "
+        "JOIN TransitionToDisconnected td "
+        "ON tr.drone_id = td.drone_id;"
     );
+    std::cout << "[Monitor-CV] Got work_disconnect_reconnect" << std::endl;
+
+
+    auto work_disconnect_dead = txn.exec(
+        "WITH StatusChange AS ("
+        "SELECT drone_id, tick_n, status, wave, "
+        "LAG(status) OVER (PARTITION BY drone_id ORDER BY tick_n) AS prev_status "
+        "FROM drone_logs "
+        "WHERE tick_n > " + std::to_string(tick_last_read) +
+        "), "
+        "TransitionToWorking AS ("
+        "SELECT drone_id, MIN(tick_n) AS first_working_tick, wave "
+        "FROM StatusChange "
+        "WHERE status = 'WORKING' "
+        "AND prev_status = 'READY' "
+        "GROUP BY drone_id, wave"
+        "), "
+        "TransitionToDisconnected AS ("
+        "SELECT drone_id, MIN(tick_n) AS first_disconnected_tick "
+        "FROM StatusChange "
+        "WHERE status = 'DISCONNECTED' "
+        "AND prev_status = 'WORKING' "
+        "GROUP BY drone_id"
+        "), "
+        "TransitionToDead AS ("
+        "SELECT drone_id, wave, MIN(tick_n) AS dead_tick "
+        "FROM StatusChange "
+        "WHERE status = 'DEAD' "
+        "AND prev_status = 'DISCONNECTED' "
+        "AND drone_id IN (SELECT drone_id FROM TransitionToDisconnected) "
+        "GROUP BY drone_id, wave"
+        ") "
+        "SELECT tw.wave, tw.drone_id, tw.first_working_tick, tdd.first_disconnected_tick "
+        "FROM TransitionToWorking tw "
+        "JOIN TransitionToDead td "
+        "ON tw.drone_id = td.drone_id "
+        "JOIN TransitionToDisconnected tdd "
+        "ON tdd.drone_id = tw.drone_id;"
+    );
+    std::cout << "[Monitor-CV] Got work_disconnect_dead" << std::endl;
+
+
+    std::string q_working_dead = R"(
+WITH StatusChange AS (
+    SELECT
+        drone_id,
+        tick_n,
+        status,
+        wave,
+        LAG(status) OVER (PARTITION BY drone_id ORDER BY tick_n) AS prev_status
+    FROM
+        drone_logs
+    WHERE
+        tick_n > 0
+),
+TransitionToWorking AS (
+    SELECT
+        drone_id,
+        MIN(tick_n) AS first_working_tick,
+        wave
+    FROM
+        StatusChange
+    WHERE
+        status = 'WORKING'
+        AND prev_status = 'READY'
+    GROUP BY
+        drone_id,
+        wave
+),
+TransitionToDead AS (
+    SELECT
+        sc.drone_id,
+        sc.tick_n AS dead_tick,
+        sc.wave
+    FROM
+        StatusChange sc
+    WHERE
+        sc.status = 'DEAD'
+        AND sc.prev_status = 'WORKING'
+        AND EXISTS (SELECT 1 FROM TransitionToWorking tw WHERE tw.drone_id = sc.drone_id)
+)
+SELECT
+    tw.wave,
+    tw.drone_id,
+    tw.first_working_tick,
+    td.dead_tick
+FROM
+    TransitionToWorking tw
+JOIN
+    TransitionToDead td
+ON
+    tw.drone_id = td.drone_id;
+)";
+
+
+    auto work_dead = txn.exec(q_working_dead);
+    std::cout << "[Monitor-CV] Got work_dead" << std::endl;
+
 
     // Get the maximum tick in the entire table
     auto max_tick_result = txn.exec("SELECT MAX(tick_n) AS max_tick_in_db FROM drone_logs;");
@@ -133,30 +254,74 @@ std::vector<std::array<int, 3>> CoverageMonitor::getWaveVerification()
     //     tick_last_read = max_tick_result[0]["max_tick_in_db"].as<int>();
     // }
 
+    std::cout << "[Monitor-CV] Got latest tick" << std::endl;
+
     tick_last_read = max_tick_result[0]["max_tick_in_db"].is_null()
                          ? 0
                          : max_tick_result[0]["max_tick_in_db"].as<int>();
 
     // Commit the transaction
+    std::cout << "[Monitor-CV] About to commit queries" << std::endl;
     txn.commit();
+    std::cout << "[Monitor-CV] Commited queries" << std::endl;
 
     // Now you can process the results
-    std::cout << "[Monitor] Max Tick in DB: " << tick_last_read << std::endl;
+    std::cout << "[Monitor-CV] Max Tick in DB: " << tick_last_read << std::endl;
 
-    if (!r.empty())
+    std::vector<WaveVerification> wave_not_verified;
+
+    if (!work_disconnect_reconnect.empty())
     {
-        std::vector<std::array<int, 3>> wave_not_verified;
-        for (const auto& row : r)
+        for (const auto& row : work_disconnect_reconnect)
         {
-            int wave = row["wave"].is_null() ? 0 : row["wave"].as<int>();
-            int tick_n = row["tick_n"].is_null() ? 0 : row["tick_n"].as<int>();
-            int drone_id = row["drone_id"].is_null() ? 0 : row["drone_id"].as<int>();
+            const int drone_id = row["drone_id"].as<int>();
+            const int wave_id = row["wave"].as<int>();
+            const int first_disconnected_tick = row["first_disconnected_tick"].as<int>();
+            const int reconnect_tick = row["reconnect_tick"].as<int>();
 
-            wave_not_verified.emplace_back(std::array{wave, tick_n, drone_id});
-
-            std::cout << "Wave: " << wave << ", Tick: " << tick_n << ", Drone ID: " << drone_id << std::endl;
+            for (int i = first_disconnected_tick; i <= reconnect_tick; ++i)
+            {
+                WaveVerification wv = {wave_id, i, drone_id};
+                wave_not_verified.push_back(wv);
+            }
         }
-        return wave_not_verified;
     }
-    return {};
+
+    if (!work_disconnect_dead.empty())
+    {
+        for (const auto& row : work_disconnect_dead)
+        {
+            const int drone_id = row["drone_id"].as<int>();
+            const int wave_id = row["wave"].as<int>();
+            const int first_working_tick = row["first_working_tick"].as<int>();
+            const int first_disconnected_tick = row["first_disconnected_tick"].as<int>();
+            const int last_working_tick = first_working_tick + 300;
+
+            for (int i = first_disconnected_tick; i < last_working_tick; i++)
+            {
+                WaveVerification wv = {wave_id, i, drone_id};
+                wave_not_verified.push_back(wv);
+            }
+        }
+    }
+
+    if (!work_dead.empty())
+    {
+        for (const auto& row : work_dead)
+        {
+            const int drone_id = row["drone_id"].as<int>();
+            const int wave_id = row["wave"].as<int>();
+            const int first_working_tick = row["first_working_tick"].as<int>();
+            const int dead_tick = row["dead_tick"].as<int>();
+            const int last_working_tick = first_working_tick + 300;
+
+            for (int i = dead_tick; i < last_working_tick; ++i)
+            {
+                WaveVerification wv = {wave_id, i, drone_id};
+                wave_not_verified.push_back(wv);
+            }
+        }
+    }
+
+    return wave_not_verified;
 }

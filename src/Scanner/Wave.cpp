@@ -130,6 +130,9 @@ void Wave::DeleteDrones()
             int index = drone_id % 1000;
             drones[index].reset(); // Reset the shared_ptr to release the memory
         }
+
+        // Clear the vector
+        drones_to_delete.clear();
     }
     catch (const std::exception& e)
     {
@@ -140,13 +143,13 @@ void Wave::DeleteDrones()
 bool Wave::AllDronesAreDead()
 {
     // Check if all drones are dead
-    std::cout << "Wave " << id << " tick " << tick << " checking alive drones" << std::endl;
+    // std::cout << "Wave " << id << " tick " << tick << " checking alive drones" << std::endl;
     return std::ranges::all_of(drones, [](const std::unique_ptr<Drone>& d) { return d == nullptr; });
 }
 
 void Wave::Run()
 {
-    std::cout << "Wave " << id << " started" << std::endl;
+    // std::cout << "Wave " << id << " started" << std::endl;
     // tick_sync.thread_started();
     sem_sync->add_thread();
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -161,7 +164,7 @@ void Wave::Run()
         {
             // std::cout << "[" << std::this_thread::get_id() << "] Wave " << id << " - TICK " << tick << " just started" << std::endl;
             // std::cout << "Wave " << id << " tick " << tick << " drones are all dead: "<< AreDroneDead << std::endl;
-            std::cout << "Wave " << id << " tick " << tick << std::endl;
+            // std::cout << "Wave " << id << " tick " << tick << std::endl;
 
             // Before the "normal" execution, check if SM did put any "input" inside the "queue" (aka TestGenerator scenarios' input)
             // Check if there is any message in the queue
@@ -174,17 +177,17 @@ void Wave::Run()
                 setDroneFault(drone_id, new_state, reconnect_tick, high_consumption_factor);
             }
 
-            std::cout << "Wave " << id << " tick " << tick << " checked for drone faults" << std::endl;
+            // std::cout << "Wave " << id << " tick " << tick << " checked for drone faults" << std::endl;
             // Execute the wave
             for (const auto& drone : drones)
             {
-                std::cout << "Drone " << drone << std::endl;
+                // std::cout << "Drone " << drone << std::endl;
                 if (drone != nullptr)
                 {
-                    std::cout << "Drone " << drone->id << " about to run" << std::endl;
+                    // std::cout << "Drone " << drone->id << " about to run" << std::endl;
                     // Execute the current state
                     drone->run();
-                    std::cout << "Drone " << drone->id << " ran" << std::endl;
+                    // std::cout << "Drone " << drone->id << " ran" << std::endl;
 
                     // Create a DroneData object
                     DroneData data(tick, drone->id, utils::droneStateToString(drone->getCurrentState()->getState()),
@@ -195,11 +198,11 @@ void Wave::Run()
                     // Add the command to the pipeline
                     pipe.xadd("scanner_stream", "*", v.begin(), v.end());
 
-                    std::cout << "Drone " << drone->id << " added upload to pipe" << std::endl;
+                    // std::cout << "Drone " << drone->id << " added upload to pipe" << std::endl;
                 }
             }
 
-            std::cout << "Wave " << id << " tick " << tick << " all drones executed" << std::endl;
+            // std::cout << "Wave " << id << " tick " << tick << " all drones executed" << std::endl;
 
             pipe.exec();
 
@@ -213,9 +216,9 @@ void Wave::Run()
             // Each tick of the execution will be synced with the other threads. This will make writing to the DB much easier
             // because the data will be consistent/historical
             // tick_sync.tick_completed();
-            std::cout << "Wave " << id << " tick " << tick << " setting sync" << std::endl;
+            // std::cout << "Wave " << id << " tick " << tick << " setting sync" << std::endl;
             sem_sync->sync();
-            std::cout << "Wave " << id << " tick " << tick << " synced" << std::endl;
+            // std::cout << "Wave " << id << " tick " << tick << " synced" << std::endl;
             tick++;
         }
         catch (const TimeoutError& e)

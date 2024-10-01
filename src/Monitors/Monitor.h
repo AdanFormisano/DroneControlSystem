@@ -25,7 +25,7 @@ protected:
     void WriteToDB(const std::string& query);
 };
 
-class RechargeTimeMonitor : public Monitor {
+class RechargeTimeMonitor final : public Monitor {
 public:
     explicit RechargeTimeMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
@@ -38,7 +38,7 @@ private:
     void getChargedDrones(pqxx::work& W);
 };
 
-class CoverageMonitor : public Monitor {
+class CoverageMonitor final : public Monitor {
 public:
     explicit CoverageMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
@@ -50,10 +50,18 @@ private:
     void checkCoverage();
     void checkWaveVerification();
     void checkAreaCoverage();
-    std::vector<std::array<int,3>> getWaveVerification();
+
+    struct WaveVerification
+    {
+        int wave_id;
+        int tick_n;
+        int drone_id;
+    };
+
+    std::vector<WaveVerification> getWaveVerification();   // wave_id, tick_n, drone_id
 };
 
-class DroneChargeMonitor : public Monitor {
+class DroneChargeMonitor final : public Monitor {
 public:
     explicit DroneChargeMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
@@ -67,7 +75,7 @@ private:
     void checkDroneCharge();
 };
 
-class TimeToReadDataMonitor : public Monitor {
+class TimeToReadDataMonitor final : public Monitor {
 public:
     explicit TimeToReadDataMonitor(Redis& redis) : Monitor(redis) {};
     void RunMonitor() override;
