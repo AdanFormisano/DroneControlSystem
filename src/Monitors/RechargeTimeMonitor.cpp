@@ -8,18 +8,21 @@
  * - 4463 = number of ticks for 3 hours
  */
 
-#include <boost/thread.hpp>
-
 #include "Monitor.h"
+#include "spdlog/spdlog.h"
+#include "sw/redis++/redis++.h"
+#include <chrono>
+#include <iostream>
+#include <pqxx/pqxx>
+#include <sstream>
+
+using namespace sw::redis;
 
 void RechargeTimeMonitor::checkDroneRechargeTime() {
     spdlog::info("RECHARGE-MONITOR: Initiated...");
-    // boost::this_thread::sleep_for(boost::chrono::seconds(10));
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
-    try
-    {
-        // TODO: Maybe not the best thing to have a while(true) loop
+    try {
         while (true) {
             spdlog::info("RECHARGE-MONITOR: Checking drone recharge time...");
             pqxx::work W(db.getConnection());
@@ -43,12 +46,14 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
                     } else {
                         spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time", drone_id, (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
 
-                        // Insert into monitor_logs
                         std::string q = "INSERT INTO monitor_logs (tick_n, recharge_drone_id, recharge_duration) "
-                        "VALUES (" + std::to_string(end_tick) + ", ARRAY[" + std::to_string(drone_id) + "], ARRAY[" + std::to_string(delta_time) + ") "
-                        "ON CONFLICT (tick_n) DO UPDATE SET "
-                            "recharge_drone_id = array_append(monitor_logs.recharge_drone_id, " + std::to_string(drone_id) + "), "
-                            "recharge_duration = array_append(monitor_logs.recharge_duration, " + std::to_string(delta_time) + ");";
+                                        "VALUES (" +
+                                        std::to_string(end_tick) + ", ARRAY[" + std::to_string(drone_id) + "], ARRAY[" + std::to_string(delta_time) + "]) "
+                                                                                                                                                      "ON CONFLICT (tick_n) DO UPDATE SET "
+                                                                                                                                                      "recharge_drone_id = array_append(monitor_logs.recharge_drone_id, " +
+                                        std::to_string(drone_id) + "), "
+                                                                   "recharge_duration = array_append(monitor_logs.recharge_duration, " +
+                                        std::to_string(delta_time) + ");";
 
                         W.exec(q);
                     }
@@ -56,34 +61,27 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
             }
             W.commit();
 
-            // Sleep for 20 seconds
             std::this_thread::sleep_for(std::chrono::seconds(20));
         }
-    }
-    catch (const std::exception &e)
-    {
+    } catch (const std::exception &e) {
         spdlog::error("RECHARGE-MONITOR: {}", e.what());
     }
-
 }
 
-// Get new charging drones
 void RechargeTimeMonitor::getChargingDrones(pqxx::work &W) {
     pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs "
-                            "WHERE status = 'CHARGING' AND tick_n > " + std::to_string(tick_last_read) +
+                            "WHERE status = 'CHARGING' AND tick_n > " +
+                            std::to_string(tick_last_read) +
                             " ORDER BY tick_n DESC");
 
     if (r.empty()) {
         spdlog::info("RECHARGE-MONITOR: No new drones charging");
-    } else
-    {
-        tick_last_read = r[0][0].as<int>(); // Update last read tick from DB
+    } else {
+        tick_last_read = r[0][1].as<int>(); // Update last read tick from DB
 
         for (const auto &row : r) {
             int drone_id = row[0].as<int>();
             int tick_n = row[1].as<int>();
-
-            // Check if drone is in the map
             if (!drone_recharge_time.contains(drone_id)) {
                 drone_recharge_time[drone_id] = std::make_pair(tick_n, -1);
             }
@@ -91,24 +89,21 @@ void RechargeTimeMonitor::getChargingDrones(pqxx::work &W) {
     }
 }
 
-// Get drones that are done charging
 void RechargeTimeMonitor::getChargedDrones(pqxx::work &W) {
     pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs "
-                            "WHERE status = 'CHARGE_COMPLETE' AND tick_n > " + std::to_string(tick_last_read) +
+                            "WHERE status = 'CHARGE_COMPLETE' AND tick_n > " +
+                            std::to_string(tick_last_read) +
                             " ORDER BY tick_n DESC");
 
-    if (r.empty())
-    {
+    if (r.empty()) {
         spdlog::info("RECHARGE-MONITOR: No drones are done charging");
-    } else
-    {
-        tick_last_read = r[0][0].as<int>(); // Update last read tick from DB
+    } else {
+        tick_last_read = r[0][1].as<int>();
 
         for (const auto &row : r) {
             int drone_id = row[0].as<int>();
             int tick_n = row[1].as<int>();
 
-            // Check if drone is in the map
             if (drone_recharge_time.contains(drone_id)) {
                 drone_recharge_time[drone_id].second = tick_n;
             } else {
