@@ -19,7 +19,6 @@ class ScannerManager {
 public:
     explicit ScannerManager(Redis &shared_redis);
 
-    // TickSynchronizer synchronizer;
     ThreadSemaphore synchronizer;
     ThreadPool pool;
 

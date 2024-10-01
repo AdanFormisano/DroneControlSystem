@@ -168,7 +168,6 @@ void DroneControl::WriteDroneDataToDB()
     std::cout << "[DB-W] thread started" << std::endl;
 
     int max_tick = 0; // Maximum tick number read from the buffer
-    constexpr int batch_size = 15000;
 
     while (max_tick < sim_duration_ticks - 1)
     {
@@ -189,7 +188,7 @@ void DroneControl::WriteDroneDataToDB()
                 count++;
 
                 // Execute the query in batches
-                if (count >= batch_size)
+                if (constexpr int batch_size = 15000; count >= batch_size)
                 {
                     // std::cout << "DB count: " << count << " max tick: " << max_tick << std::endl;
                     query.pop_back();
@@ -237,18 +236,18 @@ void DroneControl::WriteDroneDataToDB()
 void DroneControl::SendWaveSpawnCommand() const
 {
     // spdlog::warn("Sending wave spawn command");
-    std::cout << "Sending wave spawn command" << std::endl;
+    std::cout << "[DroneControl] Sending wave spawn command" << std::endl;
     redis.incr("spawn_wave");
 
     // Wait for the wave to spawn
     while (std::stoi(redis.get("spawn_wave").value_or("-1")) != 0)
     {
         // spdlog::warn("Waiting for wave to spawn...");
-        std::cout << "Waiting for wave to spawn..." << std::endl;
+        std::cout << "[DroneControl] Waiting for wave to spawn..." << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     // spdlog::warn("Wave spawned");
-    std::cout << "Wave spawned" << std::endl;
+    std::cout << "[DroneControl] Wave spawned" << std::endl;
 }
 
 void DroneControl::GetDronePaths()
@@ -274,6 +273,7 @@ void DroneControl::GetDronePaths()
 
 void DroneControl::Run()
 {
+    std::cout << "[DroneControl] Running" << std::endl;
     // Get the drone paths from the database
     // GetDronesPaths();
 

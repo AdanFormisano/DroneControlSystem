@@ -2,6 +2,7 @@
 #include "DroneState.h"
 
 Drone::Drone(int id, const int wave_id, Wave &ctx) : id(id), wave_id(wave_id), ctx(ctx) {
+    currentState = &ToStartingLine::getInstance();
 }
 
 void Drone::setState(DroneState &newState) {

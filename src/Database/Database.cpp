@@ -28,9 +28,8 @@ void Database::get_DB() {
         pqxx::connection C("user=postgres password=admin@123 hostaddr=127.0.0.1 port=5432");
         // Verifica se il database 'dcs' esiste
         pqxx::nontransaction N(C);
-        pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'");
         // Se il DB non esiste, crearlo
-        if (R.empty()) {
+        if (pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'"); R.empty()) {
             // spdlog::warn("Creating dcs database");
             std::cout << "Creating dcs database" << std::endl;
             // pqxx::work W(C);

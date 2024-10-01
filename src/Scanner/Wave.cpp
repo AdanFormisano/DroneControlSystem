@@ -21,7 +21,8 @@ Wave::Wave(int tick_n, int wave_id, Redis& shared_redis, ThreadSemaphore* tick_s
     {
         int drone_id = id * 1000 + i;
 
-        drones.push_back(new Drone(drone_id, id, *this));
+        // drones.push_back(std::make_shared<Drone>(drone_id, id, *this));
+        drones[i] = std::make_unique<Drone>(drone_id, id, *this);
         drones[i]->position.x = 0;
         drones[i]->position.y = 0;
         drones[i]->starting_line.x = -2990.0f;
@@ -35,7 +36,7 @@ Wave::Wave(int tick_n, int wave_id, Redis& shared_redis, ThreadSemaphore* tick_s
 
         drones[i]->dir.x = dx / distance;
         drones[i]->dir.y = dy / distance;
-        drones[i]->setState(ToStartingLine::getInstance());
+        // drones[i]->setState(ToStartingLine::getInstance());
 
         y += 20.0f;
     }
@@ -127,14 +128,14 @@ void Wave::DeleteDrones()
         for (auto& drone_id : drones_to_delete)
         {
             int index = drone_id % 1000;
-            // spdlog::info("Drone {} is dead", drone_id);
-            delete drones[index];
-            drones[index] = nullptr;
+            drones[index].reset(); // Reset the shared_ptr to release the memory
         }
+
+        // Clear the vector
+        drones_to_delete.clear();
     }
     catch (const std::exception& e)
     {
-        // spdlog::error("Error deleting drones: {}", e.what());
         std::cerr << "Error deleting drones: " << e.what() << std::endl;
     }
 }
@@ -142,12 +143,12 @@ void Wave::DeleteDrones()
 bool Wave::AllDronesAreDead()
 {
     // Check if all drones are dead
-    return std::ranges::all_of(drones, [](const Drone* d) { return d == nullptr; });
+    // std::cout << "Wave " << id << " tick " << tick << " checking alive drones" << std::endl;
+    return std::ranges::all_of(drones, [](const std::unique_ptr<Drone>& d) { return d == nullptr; });
 }
 
 void Wave::Run()
 {
-    // spdlog::info("Wave {} started", id);
     // std::cout << "Wave " << id << " started" << std::endl;
     // tick_sync.thread_started();
     sem_sync->add_thread();
@@ -159,31 +160,34 @@ void Wave::Run()
 
     while (!AllDronesAreDead())
     {
-        // std::cout << "[" << std::this_thread::get_id() << "] Wave " << id << " - TICK " << tick << " just started" << std::endl;
-        // std::cout << "Wave " << id << " tick " << tick << " drones are all dead: "<< AreDroneDead << std::endl;
-        // spdlog::info("Wave {} tick {}", id, tick);
-        // std::cout << "Wave " << id << " tick " << tick << std::endl;
-
-        // Before the "normal" execution, check if SM did put any "input" inside the "queue" (aka TestGenerator scenarios' input)
-        // Check if there is any message in the queue
-        if (!tg_data.empty())
-        {
-            // TODO: In theory there will only ever be a single message in the queue, maybe we can optimize this
-            // Get the message from the queue
-            auto msg = tg_data.pop().value();
-
-            setDroneFault(msg.drone_id, msg.new_state, msg.reconnect_tick, msg.high_consumption_factor);
-        }
-
         try
         {
-            // Execute the wave
-            for (auto& drone : drones)
+            // std::cout << "[" << std::this_thread::get_id() << "] Wave " << id << " - TICK " << tick << " just started" << std::endl;
+            // std::cout << "Wave " << id << " tick " << tick << " drones are all dead: "<< AreDroneDead << std::endl;
+            // std::cout << "Wave " << id << " tick " << tick << std::endl;
+
+            // Before the "normal" execution, check if SM did put any "input" inside the "queue" (aka TestGenerator scenarios' input)
+            // Check if there is any message in the queue
+            if (!tg_data.empty())
             {
+                // TODO: In theory there will only ever be a single message in the queue, maybe we can optimize this
+                // Get the message from the queue
+                auto [drone_id, wave_id, new_state, reconnect_tick, high_consumption_factor] = tg_data.pop().value();
+
+                setDroneFault(drone_id, new_state, reconnect_tick, high_consumption_factor);
+            }
+
+            // std::cout << "Wave " << id << " tick " << tick << " checked for drone faults" << std::endl;
+            // Execute the wave
+            for (const auto& drone : drones)
+            {
+                // std::cout << "Drone " << drone << std::endl;
                 if (drone != nullptr)
                 {
+                    // std::cout << "Drone " << drone->id << " about to run" << std::endl;
                     // Execute the current state
                     drone->run();
+                    // std::cout << "Drone " << drone->id << " ran" << std::endl;
 
                     // Create a DroneData object
                     DroneData data(tick, drone->id, utils::droneStateToString(drone->getCurrentState()->getState()),
@@ -193,9 +197,12 @@ void Wave::Run()
 
                     // Add the command to the pipeline
                     pipe.xadd("scanner_stream", "*", v.begin(), v.end());
-                    // spdlog::info("Drone {} data uploaded to Redis", drone.id);
+
+                    // std::cout << "Drone " << drone->id << " added upload to pipe" << std::endl;
                 }
             }
+
+            // std::cout << "Wave " << id << " tick " << tick << " all drones executed" << std::endl;
 
             pipe.exec();
 
@@ -209,7 +216,9 @@ void Wave::Run()
             // Each tick of the execution will be synced with the other threads. This will make writing to the DB much easier
             // because the data will be consistent/historical
             // tick_sync.tick_completed();
+            // std::cout << "Wave " << id << " tick " << tick << " setting sync" << std::endl;
             sem_sync->sync();
+            // std::cout << "Wave " << id << " tick " << tick << " synced" << std::endl;
             tick++;
         }
         catch (const TimeoutError& e)

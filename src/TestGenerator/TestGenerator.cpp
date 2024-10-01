@@ -7,16 +7,16 @@
 TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_charge(1.5, 2), dis_drone(0, 299),
                                              dis_tick(1, 20) {
     // spdlog::info("Creating TestGenerator object");
-    std::cout << "Creating TestGenerator" << std::endl;
+    std::cout << "[TestGenerator] TestGenerator created" << std::endl;
     // message_queue::remove("test_generator_queue");
 
     // Everything_is_fine scenario [80%]
-    scenarios[0.8f] = []() {
+    scenarios[0.4f] = []() {
         // spdlog::info("Everything is fine");
     };
 
     // High_consumption [5%]
-    scenarios[0.85f] = [this]() {
+    scenarios[0.6f] = [this]() {
         // Choose a random drone to increase its consumption rate
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
@@ -32,7 +32,7 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
     };
 
     // Drone_failure scenario (drone stops working) [5%]
-    scenarios[0.9f] = [this]() {
+    scenarios[0.8f] = [this]() {
         // Choose a random drone to explode
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
@@ -64,7 +64,7 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
             TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1, 1};
             mq.send(&msg, sizeof(msg), 0);
             // spdlog::warn("Drone {} disconnected", drone_id);
-            std::cout << "[TestGenerator] Drone " << drone_id << " disconnected" << std::endl;
+            std::cout << "[TestGenerator] Drone " << drone_id << " disconnected and will NOT reconnect" << std::endl;
         }
     };
 
@@ -80,6 +80,7 @@ void signalHandler(int signum) {
 }
 
 void TestGenerator::Run() {
+    std::cout << "[TestGenerator] Running" << std::endl;
     signal(SIGTERM, signalHandler);
 
     while (true) {
