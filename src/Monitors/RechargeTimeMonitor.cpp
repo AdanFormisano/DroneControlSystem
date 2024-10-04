@@ -12,18 +12,23 @@
 #include "spdlog/spdlog.h"
 #include "sw/redis++/redis++.h"
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <pqxx/pqxx>
 #include <sstream>
 
 using namespace sw::redis;
 
+std::ofstream recharge_log("recharge_monitor.log");
+
 void RechargeTimeMonitor::checkDroneRechargeTime() {
+    recharge_log << "RECHARGE-MONITOR: Initiated..." << std::endl;
     spdlog::info("RECHARGE-MONITOR: Initiated...");
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
     try {
         while (true) {
+            recharge_log << "RECHARGE-MONITOR: Checking drone recharge time..." << std::endl;
             spdlog::info("RECHARGE-MONITOR: Checking drone recharge time...");
             pqxx::work W(db.getConnection());
 
@@ -39,11 +44,14 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
                 const int start_tick = drone.second.first;
 
                 if (const int end_tick = drone.second.second; end_tick == -1) {
+                    recharge_log << "RECHARGE-MONITOR: Drone " << drone_id << " is still charging" << std::endl;
                     spdlog::warn("RECHARGE-MONITOR: Drone {} is still charging", drone_id);
                 } else {
                     if (const int delta_time = end_tick - start_tick; delta_time >= 2975 && delta_time <= 4463) {
+                        recharge_log << "RECHARGE-MONITOR: Drone " << drone_id << " has charged for " << (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60 << " minutes" << std::endl;
                         spdlog::info("RECHARGE-MONITOR: Drone {} has charged for {} minutes", drone_id, (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
                     } else {
+                        recharge_log << "RECHARGE-MONITOR: Drone " << drone_id << " has charged for " << (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60 << " minutes...wrong amount of time" << std::endl;
                         spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time", drone_id, (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
 
                         std::string q = "INSERT INTO monitor_logs (tick_n, recharge_drone_id, recharge_duration) "
@@ -64,6 +72,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
             std::this_thread::sleep_for(std::chrono::seconds(20));
         }
     } catch (const std::exception &e) {
+        recharge_log << "RECHARGE-MONITOR: " << e.what() << std::endl;
         spdlog::error("RECHARGE-MONITOR: {}", e.what());
     }
 }
@@ -75,7 +84,8 @@ void RechargeTimeMonitor::getChargingDrones(pqxx::work &W) {
                             " ORDER BY tick_n DESC");
 
     if (r.empty()) {
-        spdlog::info("RECHARGE-MONITOR: No new drones charging");
+        recharge_log << "RECHARGE-MONITOR: No new drone charging" << std::endl;
+        spdlog::info("RECHARGE-MONITOR: No new drone charging");
     } else {
         tick_last_read = r[0][1].as<int>(); // Update last read tick from DB
 
@@ -96,6 +106,7 @@ void RechargeTimeMonitor::getChargedDrones(pqxx::work &W) {
                             " ORDER BY tick_n DESC");
 
     if (r.empty()) {
+        recharge_log << "RECHARGE-MONITOR: No drones are done charging" << std::endl;
         spdlog::info("RECHARGE-MONITOR: No drones are done charging");
     } else {
         tick_last_read = r[0][1].as<int>();
@@ -107,6 +118,7 @@ void RechargeTimeMonitor::getChargedDrones(pqxx::work &W) {
             if (drone_recharge_time.contains(drone_id)) {
                 drone_recharge_time[drone_id].second = tick_n;
             } else {
+                recharge_log << "RECHARGE-MONITOR: Drone " << drone_id << " is not charging" << std::endl;
                 spdlog::error("RECHARGE-MONITOR: Drone {} is not charging", drone_id);
             }
         }

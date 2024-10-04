@@ -123,8 +123,8 @@ toggle_individual_monitor() {
     case $monitor_index in
     1) log_file="coverage_monitor.log" ;;
     2) log_file="recharge_monitor.log" ;;
-    3) log_file="time_to_read_data_monitor.log" ;;
-    4) log_file="drone_charge_monitor.log" ;;
+    3) log_file="system_performance.log" ;;
+    4) log_file="charge_monitor.log" ;;
     *) return ;;
     esac
 
@@ -177,20 +177,23 @@ echo "
 echo "-----------------------------------"
 
 echo "
- Premi:
+ PREMI
+
   • [c] per chiudere tutto
+
   • [d] per mostrare DroneControlSystem
-  • [m] per mostrare i monitor
-"
-echo "-----------------------------------"
-echo "    Per i singoli monitor:"
-echo "    • 1 - Coverage Area"
-echo "    • 2 - Recharge Time"
-echo "    • 3 - System Performance"
-echo "    • 4 - Drone Charge"
-echo "    ----------------------
-     Puoi premerli anche
-      mentre vedi l'output
+  
+  • [m] per mostrare tutti i monitor
+
+  • Per i singoli monitor
+       - [1] Coverage Area
+       - [2] Recharge Time
+       - [3] System Performance
+       - [4] Drone Charge
+
+  -------------------------------
+   Puoi premerli anche
+   mentre vedi l'output
 
 "
 
