@@ -1,4 +1,5 @@
 #include "DroneState.h"
+#include "../../utils/LogUtils.h"
 
 DroneState &Idle::getInstance() {
     static Idle instance;
@@ -256,44 +257,49 @@ void Reconnected::run(Drone *drone) {
         // Riporta il drone allo stato prec. la disconnessione
         switch (drone->previous) {
         case drone_state_enum::TO_STARTING_LINE:
-            spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id,
-                         utils::droneStateToString(drone->previous));
+            dcs_log << "Drone " << drone->id << " is returning to its previous state: " << utils::droneStateToString(drone->previous) << std::endl;
+            // spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
             drone->setState(ToStartingLine::getInstance());
-            spdlog::info("BOOOTO_STARTING_LINEOOOM");
+            dcs_log << "BOOOTO_STARTING_LINEOOOM" << std::endl;
+            // spdlog::info("BOOOTO_STARTING_LINEOOOM");
             break;
         case drone_state_enum::READY:
-            spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id,
-                         utils::droneStateToString(drone->previous));
+            dcs_log << "Drone " << drone->id << " is returning to its previous state: " << utils::droneStateToString(drone->previous) << std::endl;
+            // spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
             drone->setState(Ready::getInstance());
-            spdlog::info("BOOOOOOOOREADYOOOOOOOOOOM");
+            dcs_log << "BOOOOOOOOREADYOOOOOOOOOOM" << std::endl;
+            // spdlog::info("BOOOOOOOOREADYOOOOOOOOOOM");
             break;
         case drone_state_enum::WORKING:
-            spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id,
-                         utils::droneStateToString(drone->previous));
+            dcs_log << "Drone " << drone->id << " is returning to its previous state: " << utils::droneStateToString(drone->previous) << std::endl;
+            // spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
             drone->setState(Working::getInstance());
-            spdlog::info("BOOOOOOOWORKINGOOOOOOOM");
+            dcs_log << "BOOOOOOOWORKINGOOOOOOOM" << std::endl;
+            // spdlog::info("BOOOOOOOWORKINGOOOOOOOM");
             break;
         case drone_state_enum::TO_BASE:
-            spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id,
-                         utils::droneStateToString(drone->previous));
+            dcs_log << "Drone " << drone->id << " is returning to its previous state: " << utils::droneStateToString(drone->previous) << std::endl;
+            // spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
             drone->setState(ToBase::getInstance());
-            spdlog::info("BOOOOOTO_BASEOOOOOOOM");
+            dcs_log << "BOOOOOOOTO_BASEOOOOOOOM" << std::endl;
+            // spdlog::info("BOOOOOTO_BASEOOOOOOOM");
             break;
         case drone_state_enum::CHARGING:
-            spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id,
-                         utils::droneStateToString(drone->previous));
+            dcs_log << "Drone " << drone->id << " is returning to its previous state: " << utils::droneStateToString(drone->previous) << std::endl;
+            // spdlog::info("[DroneCH] Drone {} is returning to its previous state: {}", drone->id, utils::droneStateToString(drone->previous));
             drone->setState(Charging::getInstance());
-            spdlog::info("BOOOOOOCHARGINGOOOOOOOM");
+            dcs_log << "BOOOOOOCHARGINGOOOOOOOM" << std::endl;
+            // spdlog::info("BOOOOOOCHARGINGOOOOOOOM");
             break;
         default:
-            spdlog::error(
-                "[DroneCH] Drone {}'s last state chip broken, can't recover its state before disconnection ⇒ Dead",
-                drone->id);
+            dcs_log << "Drone " << drone->id << " has a None state where it shouldn't ⇒ Dead" << std::endl;
+            // spdlog::error("[DroneCH] Drone {}'s last state chip broken, can't recover its state before disconnection ⇒ Dead", drone->id);
             drone->setState(Dead::getInstance());
             break;
         }
     } else {
-        spdlog::error("Drone {} has a None state where it shouldn't", drone->id);
+        dcs_log << "Drone " << drone->id << " has a None state where it shouldn't ⇒ Dead" << std::endl;
+        // spdlog::error("Drone {} has a None state where it shouldn't", drone->id);
         drone->setState(Dead::getInstance()); // Garbage Collection
     }
 }

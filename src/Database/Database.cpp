@@ -1,5 +1,5 @@
 #include "Database.h"
-
+#include "../../utils/LogUtils.h"
 #include <iostream>
 
 void Database::ConnectToDB(const std::string &dbname,
@@ -31,7 +31,8 @@ void Database::get_DB() {
         // Se il DB non esiste, crearlo
         if (pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'"); R.empty()) {
             // spdlog::warn("Creating dcs database");
-            std::cout << "Creating dcs database" << std::endl;
+            log_db("Creating dcs database");
+            // std::cout << "Creating dcs database" << std::endl;
             // pqxx::work W(C);
             // W.exec("CREATE DATABASE dcs;");
             // W.commit();
@@ -55,7 +56,7 @@ void Database::get_DB() {
                 "drone_id INT NOT NULL, "
                 "status VARCHAR(255), "
                 "charge FLOAT, "
-                "wave INT, "  // TODO: Change to int
+                "wave INT, " // TODO: Change to int
                 "x FLOAT, "
                 "y FLOAT, "
                 "checked BOOLEAN, "
@@ -78,15 +79,16 @@ void Database::get_DB() {
         }
     } catch (const std::exception &e) {
         // spdlog::error("Failed to get DB: {}", e.what());
-        std::cerr << "Failed to get DB: " << e.what() << std::endl;
+        log_error("Database", "Failed to get DB: " + std::string(e.what()));
+        // std::cerr << "Failed to get DB: " << e.what() << std::endl;
     }
 }
 
-void Database::ExecuteQuery(const std::string &query) const
-{
+void Database::ExecuteQuery(const std::string &query) const {
     if (!conn || !conn->is_open()) {
         // spdlog::error("DB connection not established for query execution");
-        std::cerr << "DB connection not established for query execution" << std::endl;
+        log_error("Database", "DB connection not established for query execution");
+        // std::cerr << "DB connection not established for query execution" << std::endl;
         return;
     }
 

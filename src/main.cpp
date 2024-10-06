@@ -15,25 +15,24 @@
  * (time needed for a drone to move to the next "checkpoint") in 1 tick.
  */
 
+#include "../utils/LogUtils.h"
 #include "../utils/RedisUtils.h"
 #include "../utils/utils.h"
 #include "ChargeBase/ChargeBase.h"
 #include "DroneControl/DroneControl.h"
 #include "Monitors/Monitor.h"
+#include "Scanner/ScannerManager.h"
 #include "TestGenerator/TestGenerator.h"
 #include "globals.h"
+#include <iostream>
 #include <spdlog/spdlog.h>
 #include <sw/redis++/redis++.h>
-#include <unistd.h>
-#include <iostream>
 #include <sys/wait.h>
-#include "Scanner/ScannerManager.h"
+#include <unistd.h>
 
 using namespace sw::redis;
 
-
-int main()
-{
+int main() {
     spdlog::set_pattern("[%T.%e][%^%l%$][Main] %v");
 
     ConnectionOptions connection_options;
@@ -43,14 +42,12 @@ int main()
 
     // Create the DroneControl process
     pid_t pid_drone_control = fork();
-    if (pid_drone_control == -1)
-    {
+    if (pid_drone_control == -1) {
         // spdlog::error("Fork for DroneControl failed");
-        std::cerr << "Fork for DroneControl failed" << std::endl;
+        log_error("Fork for DroneControl failed");
+        // std::cerr << "Fork for DroneControl failed" << std::endl;
         return 1;
-    }
-    else if (pid_drone_control == 0)
-    {
+    } else if (pid_drone_control == 0) {
         // In child DroneControl process
         spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
 
@@ -64,19 +61,15 @@ int main()
 
         // Start simulation
         dc.Run();
-    }
-    else
-    {
+    } else {
         // In parent process create new child Drones process
         pid_t pid_drone = fork();
-        if (pid_drone == -1)
-        {
+        if (pid_drone == -1) {
             // spdlog::error("Fork for Drone failed");
-            std::cerr << "Fork for Drone failed" << std::endl;
+            log_error("Fork for Drone failed");
+            // std::cerr << "Fork for Drone failed" << std::endl;
             return 1;
-        }
-        else if (pid_drone == 0)
-        {
+        } else if (pid_drone == 0) {
             // In child Drones process
             // Create the Redis object for Drone
             ConnectionPoolOptions drone_connection_pool_options;
@@ -93,19 +86,15 @@ int main()
             // Start simulation
             // dm.Run();
             ssm.Run();
-        }
-        else
-        {
+        } else {
             // In parent process create new child ChargeBase process
             pid_t pid_charge_base = fork();
-            if (pid_charge_base == -1)
-            {
+            if (pid_charge_base == -1) {
                 // spdlog::error("Fork for ChargeBase failed");
-                std::cerr << "Fork for ChargeBase failed" << std::endl;
+                log_error("Fork for ChargeBase failed");
+                // std::cerr << "Fork for ChargeBase failed" << std::endl;
                 return 1;
-            }
-            else if (pid_charge_base == 0)
-            {
+            } else if (pid_charge_base == 0) {
                 // In child ChargeBase process
                 // Create the Redis object for ChargeBase
                 auto charge_base_redis = Redis(connection_options);
@@ -119,19 +108,15 @@ int main()
 
                 // Start simulation
                 cb->Run();
-            }
-            else
-            {
+            } else {
                 // In parent process create new child TestGenerator process
                 pid_t pid_test_generator = fork();
-                if (pid_test_generator == -1)
-                {
+                if (pid_test_generator == -1) {
                     // spdlog::error("Fork for TestGenerator failed");
-                    std::cerr << "Fork for TestGenerator failed" << std::endl;
+                    log_error("Fork for TestGenerator failed");
+                    // std::cerr << "Fork for TestGenerator failed" << std::endl;
                     return 1;
-                }
-                else if (pid_test_generator == 0)
-                {
+                } else if (pid_test_generator == 0) {
                     // In child TestGenerator process
                     spdlog::set_pattern("[%T.%e][%^%l%$][TestGenerator] %v");
 
@@ -142,23 +127,21 @@ int main()
                     TestGenerator tg(test_redis);
 
                     // spdlog::info("TestGenerator started");
-                    std::cout << "TestGenerator started" << std::endl;
+                    log_tg("TestGenerator started");
+                    // std::cout << "TestGenerator started" << std::endl;
 
                     // Start test generation
                     tg.Run();
-                }
-                else
-                {
+                } else {
                     pid_t pid_monitors = fork();
                     // In Main process
-                    if (pid_monitors == -1)
-                    {
-                        std::cerr << "Fork for Monitors failed" << std::endl;
-                    }
-                    else if (pid_monitors == 0)
-                    {
+                    if (pid_monitors == -1) {
+                        log_error("Fork for Monitors failed");
+                        // std::cerr << "Fork for Monitors failed" << std::endl;
+                    } else if (pid_monitors == 0) {
                         // In child Monitors process
-                        std::cout << "[Monitor] Monitors started" << std::endl;
+                        log_monitor("Monitors started");
+                        // std::cout << "[Monitor] Monitors started" << std::endl;
 
                         auto monitors_redis = Redis(connection_options);
 
@@ -167,18 +150,16 @@ int main()
 
                         // Run the Monitors' thread
                         cm.RunMonitor();
-                    }
-                    else
-                    {
+                    } else {
                         auto main_redis = Redis(connection_options);
 
                         // Create named semaphore for synchronization
-                        sem_t* sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
-                        sem_t* sem_sync_sc = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
-                        sem_t* sem_sync_cb = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
-                        sem_t* sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0);             // Used for DroneControl end of tick synchronization
-                        sem_t* sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0);             // Used for ScannerManager end of tick synchronization
-                        sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);             // Used for ChargeBase end of tick synchronization
+                        sem_t *sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
+                        sem_t *sem_sync_sc = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
+                        sem_t *sem_sync_cb = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
+                        sem_t *sem_dc = utils_sync::create_or_open_semaphore("/sem_dc", 0); // Used for DroneControl end of tick synchronization
+                        sem_t *sem_sc = utils_sync::create_or_open_semaphore("/sem_sc", 0); // Used for ScannerManager end of tick synchronization
+                        sem_t *sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0); // Used for ChargeBase end of tick synchronization
 
                         // Start simulation
                         int tick_n = 0;
@@ -186,13 +167,14 @@ int main()
                         // Start timewatch
                         auto start_time = std::chrono::high_resolution_clock::now();
 
-                        std::cout << "=====================================" << std::endl;
+                        log_main("=====================================");
+                        // std::cout << "=====================================" << std::endl;
 
                         // Simulation loop
-                        while (tick_n < sim_duration_ticks)
-                        {
+                        while (tick_n < sim_duration_ticks) {
                             // spdlog::info("TICK: {}", tick_n);
-                            std::cout << "[Main] TICK: " << tick_n << std::endl;
+                            log_main("TICK: " + std::to_string(tick_n));
+                            // std::cout << "[Main] TICK: " << tick_n << std::endl;
                             std::this_thread::sleep_for(std::chrono::milliseconds(5));
                             // Release sem_sync to start the next tick
                             sem_post(sem_sync_dc); // Signal DroneControl
@@ -206,14 +188,14 @@ int main()
 
                             ++tick_n;
                             // spdlog::info("=====================================");
-                            std::cout << "=====================================" << std::endl;
+                            log_main("=====================================");
+                            // std::cout << "=====================================" << std::endl;
                         }
                         // Stop time watch
                         auto sim_end_time = std::chrono::high_resolution_clock::now();
 
                         // Use Redis to stop the simulation
                         main_redis.set("sim_running", "false");
-
 
                         // Wait for child processes to finish
                         kill(pid_test_generator, SIGTERM);
@@ -225,11 +207,14 @@ int main()
                         auto shutoff_time = std::chrono::high_resolution_clock::now();
                         auto shutoff_duration = std::chrono::duration_cast<std::chrono::milliseconds>(shutoff_time - start_time).count();
                         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(sim_end_time - start_time).count();
-                        std::cout << "Simulation duration: " << duration << " ms" << std::endl;
-                        std::cout << "Entire system duration: " << shutoff_duration << " ms" << std::endl;
+                        log_main("Simulation duration: " + std::to_string(duration) + " ms");
+                        // std::cout << "Simulation duration: " << duration << " ms" << std::endl;
+                        log_main("Entire system duration: " + std::to_string(shutoff_duration) + " ms");
+                        // std::cout << "Entire system duration: " << shutoff_duration << " ms" << std::endl;
 
                         std::this_thread::sleep_for(std::chrono::seconds(5));
-                        std::cout << "Exiting..." << std::endl;
+                        log_main("Exiting...");
+                        // std::cout << "Exiting..." << std::endl;
                     }
                 }
             }

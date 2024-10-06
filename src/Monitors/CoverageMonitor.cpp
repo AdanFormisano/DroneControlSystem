@@ -9,10 +9,9 @@
 #include <fstream>
 #include <iostream>
 
+#include "../../utils/LogUtils.h"
 #include "../../utils/utils.h"
 #include "Monitor.h"
-
-std::ofstream coverage_log("coverage_monitor.log");
 
 /**
  * \brief Main function to monitor zone and area coverage.
@@ -22,8 +21,8 @@ std::ofstream coverage_log("coverage_monitor.log");
  */
 void CoverageMonitor::checkCoverage() {
     // spdlog::info("COVERAGE-MONITOR: Initiated...");
-    coverage_log << "[Monitor-CV] Initiated..." << std::endl;
-    std::cout << "[Monitor-CV] Initiated..." << std::endl;
+    log_coverage("Initiated...");
+    // std::cout << "[Monitor-CV] Initiated..." << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
     try {
@@ -36,18 +35,18 @@ void CoverageMonitor::checkCoverage() {
             std::this_thread::sleep_for(std::chrono::seconds(15));
         }
     } catch (const std::exception &e) {
-        coverage_log << "[Monitor-CV] " << e.what() << std::endl;
-        std::cerr << "[Monitor-CV] " << e.what() << std::endl;
+        log_coverage(e.what());
+        // std::cerr << "[Monitor-CV] " << e.what() << std::endl;
     }
 }
 
 void CoverageMonitor::checkWaveVerification() {
-    coverage_log << "[Monitor-CV] Checking wave verification..." << std::endl;
-    std::cout << "[Monitor-CV] Checking wave verification..." << std::endl;
+    log_coverage("Checking wave verification...");
+    // std::cout << "[Monitor-CV] Checking wave verification..." << std::endl;
 
     if (auto failed_waves = getWaveVerification(); failed_waves.empty()) {
-        coverage_log << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
-        std::cout << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
+        log_coverage("All waves were verified until tick " + std::to_string(tick_last_read));
+        // std::cout << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
     } else {
         for (const auto &wave : failed_waves) {
             int wave_id = wave.wave_id;
@@ -57,9 +56,8 @@ void CoverageMonitor::checkWaveVerification() {
             // Enqueue failed checks
             failed_ticks.insert(tick_n);
 
-            coverage_log << "[Monitor-CV] Wave " << wave_id << " was not verified by drone " << drone_id << " at tick " << tick_n << std::endl;
-            spdlog::warn("COVERAGE-MONITOR: Wave {} was not verified by drone {} at tick {}", wave_id, drone_id,
-                         tick_n);
+            log_coverage("Wave " + std::to_string(wave_id) + " was not verified by drone " + std::to_string(drone_id) + " at tick " + std::to_string(tick_n));
+            // spdlog::warn("COVERAGE-MONITOR: Wave {} was not verified by drone {} at tick {}", wave_id, drone_id, tick_n);
 
             std::string q = "INSERT INTO monitor_logs (tick_n, wave_cover) "
                             "VALUES (" +
@@ -75,8 +73,8 @@ void CoverageMonitor::checkWaveVerification() {
 
 void CoverageMonitor::checkAreaCoverage() {
     // spdlog::info("COVERAGE-MONITOR: Checking area coverage...");
-    coverage_log << "[Monitor-CV] Checking area coverage..." << std::endl;
-    std::cout << "[Monitor-CV] Checking area coverage..." << std::endl;
+    log_coverage("Checking area coverage...");
+    // std::cout << "[Monitor-CV] Checking area coverage..." << std::endl;
 
     // Print list of failed ticks
     if (!failed_ticks.empty()) {
@@ -92,21 +90,21 @@ void CoverageMonitor::checkAreaCoverage() {
             WriteToDB(q); // This will maybe cause a lot of overhead
         }
         f.resize(f.size() - 2);
-        coverage_log << "[Monitor-CV] Failed ticks: " << f << std::endl;
-        spdlog::warn("COVERAGE-MONITOR: Failed ticks: {}", f);
+        log_coverage("Failed ticks: " + f);
+        // spdlog::warn("COVERAGE-MONITOR: Failed ticks: {}", f);
 
         failed_ticks.clear();
     } else {
         // spdlog::info("COVERAGE-MONITOR: All waves were verified until tick {}", tick_last_read);
-        coverage_log << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
-        std::cout << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
+        log_coverage("All waves were verified until tick " + std::to_string(tick_last_read));
+        // std::cout << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
     }
 }
 
 std::vector<CoverageMonitor::WaveVerification> CoverageMonitor::getWaveVerification() {
     pqxx::work txn(db.getConnection()); // Begin a transaction
-    coverage_log << "[Monitor-CV] Getting wave verification" << std::endl;
-    std::cout << "[Monitor-CV] Getting wave verification" << std::endl;
+    log_coverage("Getting wave verification");
+    // std::cout << "[Monitor-CV] Getting wave verification" << std::endl;
     // Run the main query
     //  auto r = txn.exec(
     //      "WITH StatusChange AS ("
@@ -147,8 +145,8 @@ std::vector<CoverageMonitor::WaveVerification> CoverageMonitor::getWaveVerificat
         "FROM TransitionToReconnected tr "
         "JOIN TransitionToDisconnected td "
         "ON tr.drone_id = td.drone_id;");
-    coverage_log << "[Monitor-CV] Got work_disconnect_reconnect" << std::endl;
-    std::cout << "[Monitor-CV] Got work_disconnect_reconnect" << std::endl;
+    log_coverage("Got work_disconnect_reconnect");
+    // std::cout << "[Monitor-CV] Got work_disconnect_reconnect" << std::endl;
 
     auto work_disconnect_dead = txn.exec(
         "WITH StatusChange AS ("
@@ -186,8 +184,8 @@ std::vector<CoverageMonitor::WaveVerification> CoverageMonitor::getWaveVerificat
         "ON tw.drone_id = td.drone_id "
         "JOIN TransitionToDisconnected tdd "
         "ON tdd.drone_id = tw.drone_id;");
-    coverage_log << "[Monitor-CV] Got work_disconnect_dead" << std::endl;
-    std::cout << "[Monitor-CV] Got work_disconnect_dead" << std::endl;
+    log_coverage("Got work_disconnect_dead");
+    // std::cout << "[Monitor-CV] Got work_disconnect_dead" << std::endl;
 
     std::string q_working_dead = R"(
 WITH StatusChange AS (
@@ -242,8 +240,8 @@ ON
 )";
 
     auto work_dead = txn.exec(q_working_dead);
-    coverage_log << "[Monitor-CV] Got work_dead" << std::endl;
-    std::cout << "[Monitor-CV] Got work_dead" << std::endl;
+    log_coverage("Got work_dead");
+    // std::cout << "[Monitor-CV] Got work_dead" << std::endl;
 
     // Get the maximum tick in the entire table
     auto max_tick_result = txn.exec("SELECT MAX(tick_n) AS max_tick_in_db FROM drone_logs;");
@@ -252,23 +250,23 @@ ON
     //     tick_last_read = max_tick_result[0]["max_tick_in_db"].as<int>();
     // }
 
-    coverage_log << "[Monitor-CV] Got latest tick" << std::endl;
-    std::cout << "[Monitor-CV] Got latest tick" << std::endl;
+    log_coverage("Got latest tick");
+    // std::cout << "[Monitor-CV] Got latest tick" << std::endl;
 
     tick_last_read = max_tick_result[0]["max_tick_in_db"].is_null()
                          ? 0
                          : max_tick_result[0]["max_tick_in_db"].as<int>();
 
     // Commit the transaction
-    coverage_log << "[Monitor-CV] About to commit queries" << std::endl;
-    std::cout << "[Monitor-CV] About to commit queries" << std::endl;
+    log_coverage("About to commit queries");
+    // std::cout << "[Monitor-CV] About to commit queries" << std::endl;
     txn.commit();
-    coverage_log << "[Monitor-CV] Commited queries" << std::endl;
-    std::cout << "[Monitor-CV] Commited queries" << std::endl;
+    log_coverage("Commited queries");
+    // std::cout << "[Monitor-CV] Commited queries" << std::endl;
 
     // Now you can process the results
-    coverage_log << "[Monitor-CV] Processing results" << std::endl;
-    std::cout << "[Monitor-CV] Max Tick in DB: " << tick_last_read << std::endl;
+    log_coverage("Max Tick in DB: " + std::to_string(tick_last_read));
+    // std::cout << "[Monitor-CV] Max Tick in DB: " << tick_last_read << std::endl;
 
     std::vector<WaveVerification> wave_not_verified;
 

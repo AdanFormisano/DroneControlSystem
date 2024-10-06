@@ -8,18 +8,17 @@ data entries from the drones is less than 2.24 seconds (this is the amount of ti
 
  The monitor will save every tick that takes too long inside the failed_ticks vector.
  */
+#include "../../utils/LogUtils.h"
 #include "Monitor.h"
 #include <boost/interprocess/ipc/message_queue.hpp>
 #include <fstream>
 
 using namespace boost::interprocess;
 
-std::ofstream system_performance_log("system_performance.log");
-
 void TimeToReadDataMonitor::checkTimeToReadData() {
     try {
-        system_performance_log << "System performance monitor initiated..." << std::endl;
-        spdlog::info("TIME-TO-READ-MONITOR: Initiated...");
+        system_log << "System performance monitor initiated..." << std::endl;
+        // spdlog::info("TIME-TO-READ-MONITOR: Initiated...");
         // boost::this_thread::sleep_for(boost::chrono::seconds(10));
         std::this_thread::sleep_for(std::chrono::seconds(10));
 
@@ -39,20 +38,20 @@ void TimeToReadDataMonitor::checkTimeToReadData() {
 
             // Get number of messages in queue
             auto n_msg = mq.get_num_msg();
-            system_performance_log << "System performance monitor: " << n_msg << " failed tick" << std::endl;
-            spdlog::info("TIME-TO-READ-MONITOR: {} failed tick", n_msg);
+            system_log << "System performance monitor: " << n_msg << " failed tick" << std::endl;
+            // spdlog::info("TIME-TO-READ-MONITOR: {} failed tick", n_msg);
 
             // Read every message sent by DC
             for (auto i = 0; i < n_msg; i++) {
                 // If the queue is empty tick_failed is false and
                 if (auto tick_failed = mq.try_receive(&failed_tick, sizeof(failed_tick), recvd_size, priority); !tick_failed) {
-                    system_performance_log << "System performance monitor: Everything is fine" << std::endl;
-                    spdlog::info("TIME-TO-READ-MONITOR: Everything is fine");
+                    system_log << "System performance monitor: Everything is fine" << std::endl;
+                    // spdlog::info("TIME-TO-READ-MONITOR: Everything is fine");
                 } else // Some tick took too long
                 {
                     failed_ticks.emplace_back(failed_tick);
-                    system_performance_log << "System performance monitor: tick " << failed_tick << " took too long!" << std::endl;
-                    spdlog::warn("TIME-TO-READ-MONITOR: tick {} took too long!", failed_tick);
+                    system_log << "System performance monitor: tick " << failed_tick << " took too long!" << std::endl;
+                    // spdlog::warn("TIME-TO-READ-MONITOR: tick {} took too long!", failed_tick);
                     tick_last_read = failed_tick;
                 }
             }
@@ -83,7 +82,7 @@ void TimeToReadDataMonitor::checkTimeToReadData() {
             std::this_thread::sleep_for(std::chrono::seconds(20));
         }
     } catch (interprocess_exception &ex) {
-        system_performance_log << "System performance monitor: IPC error: " << ex.what() << std::endl;
-        spdlog::error("TIME-TO-READ-MONITOR: IPC error: {}", ex.what());
+        system_log << "System performance monitor: IPC error: " << ex.what() << std::endl;
+        // spdlog::error("TIME-TO-READ-MONITOR: IPC error: {}", ex.what());
     }
 }

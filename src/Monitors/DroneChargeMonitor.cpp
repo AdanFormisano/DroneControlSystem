@@ -4,16 +4,15 @@ the drones are swapped when their charge is just enough to return to the base.
 Monitor needs to take from Redis db the chargeToBase for each zone and use it to check if the drone's charge is enough
 to go back to base as soon as the drone state changes from WORKING to TO_BASE
 */
+#include "../../utils/LogUtils.h"
 #include "Monitor.h"
 #include <fstream>
-
-std::ofstream charge_log("charge_monitor.log");
 
 void DroneChargeMonitor::checkDroneCharge() {
     try {
         // Sleep for 5 seconds to let the zones calculate and upload the charge_needed to Redis
         charge_log << "CHARGE-MONITOR: Initiated..." << std::endl;
-        spdlog::info("CHARGE-MONITOR: Initiated...");
+        // spdlog::info("CHARGE-MONITOR: Initiated...");
         // boost::this_thread::sleep_for(boost::chrono::seconds(10));
         std::this_thread::sleep_for(std::chrono::seconds(10));
 
@@ -27,7 +26,7 @@ void DroneChargeMonitor::checkDroneCharge() {
             last_tick = r[0][0].as<int>();
 
             charge_log << "CHARGE-MONITOR: last tick read " << last_tick << std::endl;
-            spdlog::info("CHARGE-MONITOR: last tick read {}", last_tick);
+            // spdlog::info("CHARGE-MONITOR: last tick read {}", last_tick);
 
             auto query = "WITH StatusChange AS ("
                          "    SELECT"
@@ -68,8 +67,7 @@ void DroneChargeMonitor::checkDroneCharge() {
                     charge_log << "CHARGE MONITOR: Drone " << drone_id << " going to base at tick " << tick
                                << " with " << charge << "% charge, but it needs " << charge_needed[zone] << "% charge"
                                << std::endl;
-                    spdlog::error("CHARGE MONITOR: Drone {} going to base at tick {} with {}% charge, but it needs {}% charge",
-                                  drone_id, tick, charge, charge_needed[zone]);
+                    // spdlog::error("CHARGE MONITOR: Drone {} going to base at tick {} with {}% charge, but it needs {}% charge", drone_id, tick, charge, charge_needed[zone]);
 
                     // Insert into monitor_logs
                     std::string q = "INSERT INTO monitor_logs (tick_n, charge_drone_id, charge_percentage, charge_needed) "
@@ -87,7 +85,7 @@ void DroneChargeMonitor::checkDroneCharge() {
                     W.exec(q);
                 } else {
                     charge_log << "CHARGE MONITOR: Drone " << drone_id << " going back to base at tick " << tick << " with " << charge << "% charge" << std::endl;
-                    spdlog::info("CHARGE MONITOR: Drone {} ({}%) is going back to base", drone_id, charge);
+                    // spdlog::info("CHARGE MONITOR: Drone {} ({}%) is going back to base", drone_id, charge);
                 }
             }
             W.commit();
@@ -96,7 +94,7 @@ void DroneChargeMonitor::checkDroneCharge() {
         }
     } catch (const std::exception &e) {
         charge_log << "CHARGE-MONITOR: " << e.what() << std::endl;
-        spdlog::error("CHARGE-MONITOR: {}", e.what());
+        // spdlog::error("CHARGE-MONITOR: {}", e.what());
     }
 }
 
@@ -105,7 +103,7 @@ void DroneChargeMonitor::getChargeNeededForZones() {
     for (int z = 0; z < ZONE_NUMBER; z++) {
         if (auto r = shared_redis.get("zone:" + std::to_string(z) + ":charge_needed_to_base"); !r.has_value()) {
             charge_log << "CHARGE-MONITOR: Couldn't get charge_needed_to_base from Redis" << std::endl;
-            spdlog::error("Couldn't get charge_needed_to_base from Redis");
+            // spdlog::error("Couldn't get charge_needed_to_base from Redis");
         } else {
             charge_needed[z] = std::stof(r.value());
         }

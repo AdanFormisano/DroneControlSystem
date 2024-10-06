@@ -21,6 +21,7 @@ Premi Invio per avviare la simulazione
 read
 echo "-----------------------------------"
 
+# Configurazione di Redis
 REDIS_PORT=7777
 if lsof -i:$REDIS_PORT | grep LISTEN; then
     echo "
@@ -36,10 +37,10 @@ sleep 0.2
 redis-server ./redis.conf --daemonize yes &>/dev/null
 sleep 0.2
 
+# Funzione di cleanup
 cleanup() {
     echo -e "\n\n☑️ Termino i processi..."
     kill -- -$DRONE_PID
-    kill $MONITOR_PID
     if [ "$TAIL_RUNNING" = true ]; then
         kill $TAIL_PID
     fi
@@ -49,7 +50,7 @@ cleanup() {
     for pid in "${MONITOR_PIDS[@]}"; do
         kill $pid
     done
-    wait $DRONE_PID $MONITOR_PID $TAIL_PID $MONITOR_LOG_PID 2>/dev/null
+    wait $DRONE_PID $TAIL_PID $MONITOR_LOG_PID 2>/dev/null
 
     echo -e "☑️ Termino Redis..."
     redis-cli -p $REDIS_PORT shutdown
@@ -60,6 +61,7 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
+# Funzioni per gestire la visualizzazione dei log
 toggle_tail() {
     if [ "$TAIL_RUNNING" = true ]; then
         echo "
@@ -82,7 +84,7 @@ DroneControlSystem
 ------------------
 
 "
-        tail -f drone_output.log &
+        tail -f dcsa.log &
         TAIL_PID=$!
         TAIL_RUNNING=true
     fi
@@ -110,7 +112,7 @@ Visualizzazione
 ---------------
 
 "
-        tail -f monitor_output.log &
+        tail -f monitor.log &
         MONITOR_LOG_PID=$!
         MONITOR_RUNNING=true
     fi
@@ -121,10 +123,10 @@ toggle_individual_monitor() {
     local log_file
 
     case $monitor_index in
-    1) log_file="coverage_monitor.log" ;;
-    2) log_file="recharge_monitor.log" ;;
-    3) log_file="system_performance.log" ;;
-    4) log_file="charge_monitor.log" ;;
+    1) log_file="coverage.log" ;;
+    2) log_file="recharge.log" ;;
+    3) log_file="system.log" ;;
+    4) log_file="charge.log" ;;
     *) return ;;
     esac
 
@@ -154,17 +156,14 @@ Hai bloccato la visualiz-
     fi
 }
 
+# Avvio dei componenti
 echo " ☑️ Avvio il DroneControlSystem..."
 cd build
-setsid ./DroneControlSystem >drone_output.log 2>&1 &
+setsid ./DroneControlSystem >dcsa.log 2>&1 &
 DRONE_PID=$!
 sleep 0.2
 
-echo " ☑️ Avvio i monitor..."
-python3 ../Monitors/Monitor.py >monitor_output.log 2>&1 &
-MONITOR_PID=$!
-sleep 0.2
-
+# Variabili di stato per i log
 TAIL_RUNNING=false
 TAIL_PID=0
 MONITOR_RUNNING=false
@@ -176,6 +175,7 @@ echo "
 "
 echo "-----------------------------------"
 
+# Istruzioni per l'utente
 echo "
  PREMI
 
@@ -197,6 +197,7 @@ echo "
 
 "
 
+# Ciclo principale di input dell'utente
 while true; do
     read -n 1 -r key
     case $key in

@@ -18,6 +18,8 @@ add_executable(DroneControlSystem
         src/Database/Database.h
         src/TestGenerator/TestGenerator.cpp
         src/TestGenerator/TestGenerator.h
+        utils/LogUtils.cpp
+        utils/LogUtils.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp

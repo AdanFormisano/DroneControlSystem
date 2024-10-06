@@ -2,39 +2,38 @@
 #include "../../utils/RedisUtils.h"
 #include <algorithm>
 
+#include "../../utils/LogUtils.h"
 #include "../../utils/utils.h"
 
-ChargeBase* instance = nullptr;
+ChargeBase *instance = nullptr;
 
-ChargeBase* ChargeBase::getInstance(Redis& redis)
-{
-    if (!instance)
-    {
+ChargeBase *ChargeBase::getInstance(Redis &redis) {
+    if (!instance) {
         instance = new ChargeBase(redis); // Constructor
     }
     return instance;
 }
 
-ChargeBase::ChargeBase(Redis& redis) : redis(redis)
-{
+ChargeBase::ChargeBase(Redis &redis) : redis(redis) {
     // spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
     // spdlog::info("ChargeBase process starting");
-    std::cout << "[ChargeBase] ChargeBase created" << std::endl;
+    log_cb("ChargeBase created");
+    // std::cout << "[ChargeBase] ChargeBase created" << std::endl;
 }
 
-void ChargeBase::Run()
-{
-    std::cout << "[ChargeBase] Running" << std::endl;
+void ChargeBase::Run() {
+    log_cb("Running");
+    // std::cout << "[ChargeBase] Running" << std::endl;
     // Create or open the semaphore for synchronization
-    sem_t* sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
-    sem_t* sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);
+    sem_t *sem_sync = utils_sync::create_or_open_semaphore("/sem_sync_cb", 0);
+    sem_t *sem_cb = utils_sync::create_or_open_semaphore("/sem_cb", 0);
 
-    while (tick_n < sim_duration_ticks)
-    {
+    while (tick_n < sim_duration_ticks) {
         // Wait for the semaphore to be released
         sem_wait(sem_sync);
         // spdlog::info("TICK: {}", tick_n);
-        std::cout << "[Chargebase] TICK: " << tick_n << std::endl;
+        log_cb("TICK: " + std::to_string(tick_n));
+        // std::cout << "[Chargebase] TICK: " << tick_n << std::endl;
 
         // Work
         // ChargeDrone(); // Normal charge rate
@@ -47,20 +46,19 @@ void ChargeBase::Run()
     }
 
     // spdlog::info("ChargeBase process finished");
-    std::cout << "[ChargeBase] finished" << std::endl;
+    log_cb("Finished");
+    // std::cout << "[ChargeBase] finished" << std::endl;
 }
 
 // Read the charge_stream and adds the drones to the vector of drones to charge
-void ChargeBase::ReadChargeStream()
-{
+void ChargeBase::ReadChargeStream() {
     using new_Attrs = std::vector<std::pair<std::string, std::string>>;
     // This NEEDS to be a vector for xread to work
     using new_Item = std::pair<std::string, new_Attrs>;
     using new_ItemStream = std::vector<new_Item>;
 
     // Parse the stream and save/update the drones' data, trims the stream after reading
-    try
-    {
+    try {
         std::unordered_map<std::string, new_ItemStream> new_result;
         // TODO: Check of number_items_stream is necessary
         // Gets the number of items in the stream
@@ -68,17 +66,15 @@ void ChargeBase::ReadChargeStream()
 
         // Reads the stream
         redis.xread("charge_stream", current_stream_id,
-            number_items_stream, std::inserter(new_result, new_result.end()));
+                    number_items_stream, std::inserter(new_result, new_result.end()));
 
         // Parses the stream
-        for (const auto& item : new_result)
-        {
+        for (const auto &item : new_result) {
             // There is only one pair: stream_key and stream_data
             // item.first is the key of the stream. In this case it is "drone_stream"
 
             // spdlog::info("-----------------Tick {}-----------------", tick_n);
-            for (const auto& stream_drone : item.second)
-            {
+            for (const auto &stream_drone : item.second) {
                 // stream_drone.first is the id of the message in the stream
                 // stream_drone.second is the unordered_map with the data of the drone
 
@@ -91,16 +87,14 @@ void ChargeBase::ReadChargeStream()
         // Trim the stream
         // spdlog::info("{} entries read from charge_stream. Trimming the stream.", number_items_stream);
         redis.command<long long>("XTRIM", "charge_stream", "MINID", current_stream_id);
-    }
-    catch (const Error& e)
-    {
-         // splog::error("Error reading the stream: {}", e.what());
-        std::cerr << "[ChargeBase] Error reading the stream: " << e.what() << std::endl;
+    } catch (const Error &e) {
+        // splog::error("Error reading the stream: {}", e.what());
+        log_error("ChargeBase", "Error reading the stream: " + std::string(e.what()));
+        // std::cerr << "[ChargeBase] Error reading the stream: " << e.what() << std::endl;
     }
 }
 
-void ChargeBase::SetChargeData(const std::vector<std::pair<std::string, std::string>>& data)
-{
+void ChargeBase::SetChargeData(const std::vector<std::pair<std::string, std::string>> &data) {
     // The data is structured as a known array
     ChargingDroneData drone_data{};
     drone_data.id = std::stoi(data[0].second);
@@ -113,19 +107,15 @@ void ChargeBase::SetChargeData(const std::vector<std::pair<std::string, std::str
     charging_drones[drone_data.id] = drone_data;
 }
 
-void ChargeBase::ChargeDrone()
-{
+void ChargeBase::ChargeDrone() {
     // List of drones to remove from the charging list
     std::vector<int> drones_to_remove;
 
-    for (auto& drone : charging_drones)
-    {
-        auto& drone_data = drone.second;
-        if (drone_data.charge < 100)
-        {
+    for (auto &drone : charging_drones) {
+        auto &drone_data = drone.second;
+        if (drone_data.charge < 100) {
             drone_data.charge += drone_data.charge_rate;
-        } else if (drone_data.charge >= 100)
-        {
+        } else if (drone_data.charge >= 100) {
             drone_data.state = drone_state_enum::CHARGING_COMPLETED;
             ReleaseDrone(drone_data);
 
@@ -135,25 +125,20 @@ void ChargeBase::ChargeDrone()
     }
 
     // Remove the drones from the charging list
-    for (auto& drone_id : drones_to_remove)
-    {
+    for (auto &drone_id : drones_to_remove) {
         charging_drones.erase(drone_id);
     }
 }
 
-void ChargeBase::ChargeDroneMegaSpeed()
-{
+void ChargeBase::ChargeDroneMegaSpeed() {
     // List of drones to remove from the charging list
     std::vector<int> drones_to_remove;
 
-    for (auto& drone : charging_drones)
-    {
-        auto& drone_data = drone.second;
-        if (drone_data.charge < 100)
-        {
+    for (auto &drone : charging_drones) {
+        auto &drone_data = drone.second;
+        if (drone_data.charge < 100) {
             drone_data.charge += drone_data.charge_rate * 5;
-        } else if (drone_data.charge >= 100)
-        {
+        } else if (drone_data.charge >= 100) {
             drone_data.state = drone_state_enum::CHARGING_COMPLETED;
             // std::cout << "[ChargeBase] Drone ID: " << drone_data.id << " State updated to CHARGING_COMPLETED" << std::endl;
 
@@ -165,14 +150,12 @@ void ChargeBase::ChargeDroneMegaSpeed()
     }
 
     // Remove the drones from the charging list
-    for (auto& drone_id : drones_to_remove)
-    {
+    for (auto &drone_id : drones_to_remove) {
         charging_drones.erase(drone_id);
     }
 }
 
-void ChargeBase::ReleaseDrone(const ChargingDroneData& drone_data) const
-{
+void ChargeBase::ReleaseDrone(const ChargingDroneData &drone_data) const {
     // Add the drone to the list of charged drones for SM (to recycle drones)
     redis.sadd("charged_drones", std::to_string(drone_data.id));
 
@@ -182,20 +165,17 @@ void ChargeBase::ReleaseDrone(const ChargingDroneData& drone_data) const
     redis.xadd("scanner_stream", "*", v.begin(), v.end());
 }
 
-void ChargeBase::SetEngine()
-{
+void ChargeBase::SetEngine() {
     std::random_device rd;
     engine = std::mt19937(rd());
 }
 
-float ChargeBase::getChargeRate()
-{
+float ChargeBase::getChargeRate() {
     // Generate a random float between 2.0 and 3.0 for the charge rate
-    auto generateRandomFloat = [this]() -> float
-    {
+    auto generateRandomFloat = [this]() -> float {
         std::uniform_real_distribution<float> dist(2.0f, 3.0f);
         return dist(engine);
-    }; //GBT FTW
+    }; // GBT FTW
 
     auto tick_needed_to_charge = (generateRandomFloat() * (60 * 60)) / TICK_TIME_SIMULATED;
 

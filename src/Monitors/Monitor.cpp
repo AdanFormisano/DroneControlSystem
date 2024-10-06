@@ -19,6 +19,7 @@ The non-functional monitors are:
 */
 
 #include "Monitor.h"
+#include "../../utils/LogUtils.h"
 
 Monitor::Monitor(Redis &redis) : shared_redis(redis) {
     // spdlog::info("Monitor object created");
@@ -41,7 +42,8 @@ void Monitor::WriteToDB(const std::string &query) {
         W.exec(query);
         W.commit();
     } catch (const std::exception &e) {
-        spdlog::error("Error writing to DB: {}", e.what());
+        mon_log << "Error writing to DB: " << e.what() << std::endl;
+        // spdlog::error("Error writing to DB: {}", e.what());
     }
 }
 
