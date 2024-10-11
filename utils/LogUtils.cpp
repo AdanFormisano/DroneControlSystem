@@ -11,6 +11,11 @@ std::ofstream recharge_log("recharge.log");
 std::ofstream system_log("system.log");
 std::ofstream charge_log("charge.log");
 
+void log(const std::string &message) {
+    dcs_log << message << std::endl;
+    std::cout << message << std::endl;
+}
+
 void log_all(const std::string &message) {
     dcsa_log << message << std::endl;
     std::cout << message << std::endl;

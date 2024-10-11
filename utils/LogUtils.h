@@ -22,6 +22,7 @@ void log_cb(const std::string &message);   // Su dcs_log + [ChargeBase]
 void log_tg(const std::string &message);   // Su dcs_log + [TestGenerator]
 void log_sm(const std::string &message);   // Su dcs_log + [ScannerManager]
 void log_wv(const std::string &message);   // Su dcs_log + [Wave]
+void log(const std::string &message);      // Su dcs_log
 
 void log_db(const std::string &message);
 
