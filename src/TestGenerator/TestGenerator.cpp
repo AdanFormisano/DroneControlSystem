@@ -103,7 +103,6 @@ DroneInfo TestGenerator::ChooseRandomDrone() {
 
     // Get a random alive wave from Redis
     auto wave_id = std::stoi(test_redis.srandmember("waves_alive").value_or("-1"));
-    spdlog::info("Wave ID: {}", wave_id);
 
     if (wave_id == -1) {
         // Create exception if the wave is not found

@@ -31,6 +31,7 @@ public:
 private:
     int id = 0;
     std::array<std::unique_ptr<Drone>, 300> drones;
+    // std::vector<std::unique_ptr<Drone>> drones;
     ThreadSemaphore *sem_sync;
     int ready_drones = 0;
 

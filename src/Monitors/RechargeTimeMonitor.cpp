@@ -18,12 +18,15 @@
 
 using namespace sw::redis;
 
-void RechargeTimeMonitor::checkDroneRechargeTime() {
+void RechargeTimeMonitor::checkDroneRechargeTime()
+{
     spdlog::info("RECHARGE-MONITOR: Initiated...");
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
-    try {
-        while (true) {
+    try
+    {
+        while (true)
+        {
             spdlog::info("RECHARGE-MONITOR: Checking drone recharge time...");
             pqxx::work W(db.getConnection());
 
@@ -34,26 +37,36 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
             getChargedDrones(W);
 
             // Check if drones are charging for the right amount of time
-            for (const auto &drone : drone_recharge_time) {
+            for (const auto& drone : drone_recharge_time)
+            {
                 int drone_id = drone.first;
                 const int start_tick = drone.second.first;
 
-                if (const int end_tick = drone.second.second; end_tick == -1) {
+                if (const int end_tick = drone.second.second; end_tick == -1)
+                {
                     spdlog::warn("RECHARGE-MONITOR: Drone {} is still charging", drone_id);
-                } else {
-                    if (const int delta_time = end_tick - start_tick; delta_time >= 2975 && delta_time <= 4463) {
-                        spdlog::info("RECHARGE-MONITOR: Drone {} has charged for {} minutes", drone_id, (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
-                    } else {
-                        spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time", drone_id, (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
+                }
+                else
+                {
+                    if (const int delta_time = end_tick - start_tick; delta_time >= 2975 && delta_time <= 4463)
+                    {
+                        spdlog::info("RECHARGE-MONITOR: Drone {} has charged for {} minutes", drone_id,
+                                     (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
+                    }
+                    else
+                    {
+                        spdlog::warn("RECHARGE-MONITOR: Drone {} has charged for {} minutes...wrong amount of time",
+                                     drone_id, (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60);
 
                         std::string q = "INSERT INTO monitor_logs (tick_n, recharge_drone_id, recharge_duration) "
-                                        "VALUES (" +
-                                        std::to_string(end_tick) + ", ARRAY[" + std::to_string(drone_id) + "], ARRAY[" + std::to_string(delta_time) + "]) "
-                                                                                                                                                      "ON CONFLICT (tick_n) DO UPDATE SET "
-                                                                                                                                                      "recharge_drone_id = array_append(monitor_logs.recharge_drone_id, " +
-                                        std::to_string(drone_id) + "), "
-                                                                   "recharge_duration = array_append(monitor_logs.recharge_duration, " +
-                                        std::to_string(delta_time) + ");";
+                            "VALUES (" +
+                            std::to_string(end_tick) + ", ARRAY[" + std::to_string(drone_id) + "], ARRAY[" +
+                            std::to_string(delta_time) + "]) "
+                            "ON CONFLICT (tick_n) DO UPDATE SET "
+                            "recharge_drone_id = array_append(monitor_logs.recharge_drone_id, " +
+                            std::to_string(drone_id) + "), "
+                            "recharge_duration = array_append(monitor_logs.recharge_duration, " +
+                            std::to_string(delta_time) + ");";
 
                         W.exec(q);
                     }
@@ -63,50 +76,66 @@ void RechargeTimeMonitor::checkDroneRechargeTime() {
 
             std::this_thread::sleep_for(std::chrono::seconds(20));
         }
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception& e)
+    {
         spdlog::error("RECHARGE-MONITOR: {}", e.what());
     }
 }
 
-void RechargeTimeMonitor::getChargingDrones(pqxx::work &W) {
+void RechargeTimeMonitor::getChargingDrones(pqxx::work& W)
+{
     pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs "
-                            "WHERE status = 'CHARGING' AND tick_n > " +
-                            std::to_string(tick_last_read) +
-                            " ORDER BY tick_n DESC");
+        "WHERE status = 'CHARGING' AND tick_n > " +
+        std::to_string(tick_last_read) +
+        " ORDER BY tick_n DESC");
 
-    if (r.empty()) {
+    if (r.empty())
+    {
         spdlog::info("RECHARGE-MONITOR: No new drones charging");
-    } else {
+    }
+    else
+    {
         tick_last_read = r[0][1].as<int>(); // Update last read tick from DB
 
-        for (const auto &row : r) {
+        for (const auto& row : r)
+        {
             int drone_id = row[0].as<int>();
             int tick_n = row[1].as<int>();
-            if (!drone_recharge_time.contains(drone_id)) {
+            if (!drone_recharge_time.contains(drone_id))
+            {
                 drone_recharge_time[drone_id] = std::make_pair(tick_n, -1);
             }
         }
     }
 }
 
-void RechargeTimeMonitor::getChargedDrones(pqxx::work &W) {
+void RechargeTimeMonitor::getChargedDrones(pqxx::work& W)
+{
     pqxx::result r = W.exec("SELECT drone_id, tick_n FROM drone_logs "
-                            "WHERE status = 'CHARGE_COMPLETE' AND tick_n > " +
-                            std::to_string(tick_last_read) +
-                            " ORDER BY tick_n DESC");
+        "WHERE status = 'CHARGE_COMPLETE' AND tick_n > " +
+        std::to_string(tick_last_read) +
+        " ORDER BY tick_n DESC");
 
-    if (r.empty()) {
+    if (r.empty())
+    {
         spdlog::info("RECHARGE-MONITOR: No drones are done charging");
-    } else {
+    }
+    else
+    {
         tick_last_read = r[0][1].as<int>();
 
-        for (const auto &row : r) {
+        for (const auto& row : r)
+        {
             int drone_id = row[0].as<int>();
             int tick_n = row[1].as<int>();
 
-            if (drone_recharge_time.contains(drone_id)) {
+            if (drone_recharge_time.contains(drone_id))
+            {
                 drone_recharge_time[drone_id].second = tick_n;
-            } else {
+            }
+            else
+            {
                 spdlog::error("RECHARGE-MONITOR: Drone {} is not charging", drone_id);
             }
         }

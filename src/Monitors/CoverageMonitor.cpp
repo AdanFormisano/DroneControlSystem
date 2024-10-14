@@ -60,8 +60,8 @@ void CoverageMonitor::checkWaveVerification()
             // Enqueue failed checks
             failed_ticks.insert(tick_n);
 
-            spdlog::warn("COVERAGE-MONITOR: Wave {} was not verified by drone {} at tick {}", wave_id, drone_id,
-                         tick_n);
+            // spdlog::warn("COVERAGE-MONITOR: Wave {} was not verified by drone {} at tick {}", wave_id, drone_id,
+            //              tick_n);
 
             std::string q = "INSERT INTO monitor_logs (tick_n, wave_cover) "
                 "VALUES (" + std::to_string(tick_n) + ", ARRAY[" + std::to_string(drone_id) + "]) "
@@ -93,7 +93,7 @@ void CoverageMonitor::checkAreaCoverage()
             WriteToDB(q); // This will maybe cause a lot of overhead
         }
         f.resize(f.size() - 2);
-        spdlog::warn("COVERAGE-MONITOR: Failed ticks: {}", f);
+        // spdlog::warn("COVERAGE-MONITOR: Failed ticks: {}", f);
 
         failed_ticks.clear();
     }
