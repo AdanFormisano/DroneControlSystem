@@ -19,6 +19,7 @@ The non-functional monitors are:
 */
 
 #include "Monitor.h"
+#include <iostream>
 
 Monitor::Monitor(Redis &redis) : shared_redis(redis) {
     // spdlog::info("Monitor object created");
@@ -41,7 +42,7 @@ void Monitor::WriteToDB(const std::string &query) {
         W.exec(query);
         W.commit();
     } catch (const std::exception &e) {
-        spdlog::error("Error writing to DB: {}", e.what());
+        std::cerr << e.what() << std::endl;
     }
 }
 
@@ -56,12 +57,16 @@ void CoverageMonitor::RunMonitor() {
     t = std::thread(&CoverageMonitor::checkCoverage, this);
 }
 
-void DroneChargeMonitor::RunMonitor() {
+void SystemPerformanceMonitor::RunMonitor()
+{
+    // Create a thread to run the monitor
+    t = std::thread(&SystemPerformanceMonitor::checkPerformance, this);
+}
+
+void DroneChargeMonitor::RunMonitor()
+{
     // Create a thread to run the monitor
     t = std::thread(&DroneChargeMonitor::checkDroneCharge, this);
 }
 
-void TimeToReadDataMonitor::RunMonitor() {
-    // Create a thread to run the monitor
-    t = std::thread(&TimeToReadDataMonitor::checkTimeToReadData, this);
-}
+
