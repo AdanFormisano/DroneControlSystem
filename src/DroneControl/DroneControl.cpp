@@ -341,13 +341,16 @@ void DroneControl::Run()
 
     sim_running = false;
 
-    // Wait for the consumers to finish
-    // for (auto& consumer : consumers)
-    // {
-    //     consumer.join();
-    //     std::cout << "[DroneControl] Consumer joined [" << consumer.get_id() << "]" << std::endl;
-    // }
+    // Close the semaphore
+    sem_close(sem_sync);
+    sem_close(sem_dc);
 
     // spdlog::info("DroneControl finished");
     std::cout << "[DroneControl] finished" << std::endl;
+}
+
+DroneControl::DroneControl(Redis& shared_redis) : redis(shared_redis)
+{
+    std::cout << "[DroneControl] DroneControl created" << std::endl;
+    db.get_DB();
 }

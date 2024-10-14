@@ -10,7 +10,7 @@ using namespace sw::redis;
 
 class DroneControl {
 public:
-    explicit DroneControl(Redis &shared_redis) : redis(shared_redis) { db.get_DB(); };
+    explicit DroneControl(Redis &shared_redis);
 
     Redis &redis;
 

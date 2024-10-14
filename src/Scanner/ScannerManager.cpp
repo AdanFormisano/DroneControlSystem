@@ -136,6 +136,15 @@ void ScannerManager::Run()
     }
     synchronizer.remove_thread();
 
+    // Close the semaphore
+    sem_close(sem_sync);
+    sem_close(sem_sc);
+
+    // Close the message queue
+    message_queue::remove("drone_fault_queue");
+
+
+
     // spdlog::info("ScannerManager finished");
     std::cout << "[ScannerManager] finished" << std::endl;
 }

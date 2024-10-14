@@ -10,7 +10,7 @@ class Wave;
 
 class Drone {
 public:
-    Drone(int id, int wave_id, Wave &ctx);
+    Drone(int id, int wave_id, Wave *ctx);
     // ~Drone();
 
     int id;                              ///< Unique identifier for the drone.
@@ -20,7 +20,7 @@ public:
     // drone_state_enum state = drone_state_enum::IDLE_IN_BASE; ///< Current state of the drone.
     int wave_id;           ///< Identifier for the wave the drone is part of.
     float charge = 100.0f; ///< Current charge level of the drone, in percentage.
-    Wave &ctx;
+    Wave *ctx;
     int tick_drone = 0;
     coords hidden_coords = {0.0f, 0.0f};  ///< Hidden coordinates for the drone.
     int reconnect_tick = 0;               ///< Tick when the drone will reconnect.

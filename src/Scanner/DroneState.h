@@ -95,8 +95,8 @@ class Charging final : public DroneState
 {
 public:
     void enter(Drone* drone) override;
-    void run(Drone* drone) override;
-    void exit(Drone* drone) override;
+    void run(Drone* drone) override{};
+    void exit(Drone* drone) override{};
     static DroneState& getInstance();
     drone_state_enum getState() override { return drone_state_enum::CHARGING; }
 
@@ -109,7 +109,7 @@ private:
 class Dead final : public DroneState
 {
 public:
-    void enter(Drone* drone) override {};
+    void enter(Drone* drone) override;
     void run(Drone* drone) override;
     void exit(Drone* drone) override {};
     static DroneState& getInstance();
