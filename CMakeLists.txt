@@ -7,27 +7,42 @@ set(CMAKE_CXX_STANDARD 20)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 
-add_executable(DroneControlSystem
-        src/main.cpp
-        src/ChargeBase/ChargeBase.cpp
-        src/ChargeBase/ChargeBase.h
-        src/DroneControl/DroneControl.cpp
-        src/DroneControl/DroneControl.h
+add_executable(DroneBaseSystem
+        src/main_system.cpp
         src/globals.h
         src/Database/Database.cpp
         src/Database/Database.h
         src/TestGenerator/TestGenerator.cpp
         src/TestGenerator/TestGenerator.h
-        utils/RedisUtils.cpp
-        utils/RedisUtils.h
-        utils/utils.cpp
-        utils/utils.h
         src/Monitors/Monitor.cpp
         src/Monitors/Monitor.h
         src/Monitors/RechargeTimeMonitor.cpp
         src/Monitors/CoverageMonitor.cpp
+        utils/RedisUtils.cpp
+        utils/RedisUtils.h
+        utils/utils.cpp
+        utils/utils.h
+        src/Monitors/SystemPerformanceMonitor.cpp
         src/Monitors/DroneChargeMonitor.cpp
-        src/Monitors/TimeToReadDataMonitor.cpp
+)
+
+add_executable(DroneControl
+        src/DroneControl/main_dronecontrol.cpp
+        src/globals.h
+        src/DroneControl/DroneControl.cpp
+        src/DroneControl/DroneControl.h
+        src/Database/Database.cpp
+        src/Database/Database.h
+        src/Database/NewBuffer.cpp
+        src/Database/NewBuffer.h
+        utils/RedisUtils.cpp
+        utils/RedisUtils.h
+        utils/utils.cpp
+        utils/utils.h)
+
+add_executable(Scanner
+        src/Scanner/main_scanner.cpp
+        src/globals.h
         src/Scanner/ScannerManager.cpp
         src/Scanner/ScannerManager.h
         src/Scanner/ThreadUtils.h
@@ -38,17 +53,31 @@ add_executable(DroneControlSystem
         src/Scanner/DroneState.cpp
         src/Scanner/Wave.cpp
         src/Scanner/Wave.h
-        src/Database/NewBuffer.cpp
-        src/Database/NewBuffer.h
-)
+        utils/RedisUtils.cpp
+        utils/RedisUtils.h
+        utils/utils.cpp
+        utils/utils.h)
+
+add_executable(ChargeBase
+        src/ChargeBase/main_chargebase.cpp
+        src/globals.h
+        src/ChargeBase/ChargeBase.cpp
+        src/ChargeBase/ChargeBase.h
+        utils/RedisUtils.cpp
+        utils/RedisUtils.h
+        utils/utils.cpp
+        utils/utils.h)
 
 option(DEBUG "Enable debug mode" OFF)
 
 if (DEBUG)
-    target_compile_definitions(DroneControlSystem PRIVATE DEBUG)
+    target_compile_definitions(DroneBaseSystem PRIVATE DEBUG)
 endif ()
 
-target_compile_definitions(DroneControlSystem PRIVATE BOOST_DATE_TIME_NO_LIB)
+target_compile_definitions(DroneBaseSystem PRIVATE BOOST_DATE_TIME_NO_LIB)
+target_compile_definitions(DroneControl PRIVATE BOOST_DATE_TIME_NO_LIB)
+target_compile_definitions(Scanner PRIVATE BOOST_DATE_TIME_NO_LIB)
+target_compile_definitions(ChargeBase PRIVATE BOOST_DATE_TIME_NO_LIB)
 
 # Add spdlog dependency
 include(FetchContent)
@@ -64,25 +93,46 @@ include_directories(${CMAKE_SOURCE_DIR}/libs)
 
 # <------------ add hiredis dependency --------------->
 find_path(HIREDIS_HEADER hiredis)
-target_include_directories(DroneControlSystem PUBLIC ${HIREDIS_HEADER})
+target_include_directories(DroneBaseSystem PUBLIC ${HIREDIS_HEADER})
+target_include_directories(DroneControl PUBLIC ${HIREDIS_HEADER})
+target_include_directories(Scanner PUBLIC ${HIREDIS_HEADER})
+target_include_directories(ChargeBase PUBLIC ${HIREDIS_HEADER})
 
 find_library(HIREDIS_LIB hiredis)
-target_link_libraries(DroneControlSystem ${HIREDIS_LIB})
+target_link_libraries(DroneBaseSystem ${HIREDIS_LIB})
+target_link_libraries(DroneControl ${HIREDIS_LIB})
+target_link_libraries(Scanner ${HIREDIS_LIB})
+target_link_libraries(ChargeBase ${HIREDIS_LIB})
 
 # <------------ add redis-plus-plus dependency -------------->
 find_path(REDIS_PLUS_PLUS_HEADER sw)
-target_include_directories(DroneControlSystem PUBLIC ${REDIS_PLUS_PLUS_HEADER})
+target_include_directories(DroneBaseSystem PUBLIC ${REDIS_PLUS_PLUS_HEADER})
+target_include_directories(DroneControl PUBLIC ${REDIS_PLUS_PLUS_HEADER})
+target_include_directories(Scanner PUBLIC ${REDIS_PLUS_PLUS_HEADER})
+target_include_directories(ChargeBase PUBLIC ${REDIS_PLUS_PLUS_HEADER})
 
 find_library(REDIS_PLUS_PLUS_LIB redis++)
-target_link_libraries(DroneControlSystem ${REDIS_PLUS_PLUS_LIB})
+target_link_libraries(DroneBaseSystem ${REDIS_PLUS_PLUS_LIB})
+target_link_libraries(DroneControl ${REDIS_PLUS_PLUS_LIB})
+target_link_libraries(Scanner ${REDIS_PLUS_PLUS_LIB})
+target_link_libraries(ChargeBase ${REDIS_PLUS_PLUS_LIB})
 
-target_link_libraries(DroneControlSystem spdlog::spdlog)
+target_link_libraries(DroneBaseSystem spdlog::spdlog)
+target_link_libraries(DroneControl spdlog::spdlog)
+target_link_libraries(Scanner spdlog::spdlog)
+target_link_libraries(ChargeBase spdlog::spdlog)
 
 # <------------ libpqxx dependency -------------->
 find_path(LIBPQXX_HEADER pqxx)
-target_include_directories(DroneControlSystem PUBLIC ${LIBPQXX_HEADER})
+target_include_directories(DroneBaseSystem PUBLIC ${LIBPQXX_HEADER})
+target_include_directories(DroneControl PUBLIC ${LIBPQXX_HEADER})
+target_include_directories(Scanner PUBLIC ${LIBPQXX_HEADER})
+target_include_directories(ChargeBase PUBLIC ${LIBPQXX_HEADER})
 
 find_library(LIBPQXX_LIB pqxx)
 find_library(PQ_LIB pq REQUIRED)
-target_link_libraries(DroneControlSystem ${LIBPQXX_LIB} ${PQ_LIB})
+target_link_libraries(DroneBaseSystem ${LIBPQXX_LIB} ${PQ_LIB})
+target_link_libraries(DroneControl ${LIBPQXX_LIB} ${PQ_LIB})
+target_link_libraries(Scanner ${LIBPQXX_LIB} ${PQ_LIB})
+target_link_libraries(ChargeBase ${LIBPQXX_LIB} ${PQ_LIB})
 
