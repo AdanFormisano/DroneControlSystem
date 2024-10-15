@@ -147,9 +147,16 @@ int main() {
 
                         // Create the Monitors
                         CoverageMonitor cm(monitors_redis);
+                        RechargeTimeMonitor rm(monitors_redis);
+                        DroneChargeMonitor dm(monitors_redis);
+                        SystemPerformanceMonitor sm(monitors_redis);
 
                         // Run the Monitors' thread
                         cm.RunMonitor();
+                        rm.RunMonitor();
+                        dm.RunMonitor();
+                        sm.RunMonitor();
+
                     } else {
                         auto main_redis = Redis(connection_options);
 
@@ -215,6 +222,8 @@ int main() {
                         std::this_thread::sleep_for(std::chrono::seconds(5));
                         log_main("Exiting...");
                         // std::cout << "Exiting..." << std::endl;
+
+                        close_logs();
                     }
                 }
             }
