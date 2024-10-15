@@ -48,6 +48,8 @@ void Database::get_DB() {
             // Eliminare la tabella se esiste
             W.exec("DROP TABLE IF EXISTS drone_logs");
             W.exec("DROP TABLE IF EXISTS monitor_logs");
+            W.exec("DROP TABLE IF EXISTS system_performance_logs");
+            W.exec("DROP TABLE IF EXISTS drone_charge_logs");
 
             // Ricreare la tabella per i log dei droni
             W.exec(
@@ -56,7 +58,7 @@ void Database::get_DB() {
                 "drone_id INT NOT NULL, "
                 "status VARCHAR(255), "
                 "charge FLOAT, "
-                "wave INT, " // TODO: Change to int
+                "wave INT, "
                 "x FLOAT, "
                 "y FLOAT, "
                 "checked BOOLEAN, "
@@ -75,7 +77,24 @@ void Database::get_DB() {
                 "recharge_duration INT[], "
                 "time_to_read INT[]);");
 
+            // Create table for system performance logs
+            W.exec(
+                "CREATE TABLE system_performance_logs ("
+                "tick_n INT PRIMARY KEY, "
+                "working_drones_count INT, "
+                "waves_count INT, "
+                "performance FLOAT);");
+
+            // Create table for drones that consumed more than the intended charge
+            W.exec(
+                "CREATE TABLE drone_charge_logs ("
+                "drone_id INT PRIMARY KEY, "
+                "consumption_factor FLOAT, "
+                "arrived_at_base BOOLEAN);");
+
             W.commit();
+        } else {
+            std::cerr << "Failed to connect to DB" << std::endl;
         }
     } catch (const std::exception &e) {
         // spdlog::error("Failed to get DB: {}", e.what());

@@ -90,7 +90,7 @@ void CoverageMonitor::checkAreaCoverage() {
             WriteToDB(q); // This will maybe cause a lot of overhead
         }
         f.resize(f.size() - 2);
-        log_coverage("Failed ticks: " + f);
+        // log_coverage("Failed ticks: " + f);
         // spdlog::warn("COVERAGE-MONITOR: Failed ticks: {}", f);
 
         failed_ticks.clear();

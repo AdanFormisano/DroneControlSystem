@@ -20,7 +20,7 @@ Wave::Wave(int tick_n, int wave_id, Redis &shared_redis, ThreadSemaphore *tick_s
         int drone_id = id * 1000 + i;
 
         // drones.push_back(std::make_shared<Drone>(drone_id, id, *this));
-        drones[i] = std::make_unique<Drone>(drone_id, id, *this);
+        drones[i] = std::make_unique<Drone>(drone_id, id, this);
         drones[i]->position.x = 0;
         drones[i]->position.y = 0;
         drones[i]->starting_line.x = -2990.0f;
@@ -78,6 +78,9 @@ void Wave::UploadData() const {
         // spdlog::error("Redis pipeline error: {}", e.what());
         log_error("Wave", "Redis pipeline error: " + std::string(e.what()));
         // std::cerr << "Redis pipeline error: " << e.what() << std::endl;
+    } catch (...) {
+        log_error("Wave", "Unknown error uploading data to Redis");
+        // std::cerr << "Unknown error uploading data to Redis" << std::endl;
     }
 }
 
@@ -99,17 +102,22 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
 }
 
 void Wave::RecycleDrones() const {
-    // Get the drones that are fully charged
-    std::vector<std::string> charged_drones;
-    redis.spop("charged_drones", 300, std::back_inserter(charged_drones));
+    try {
+        // Get the drones that are fully charged
+        std::vector<std::string> charged_drones;
+        redis.spop("charged_drones", 300, std::back_inserter(charged_drones));
 
-    // Convert charged_drones from std::vector<std::string> to std::vector<int>
-    std::vector<int> charged_drones_int;
-    charged_drones_int.reserve(charged_drones.size());
-    std::ranges::transform(charged_drones, std::back_inserter(charged_drones_int),
-                           [](const std::string &str) { return std::stoi(str); });
+        // Convert charged_drones from std::vector<std::string> to std::vector<int>
+        std::vector<int> charged_drones_int;
+        charged_drones_int.reserve(charged_drones.size());
+        std::ranges::transform(charged_drones, std::back_inserter(charged_drones_int),
+                               [](const std::string &str) { return std::stoi(str); });
 
-    // return static_cast<int>(charged_drones_int.size());
+        // return static_cast<int>(charged_drones_int.size());
+    } catch (...) {
+        log_error("Wave", "Error recycling drones");
+        // std::cerr << "Error recycling drones" << std::endl;
+    }
 }
 
 void Wave::DeleteDrones() {
@@ -117,11 +125,12 @@ void Wave::DeleteDrones() {
         // Delete drones that are dead
         for (auto &drone_id : drones_to_delete) {
             int index = drone_id % 1000;
-            drones[index].reset(); // Reset the shared_ptr to release the memory
+            if (drones[index] != nullptr) {
+                drones[index].reset(nullptr); // Reset the shared_ptr to release the memory
+            }
         }
     } catch (const std::exception &e) {
-        log_error("Wave", "Error deleting drones: " + std::string(e.what()));
-        // std::cerr << "Error deleting drones: " << e.what() << std::endl;
+        std::cerr << "Error deleting drones: " << e.what() << std::endl;
     }
 }
 
@@ -177,6 +186,7 @@ void Wave::Run() {
                     pipe.xadd("scanner_stream", "*", v.begin(), v.end());
 
                     // std::cout << "Drone " << drone->id << " added upload to pipe" << std::endl;
+                    // std::cout << "Drone " << drone->id << " done" << std::endl;
                 }
             }
 
@@ -191,8 +201,6 @@ void Wave::Run() {
             // Delete drones that are dead
             DeleteDrones();
 
-            // Each tick of the execution will be synced with the other threads. This will make writing to the DB much easier
-            // because the data will be consistent/historical
             // tick_sync.tick_completed();
             // std::cout << "Wave " << id << " tick " << tick << " setting sync" << std::endl;
             sem_sync->sync();

@@ -22,6 +22,7 @@ void ToStartingLine::enter(Drone *drone) {
 void ToStartingLine::run(Drone *drone) {
     if (drone->charge - DRONE_CONSUMPTION_RATE * drone->high_consumption_factor <= 0.0f) {
         drone->setState(Dead::getInstance());
+        return;
     }
 
     // Check if the drone has reached the starting line
@@ -29,6 +30,7 @@ void ToStartingLine::run(Drone *drone) {
         // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
         // Change the state to READY
         drone->setState(Ready::getInstance());
+        return;
     } else {
         if (drone->dir.x * DRONE_STEP_SIZE + drone->position.x <= -2990) {
             drone->position.x = -2990;
@@ -54,20 +56,23 @@ DroneState &Ready::getInstance() {
 
 void Ready::enter(Drone *drone) {
     // spdlog::info("TICK {} Drone {} is ready to start working", drone->tick_drone, drone->id);
-    drone->ctx.incrReadyDrones();
+    drone->ctx->incrReadyDrones();
 }
 
 void Ready::run(Drone *drone) {
     if (drone->charge - DRONE_CONSUMPTION_RATE * drone->high_consumption_factor <= 0.0f) {
         drone->setState(Dead::getInstance());
+        return;
     }
 
-    if (drone->ctx.getReadyDrones() < 300) {
+    if (drone->ctx->getReadyDrones() < 300) {
         // Wait for all drones to be ready
+        drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
         // spdlog::info("TICK {} Drone {} is waiting for all drones to be ready", drone->tick_drone, drone->id);
     } else {
         // Change the state to WORKING
         drone->setState(Working::getInstance());
+        return;
     }
 }
 
@@ -83,11 +88,13 @@ void Working::enter(Drone *drone) {
 void Working::run(Drone *drone) {
     if (drone->charge - DRONE_CONSUMPTION_RATE * drone->high_consumption_factor <= 0.0f) {
         drone->setState(Dead::getInstance());
+        return;
     }
 
     // Move to the right by 20 units
     if (drone->position.x >= 2990) {
         drone->setState(ToBase::getInstance());
+        return;
     } else {
         drone->position.x += DRONE_STEP_SIZE;
         drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
@@ -107,6 +114,7 @@ void ToBase::enter(Drone *drone) {
 void ToBase::run(Drone *drone) {
     if (drone->charge - DRONE_CONSUMPTION_RATE * drone->high_consumption_factor <= 0.0f) {
         drone->setState(Dead::getInstance());
+        return;
     }
 
     // Check if the drone has reached the starting line
@@ -114,6 +122,7 @@ void ToBase::run(Drone *drone) {
         // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
         // Change the state to READY
         drone->setState(Charging::getInstance());
+        return;
     } else {
         if (drone->dir.x * DRONE_STEP_SIZE + drone->position.x <= 0) {
             drone->position.x = 0;
@@ -138,24 +147,14 @@ DroneState &Charging::getInstance() {
 }
 
 void Charging::enter(Drone *drone) {
-    // spdlog::info("TICK {} Drone {} is charging", drone->tick_drone, drone->id);
-}
-
-// TODO: Correctly implement the Charging state
-void Charging::run(Drone *drone) {
     // Upload to Redis drones' information for ChargeBase
     ChargingStreamData data(drone->id, drone->wave_id, drone->charge,
                             utils::droneStateToString(drone_state_enum::CHARGING));
     auto v = data.toVector();
-    drone->ctx.redis.xadd("charge_stream", "*", v.begin(), v.end());
+    drone->ctx->redis.xadd("charge_stream", "*", v.begin(), v.end());
 
     // Drone has sent its data to Redis, now it can charge (die)
-    drone->setState(Dead::getInstance());
-}
-
-void Charging::exit(Drone *drone) {
-    // spdlog::info("TICK {} Drone {} has finished charging", drone->tick_drone, drone->id);
-    // Setto a Dead o lo faccio puntare a null, o lo elimino dal vettore
+    drone->ctx->drones_to_delete.push_back(drone->id);
 }
 
 DroneState &Disconnected::getInstance() {
@@ -175,7 +174,7 @@ void Disconnected::hidden_to_starting_line(Drone *drone) {
     if (drone->dir.x * DRONE_STEP_SIZE + drone->hidden_coords.x <= -2990) {
         drone->hidden_coords.x = -2990;
         drone->hidden_coords.y = drone->starting_line.y;
-        drone->ctx.incrReadyDrones();
+        drone->ctx->incrReadyDrones();
         drone->previous = drone_state_enum::READY;
     } else {
         drone->hidden_coords.x += drone->dir.x * DRONE_STEP_SIZE;
@@ -185,7 +184,7 @@ void Disconnected::hidden_to_starting_line(Drone *drone) {
 
 void Disconnected::hidden_ready(Drone *drone) {
     drone->hidden_charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-    if (drone->ctx.getReadyDrones() >= 300) {
+    if (drone->ctx->getReadyDrones() >= 300) {
         drone->previous = drone_state_enum::WORKING;
     }
 }
@@ -211,6 +210,7 @@ void Disconnected::run(Drone *drone) {
     if (drone->reconnect_tick != -1) {
         if (drone->charge - DRONE_CONSUMPTION_RATE * drone->high_consumption_factor <= 0.0f) {
             drone->setState(Dead::getInstance());
+            return;
         }
 
         switch (drone->previous) {
@@ -232,6 +232,7 @@ void Disconnected::run(Drone *drone) {
 
         if (drone->tick_drone >= drone->reconnect_tick + drone->disconnected_tick) {
             drone->setState(Reconnected::getInstance());
+            return;
         }
     } else {
         // spdlog::info("[[DroneCH]] Drone {} is disconnected, coming from {}, waiting to die...", drone->id, utils::droneStateToString(drone->previous));
@@ -301,6 +302,7 @@ void Reconnected::run(Drone *drone) {
         dcs_log << "Drone " << drone->id << " has a None state where it shouldn't ⇒ Dead" << std::endl;
         // spdlog::error("Drone {} has a None state where it shouldn't", drone->id);
         drone->setState(Dead::getInstance()); // Garbage Collection
+        return;
     }
 }
 
@@ -309,8 +311,9 @@ DroneState &Dead::getInstance() {
     return instance;
 }
 
+void Dead::enter(Drone *drone) {
+    drone->ctx->drones_to_delete.push_back(drone->id);
+}
+
 void Dead::run(Drone *drone) {
-    // spdlog::info("[TestGenerator] TICK {} Drone {} is dead, coming from {}", drone->tick_drone, drone->id, utils::droneStateToString(drone->previous));
-    // spdlog::info("TICK {} Drone {} is dead", drone->tick_drone, drone->id);
-    drone->ctx.drones_to_delete.push_back(drone->id);
 }

@@ -1,6 +1,4 @@
 #pragma once
-#include <spdlog/spdlog.h>
-
 #include <memory>
 #include <pqxx/pqxx>
 #include <string>
