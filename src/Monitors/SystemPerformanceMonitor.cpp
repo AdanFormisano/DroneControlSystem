@@ -1,26 +1,28 @@
+#include "../../utils/LogUtils.h"
+#include "Monitor.h"
 #include <iostream>
 
-#include "Monitor.h"
-
-void SystemPerformanceMonitor::checkPerformance()
-{
-    std::cout << "[Monitor-SP] Initiated..." << std::endl;
+void SystemPerformanceMonitor::checkPerformance() {
+    log_system("Initiated...");
+    // std::cout << "[Monitor-SP] Initiated..." << std::endl;
 
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
-    try
-    {
+    try {
         // Get performance data
         getPerformanceData();
+
+        if (performance_data.empty()) {
+            log_system("No performance data to write to the database.");
+            return;
+        }
 
         // Write performance data to the database
         std::string query =
             "INSERT INTO system_performance_logs (tick_n, working_drones_count, waves_count, performance) VALUES ";
 
-        for (const auto& [tick_n, working_drones_count, waves_count, performance] : performance_data)
-        {
-            query += "(" + std::to_string(tick_n) + ", " + std::to_string(working_drones_count) + ", " +
-                std::to_string(waves_count) + ", " + std::to_string(performance) + "), ";
+        for (const auto &[tick_n, working_drones_count, waves_count, performance] : performance_data) {
+            query += "(" + std::to_string(tick_n) + ", " + std::to_string(working_drones_count) + ", " + std::to_string(waves_count) + ", " + std::to_string(performance) + "), ";
         }
         query = query.substr(0, query.size() - 2);
         query += ";";
@@ -31,15 +33,13 @@ void SystemPerformanceMonitor::checkPerformance()
         performance_data.clear();
 
         std::this_thread::sleep_for(std::chrono::seconds(10));
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "[Monitor-CV] " << e.what() << std::endl;
+    } catch (const std::exception &e) {
+        log_error("SystemPerformance", e.what());
+        // std::cerr << "[Monitor-CV] " << e.what() << std::endl;
     }
 }
 
-void SystemPerformanceMonitor::getPerformanceData()
-{
+void SystemPerformanceMonitor::getPerformanceData() {
     pqxx::work W(db.getConnection());
 
     // Get the number of working drones and their respective waves
@@ -52,8 +52,7 @@ void SystemPerformanceMonitor::getPerformanceData()
 
     auto R = W.exec(q);
 
-    for (const auto& row : R)
-    {
+    for (const auto &row : R) {
         const int tick_n = row["tick_n"].as<int>();
         const int working_drones_count = row["working_drones_count"].as<int>();
         const int waves_count = row["waves_count"].as<int>();

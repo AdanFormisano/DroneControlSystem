@@ -90,7 +90,7 @@ void RechargeTimeMonitor::getChargingDrones(pqxx::work &W) {
 
     if (r.empty()) {
         log_recharge("No new drones charging");
-        spdlog::info("RECHARGE-MONITOR: No new drones charging");
+        // spdlog::info("RECHARGE-MONITOR: No new drones charging");
     } else {
         tick_last_read = r[0][1].as<int>(); // Update last read tick from DB
 
@@ -112,7 +112,7 @@ void RechargeTimeMonitor::getChargedDrones(pqxx::work &W) {
 
     if (r.empty()) {
         log_recharge("No drones are done charging");
-        spdlog::info("RECHARGE-MONITOR: No drones are done charging");
+        // spdlog::info("RECHARGE-MONITOR: No drones are done charging");
     } else {
         tick_last_read = r[0][1].as<int>();
 

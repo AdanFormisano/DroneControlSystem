@@ -39,6 +39,7 @@ int Monitor::JoinThread() {
 
 void Monitor::WriteToDB(const std::string &query) {
     try {
+        log_monitor("Writing to DB: " + query);
         pqxx::work W(db.getConnection());
         W.exec(query);
         W.commit();

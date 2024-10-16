@@ -130,7 +130,8 @@ void Wave::DeleteDrones() {
             }
         }
     } catch (const std::exception &e) {
-        std::cerr << "Error deleting drones: " << e.what() << std::endl;
+        log_error("Wave", "Error deleting drones: " + std::string(e.what()));
+        // std::cerr << "Error deleting drones: " << e.what() << std::endl;
     }
 }
 

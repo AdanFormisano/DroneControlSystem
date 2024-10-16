@@ -34,6 +34,7 @@ void DroneChargeMonitor::checkDroneCharge() {
             W.commit();
         } catch (...) {
             log_error("DroneChargeMonitor", "Error occurred");
+            log_charge("Error occurred in DroneChargeMonitor::checkDroneCharge's try block");
             // std::cerr << "[Monitor-DC] Error occurred" << std::endl;
         }
     }

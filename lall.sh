@@ -103,7 +103,7 @@ DroneControlSystem
 ------------------
 
 "
-        tail -f dcsa.log &
+        tail -f dcs.log &
         TAIL_PID=$!
         TAIL_RUNNING=true
     fi
@@ -153,7 +153,7 @@ toggle_individual_monitor() {
         echo "
 
 ---------------
-$monitor_name
+ $monitor_name
 ---------------
 
 "
@@ -183,7 +183,7 @@ $monitor_name
 
 echo " ☑️ Avvio DroneControlSystem..."
 cd build
-setsid ./DroneControlSystem >dcsa.log 2>&1 &
+setsid ./DroneControlSystem >dcs.log 2>&1 &
 DRONE_PID=$!
 sleep 0.2
 
@@ -261,14 +261,24 @@ while true; do
 Output nascosto
 ---------------
 
- Premi:
+ PREMI
+
   • [c] per chiudere tutto
+
   • [d] per mostrare DroneControlSystem
+  
   • [m] per mostrare i Monitor
-  • 1 - Coverage Area
-  • 2 - Recharge Time
-  • 3 - System Performance
-  • 4 - Drone Charge
+
+  • Per i singoli Monitor
+       - [1] Coverage Area
+       - [2] Recharge Time
+       - [3] System Performance
+       - [4] Drone Charge
+
+  -------------------------------
+   Puoi premerli anche
+   mentre vedi l'output
+
 
 "
         ;;

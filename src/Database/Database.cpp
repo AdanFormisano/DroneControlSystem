@@ -94,7 +94,8 @@ void Database::get_DB() {
 
             W.commit();
         } else {
-            std::cerr << "Failed to connect to DB" << std::endl;
+            log_error("Database", "Failed to connect to DB");
+            // std::cerr << "Failed to connect to DB" << std::endl;
         }
     } catch (const std::exception &e) {
         // spdlog::error("Failed to get DB: {}", e.what());

@@ -318,8 +318,8 @@ void DroneControl::Run() {
     // std::cout << "[DroneControl] finished" << std::endl;
 }
 
-DroneControl::DroneControl(Redis& shared_redis) : redis(shared_redis)
-{
-    std::cout << "[DroneControl] DroneControl created" << std::endl;
+DroneControl::DroneControl(Redis &shared_redis) : redis(shared_redis) {
+    log_dc("DroneControl created");
+    // std::cout << "[DroneControl] DroneControl created" << std::endl;
     db.get_DB();
 }
