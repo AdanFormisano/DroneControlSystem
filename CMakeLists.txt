@@ -18,6 +18,8 @@ add_executable(DroneBaseSystem
         src/Monitors/Monitor.h
         src/Monitors/RechargeTimeMonitor.cpp
         src/Monitors/CoverageMonitor.cpp
+        utils/LogUtils.cpp
+        utils/LogUtils.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
@@ -35,6 +37,8 @@ add_executable(DroneControl
         src/Database/Database.h
         src/Database/NewBuffer.cpp
         src/Database/NewBuffer.h
+        utils/LogUtils.cpp
+        utils/LogUtils.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
@@ -53,6 +57,8 @@ add_executable(Scanner
         src/Scanner/DroneState.cpp
         src/Scanner/Wave.cpp
         src/Scanner/Wave.h
+        utils/LogUtils.cpp
+        utils/LogUtils.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
@@ -63,6 +69,8 @@ add_executable(ChargeBase
         src/globals.h
         src/ChargeBase/ChargeBase.cpp
         src/ChargeBase/ChargeBase.h
+        utils/LogUtils.cpp
+        utils/LogUtils.h
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp

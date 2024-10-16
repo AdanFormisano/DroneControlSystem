@@ -21,7 +21,21 @@ Premi Invio per avviare la simulazione
 read
 echo "-----------------------------------"
 
-# Redis è in esecuzione sulla porta 7777?
+############################################
+# Nomi monitor ad indici
+############################################
+
+declare -A MONITOR_NAMES=(
+    [1]="Coverage Area"
+    [2]="Recharge Time"
+    [3]="System Performance"
+    [4]="Drone Charge"
+)
+
+############################################
+# Redis
+############################################
+
 REDIS_PORT=7777
 if lsof -i:$REDIS_PORT | grep LISTEN; then
     echo "
@@ -33,46 +47,49 @@ Lo chiudo e lo riapro..."
 fi
 
 echo -e "\n ☑️ Avvio Redis sulla porta $REDIS_PORT..."
-sleep 0.2 # non serve, è solo estetico
+sleep 0.2
 redis-server ./redis.conf --daemonize yes &>/dev/null
-sleep 0.2 # non serve, è solo estetico
+sleep 0.2
+
+############################################
+# Cleanup
+############################################
 
 cleanup() {
-    echo -e "\n\n☑️ Termino i processi..."
+    echo -e "\n☑️ Termino i processi..."
     kill -- -$DRONE_PID
-    kill $MONITOR_PID
     if [ "$TAIL_RUNNING" = true ]; then
         kill $TAIL_PID
     fi
     if [ "$MONITOR_RUNNING" = true ]; then
         kill $MONITOR_LOG_PID
     fi
-    wait $DRONE_PID $MONITOR_PID $TAIL_PID $MONITOR_LOG_PID 2>/dev/null
+    for pid in "${MONITOR_PIDS[@]}"; do
+        kill $pid
+    done
+    wait $DRONE_PID $TAIL_PID $MONITOR_LOG_PID 2>/dev/null
 
     echo -e "☑️ Termino Redis..."
     redis-cli -p $REDIS_PORT shutdown
 
-    echo -e "\n✅ Programma terminato"
+    echo -e "\n✅ Programma terminato\n"
     exit
 }
 
 trap cleanup SIGINT SIGTERM
 
+############################################
+# Toggle viste log
+############################################
+
 toggle_tail() {
     if [ "$TAIL_RUNNING" = true ]; then
         echo "
 
--------------------------------
-Hai bloccato la visualizzazione
-    di DroneControlSystem
--------------------------------
-
-
- Premi:
-  • [c] per chiudere il programma
-  • [d] per mostrare ancora DroneControlSystem
-  • [m] per mostrare i monitor
-  • [h] per nascondere l'output
+--------------------
+ DroneControlSystem
+      nascosto
+--------------------
 
 "
         kill $TAIL_PID
@@ -82,12 +99,11 @@ Hai bloccato la visualizzazione
         echo "
 
 ------------------
-Visualizzazione di
 DroneControlSystem
 ------------------
 
 "
-        tail -f drone_output.log &
+        tail -f dcs.log &
         TAIL_PID=$!
         TAIL_RUNNING=true
     fi
@@ -97,16 +113,10 @@ toggle_monitor() {
     if [ "$MONITOR_RUNNING" = true ]; then
         echo "
 
--------------------------
-Hai bloccato la visualiz-
-  -zione dei monitor
--------------------------
-
- Premi:
-  • [c] per chiudere il programma
-  • [d] per mostrare DroneControlSystem
-  • [m] per mostrare ancora i monitor
-  • [h] per nascondere l'output
+----------------
+ M o n i t o r
+    nascosti
+----------------
 
 "
         kill $MONITOR_LOG_PID
@@ -116,49 +126,106 @@ Hai bloccato la visualiz-
         echo "
 
 ---------------
-Visualizzazione
-  dei monitor
+ M o n i t o r
 ---------------
 
 "
-        tail -f monitor_output.log &
+        tail -f monitor.log &
         MONITOR_LOG_PID=$!
         MONITOR_RUNNING=true
     fi
 }
 
-echo " ☑️ Avvio il DroneControlSystem..."
+toggle_individual_monitor() {
+    local monitor_index=$1
+    local log_file
+    local monitor_name=${MONITOR_NAMES[$monitor_index]}
+
+    case $monitor_index in
+    1) log_file="coverage.log" ;;
+    2) log_file="recharge.log" ;;
+    3) log_file="system.log" ;;
+    4) log_file="charge.log" ;;
+    *) return ;;
+    esac
+
+    if [ -z "${MONITOR_PIDS[$monitor_index]}" ]; then
+        echo "
+
+---------------
+ $monitor_name
+---------------
+
+"
+        tail -f $log_file &
+        MONITOR_PIDS[$monitor_index]=$!
+    else
+        echo "
+
+----------------
+$monitor_name
+   nascosto
+----------------
+
+"
+        if ps -p ${MONITOR_PIDS[$monitor_index]} > /dev/null; then
+            kill ${MONITOR_PIDS[$monitor_index]}
+            wait ${MONITOR_PIDS[$monitor_index]} 2>/dev/null
+            unset MONITOR_PIDS[$monitor_index]
+        fi
+        unset MONITOR_PIDS[$monitor_index]
+    fi
+}
+
+############################################
+# Avvio componenti
+############################################
+
+echo " ☑️ Avvio DroneControlSystem..."
 cd build
-setsid ./DroneControlSystem >drone_output.log 2>&1 &
+setsid ./DroneControlSystem >dcs.log 2>&1 &
 DRONE_PID=$!
 sleep 0.2
 
-echo " ☑️ Avvio i monitor..."
-python3 ../Monitors/Monitor.py >monitor_output.log 2>&1 &
-MONITOR_PID=$!
-sleep 0.2
-
+# Variabili di stato per i log
 TAIL_RUNNING=false
 TAIL_PID=0
 MONITOR_RUNNING=false
 MONITOR_LOG_PID=0
+declare -A MONITOR_PIDS
 
 echo "
  ✅ Simulazione avviata
 "
 echo "-----------------------------------"
 
+############################################
+# Istruzioni per l'utente
+############################################
 echo "
- Premi:
+ PREMI
+
   • [c] per chiudere tutto
+
   • [d] per mostrare DroneControlSystem
-  • [m] per mostrare i monitor"
-echo "    ----------------------
-     Puoi premerli anche
-      mentre vedi l'output
+  
+  • [m] per mostrare i Monitor
+
+  • Per i singoli Monitor
+       - [1] Coverage Area
+       - [2] Recharge Time
+       - [3] System Performance
+       - [4] Drone Charge
+
+  -------------------------------
+   Puoi premerli anche
+   mentre vedi l'output
 
 "
 
+############################################
+# Ciclo principale di input dell'utente
+############################################
 while true; do
     read -n 1 -r key
     case $key in
@@ -168,13 +235,25 @@ while true; do
     [Mm])
         toggle_monitor
         ;;
+    [1-4])
+        toggle_individual_monitor $key
+        ;;
     [Hh])
         if [ "$TAIL_RUNNING" = true ]; then
-            toggle_tail # Ferma tail se sta girando
+            toggle_tail
         fi
         if [ "$MONITOR_RUNNING" = true ]; then
-            toggle_monitor # Ferma tail del monitor se sta girando
+            toggle_monitor
         fi
+        for index in "${!MONITOR_PIDS[@]}"; do
+            pid=${MONITOR_PIDS[$index]}
+            if ps -p $pid > /dev/null; then
+                kill $pid
+                wait $pid 2>/dev/null
+            fi
+            unset MONITOR_PIDS[$index]
+        done
+        MONITOR_RUNNING=false
         clear
         echo "
         
@@ -182,14 +261,35 @@ while true; do
 Output nascosto
 ---------------
 
- Premi:
+ PREMI
+
   • [c] per chiudere tutto
+
   • [d] per mostrare DroneControlSystem
-  • [m] per mostrare i monitor
+  
+  • [m] per mostrare i Monitor
+
+  • Per i singoli Monitor
+       - [1] Coverage Area
+       - [2] Recharge Time
+       - [3] System Performance
+       - [4] Drone Charge
+
+  -------------------------------
+   Puoi premerli anche
+   mentre vedi l'output
+
 
 "
         ;;
     [Cc])
+        echo "
+
+----------------------
+  Hai premuto \"c\"
+ Chiusura in corso...
+----------------------
+"    
         cleanup
         ;;
     esac
