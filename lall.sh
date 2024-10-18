@@ -103,7 +103,7 @@ DroneControlSystem
 ------------------
 
 "
-        tail -f dcs.log &
+        tail -f ../log/dcs.log &
         TAIL_PID=$!
         TAIL_RUNNING=true
     fi
@@ -130,7 +130,7 @@ toggle_monitor() {
 ---------------
 
 "
-        tail -f monitor.log &
+        tail -f ../log/monitor.log &
         MONITOR_LOG_PID=$!
         MONITOR_RUNNING=true
     fi
@@ -142,10 +142,10 @@ toggle_individual_monitor() {
     local monitor_name=${MONITOR_NAMES[$monitor_index]}
 
     case $monitor_index in
-    1) log_file="coverage.log" ;;
-    2) log_file="recharge.log" ;;
-    3) log_file="system.log" ;;
-    4) log_file="charge.log" ;;
+    1) log_file="../log/mon/coverage.log" ;;
+    2) log_file="../log/mon/recharge.log" ;;
+    3) log_file="../log/mon/system.log" ;;
+    4) log_file="../log/mon/charge.log" ;;
     *) return ;;
     esac
 
@@ -183,7 +183,7 @@ $monitor_name
 
 echo " ☑️ Avvio DroneControlSystem..."
 cd build
-setsid ./DroneControlSystem >dcs.log 2>&1 &
+setsid ./DroneControlSystem >../log/dcs.log 2>&1 &
 DRONE_PID=$!
 sleep 0.2
 

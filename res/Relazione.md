@@ -62,8 +62,15 @@ contrario, segnala eventuali anomalie.
 
 #### Modello concettuale del sistema
 
-Il sistema si compone di una **base centrale** (detta **ChargeBase**), situata esattamente al centro dell'area, che funge da punto di partenza e ricarica per i droni.  
+Il sistema si compone di una **base centrale** (composta da componenti come **ChargeBase**, **DroneControl**, **Scanner**), situata esattamente al centro dell'area, che funge da punto di partenza e ricarica per i droni.  
 La **ChargeBase** è l'unico punto dell'intera area in cui i droni si trovano in uno stato di **non volo** e gestisce la ricarica di ciascun drone dopo un'operazione.
+
+---
+
+**INSERIRE QUI**  
+**SPIEGAZIONE ANTEPRIMA SISTEMA AD ONDE**
+
+---
 
 1. **Partenza dei droni**:  
    All'inizio della simulazione, tutti i droni partono dal **centro dell'area** e si dirigono verso il **lato sinistro** dell'area di sorveglianza per posizionarsi lungo una **linea di partenza** (detta `starting_line`).  
@@ -140,9 +147,6 @@ implementare il sistema:
   la gestione delle emergenze.
 - **(3.1) Controllo autonomia dei Droni**: Il sistema deve gestire autonomamente l'autonomia di volo di ciascun drone,
   coordinando i tempi di rientro per la ricarica basandosi sul livello di carica della batteria.
-- **(3.2) Ricambio Droni in volo**: Il sistema deve garantire la copertura dell'area assicurando che i droni scarichi
-  vengano sostituiti per tempo e coordinatamente da altri droni che li rimpiazzino nello svolgimento della missione di
-  verifica dei punti assegnativi.
 
 ### Architectural system view
 
@@ -172,6 +176,7 @@ database PostgreSQL.
 
 ### Struttura dell'area sorvegliata
 
+AGGIORNARE A NUOVA IMPLEMENTAZIONE
 ~~Il sistema gestisce l'area da sorvegliare dividendola in varie colonne, ognuna delle quali è divisa in zone rettangolari impilate virtualmente una sopra l'altra.~~
 
 ~~A partire dalla richiesta nella traccia del progetto è possibile individuare _celle_ i quali punti condividono l'istante di tempo $t$ in cui vengono coperti dal drone. Ogni _cella_ è un quadrato di lato $20$ metri.  
@@ -184,6 +189,7 @@ Considerando che lo spazio rimanente da coprire era di meno, abbiamo scelto di r
 
 ### Droni e verifica dei punti
 
+AGGIORNARE A NUOVA IMPLEMENTAZIONE (COME USATI: ONDE, QUADRATI, PUNTI, ...)
 ~~Come richiesto dalla traccia del progetto, ogni punto dell'area deve essere _verificato_ almeno ogni $5$ minuti, ed un punto è _verificato_ al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10\,\mathrm{m}$ dal punto.
 Per questa ragione abbiamo pensato di dividere l'area, a livello più basso della nostra astrazione, in celle e in zone dopodiché.~~
 

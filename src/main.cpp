@@ -149,13 +149,19 @@ int main() {
                         CoverageMonitor cm(monitors_redis);
                         RechargeTimeMonitor rm(monitors_redis);
                         DroneChargeMonitor dm(monitors_redis);
-                        SystemPerformanceMonitor sm(monitors_redis);
 
                         // Run the Monitors' thread
                         cm.RunMonitor();
                         rm.RunMonitor();
                         dm.RunMonitor();
-                        sm.RunMonitor();
+
+                        cm.JoinThread();
+                        rm.JoinThread();
+                        dm.JoinThread();
+
+                        // SystemPerformanceMonitor sm(monitors_redis);
+                        // sm.RunMonitor();
+                        // sm.JoinThread();
 
                     } else {
                         auto main_redis = Redis(connection_options);
@@ -207,7 +213,14 @@ int main() {
                         // Wait for child processes to finish
                         kill(pid_test_generator, SIGTERM);
                         waitpid(pid_drone_control, nullptr, 0);
+
+                        // Check if this should be here
+                        SystemPerformanceMonitor sm(main_redis);
+                        sm.RunMonitor();
+                        sm.JoinThread();
+
                         waitpid(pid_drone, nullptr, 0);
+                        waitpid(pid_monitors, nullptr, 0);
                         waitpid(pid_charge_base, nullptr, 0);
 
                         // Get shutoff time

@@ -12,10 +12,10 @@ void SystemPerformanceMonitor::checkPerformance() {
         // Get performance data
         getPerformanceData();
 
-        if (performance_data.empty()) {
-            log_system("No performance data to write to the database.");
-            return;
-        }
+        // if (performance_data.empty()) {
+        //     log_system("No performance data to write to the database.");
+        //     return;
+        // }
 
         // Write performance data to the database
         std::string query =

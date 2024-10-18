@@ -2,14 +2,14 @@
 #include <iostream>
 
 // Flussi di log
-std::ofstream dcsa_log("dcsa.log");   // Log tutto
-std::ofstream dcs_log("dcs.log");     // Log DCS
-std::ofstream mon_log("monitor.log"); // Log monitor
+std::ofstream dcsa_log("../log/dcsa.log");   // Log tutto
+std::ofstream dcs_log("../log/dcs.log");     // Log DCS
+std::ofstream mon_log("../log/monitor.log"); // Log monitor
 
-std::ofstream coverage_log("coverage.log");
-std::ofstream recharge_log("recharge.log");
-std::ofstream system_log("system.log");
-std::ofstream charge_log("charge.log");
+std::ofstream coverage_log("../log/mon/coverage.log");
+std::ofstream recharge_log("../log/mon/recharge.log");
+std::ofstream system_log("../log/mon/system.log");
+std::ofstream charge_log("../log/mon/charge.log");
 
 void log(const std::string &message) {
     dcs_log << message << std::endl;
