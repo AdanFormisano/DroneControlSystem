@@ -28,10 +28,15 @@ std::string generate_dashes(int length) {
 
 std::map<int, std::vector<std::string>> log_buffer;
 
+void log_dcsa(const std::string &message) {
+    dcsa_log << message << std::endl;
+    std::cout << message << std::endl;
+}
+
 void log_dcs(const std::string &process, const std::string &message) {
     std::string full_message = "[" + process + "] " + message;
     dcs_log << full_message << std::endl;
-    log_all(full_message);
+    log_dcsa(full_message);
 }
 
 void log_dcs_slow(const std::string &process, const std::string &message) {
@@ -153,11 +158,6 @@ void log(const std::string &message) {
     std::cout << message << std::endl;
 }
 
-void log_all(const std::string &message) {
-    dcsa_log << message << std::endl;
-    std::cout << message << std::endl;
-}
-
 void log_cb(const std::string &message) {
     log_dcs("ChargeBase", message);
     log_dcs_sync("ChargeBase", message);
@@ -185,7 +185,7 @@ void log_d(const std::string &message) {
 void log_db(const std::string &message) {
     std::string full_message = "[Database] " + message;
     dcs_log << full_message << std::endl;
-    log_all(full_message);
+    log_dcsa(full_message);
 }
 
 void log_dc(const std::string &message) {
@@ -211,7 +211,7 @@ void log_error(const std::string &process, const std::string &message) {
 
     dcs_log << full_message << std::endl;
     std::cerr << full_message << std::endl;
-    log_all(full_message);
+    log_dcsa(full_message);
 }
 
 void log_main(const std::string &message) {
@@ -223,7 +223,7 @@ void log_main(const std::string &message) {
 void log_monitor(const std::string &message) {
     std::string full_message = "[Monitors] " + message;
     mon_log << full_message << std::endl;
-    log_all(full_message);
+    log_dcsa(full_message);
 }
 
 void log_recharge(const std::string &message) {

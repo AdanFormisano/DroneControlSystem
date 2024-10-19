@@ -7,7 +7,38 @@
 [CoverageMonitor] Got latest tick
 [CoverageMonitor] About to commit queries
 [CoverageMonitor] Commited queries
-[CoverageMonitor] Max Tick in DB: 125
-[CoverageMonitor] All waves were verified until tick 125
+[CoverageMonitor] Max Tick in DB: 349
+[CoverageMonitor] All waves were verified until tick 349
 [CoverageMonitor] Checking area coverage...
-[CoverageMonitor] All waves were verified until tick 125
+[CoverageMonitor] All waves were verified until tick 349
+[CoverageMonitor] Checking wave verification...
+[CoverageMonitor] Getting wave verification
+[CoverageMonitor] Got work_disconnect_reconnect
+[CoverageMonitor] Got work_disconnect_dead
+[CoverageMonitor] Got work_dead
+[CoverageMonitor] Got latest tick
+[CoverageMonitor] About to commit queries
+[CoverageMonitor] Commited queries
+[CoverageMonitor] Max Tick in DB: 2045
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 492
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 493
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 494
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 495
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 496
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 497
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 498
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 499
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 500
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 501
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 502
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 503
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 504
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 505
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 506
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 507
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 508
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 509
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 510
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 511
+[CoverageMonitor] Wave 0 was not verified by drone 289 at tick 512
+[CoverageMonitor] Checking area coverage...

@@ -1,5 +1,18 @@
 [ChargeMonitor] Initiated...
-[ChargeMonitor] No abnormal consumption of based drones until tick 125
-[ChargeMonitor] No abnormal consumption of DEAD drones until tick 125
-[ChargeMonitor] No abnormal consumption of based drones until tick 501
-[ChargeMonitor] No abnormal consumption of DEAD drones until tick 501
+[ChargeMonitor] No abnormal consumption of based drones until tick 251
+[ChargeMonitor] No abnormal consumption of DEAD drones until tick 251
+[ChargeMonitor] No abnormal consumption of based drones until tick 452
+[ChargeMonitor] No abnormal consumption of DEAD drones until tick 452
+[ChargeMonitor] No abnormal consumption of based drones until tick 716
+[ChargeMonitor] DEAD Drone 289 has wrong consumption 0.202958
+[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
+[ChargeMonitor] No abnormal consumption of based drones until tick 1032
+[ChargeMonitor] DEAD Drone 1227 has wrong consumption 0.150574
+[ChargeMonitor] DEAD Drone 289 has wrong consumption 0.202958
+[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
+[ChargeMonitor] Drone 3122 has wrong consumption 0.148148
+[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
+[ChargeMonitor] Drone 3122 has wrong consumption 0.148148
+[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
+[ChargeMonitor] Drone 3122 has wrong consumption 0.148148
+[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block

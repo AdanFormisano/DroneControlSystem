@@ -9,6 +9,32 @@ center_text() {
     printf "%*s%s\n" $padding "" "$text"
 }
 
+# center_title() {
+#     local term_width=$(tput cols)
+#     local text="$1"
+#     local text_width=${#text}
+#     local dashes=$(( (term_width - text_width - 2) / 2 ))
+#     printf '%*s' "$dashes" '' | tr ' ' '-'
+#     printf " %s " "$text"
+#     printf '%*s\n' "$dashes" '' | tr ' ' '-'
+# }
+
+center_title_with_message() {
+    local term_width=$(tput cols)
+    local message="$1"
+    local text="$2"
+    local message_width=${#message}
+    local text_width=${#text}
+    local message_padding=$(( (term_width - message_width) / 2 ))
+    local text_padding=$(( (term_width - text_width) / 2 ))
+    
+    printf "\n%*s%s\n" $message_padding "" "$message"
+    printf '%*s\n' "$term_width" '' | tr ' ' '-'
+    printf "%*s%s\n" $text_padding "" "$text"
+    printf '%*s\n' "$term_width" '' | tr ' ' '-'
+}
+
+
 # Testo da centrare
 header="
 ########################
@@ -25,8 +51,7 @@ Per più info sul progetto, vai qui
 "
 prompt="Premi Invio per avviare la simulazione
 (o Ctrl+C per terminare il programma)"
-separator="--------------------------
-"
+separator="--------------------------"
 
 # Stampa il testo centrato
 # center_text "$separator"
@@ -116,21 +141,12 @@ toggle_dcs() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCS_RUNNING" = true ]; then
-        echo "
-$dashes
- $name
-   nascosto
-$dashes
-"
+        center_title_with_message "Hai premuto d e visualizzi..." "$name nascosto"
         kill $DCS_PID
         wait $DCS_PID 2>/dev/null
         DCS_RUNNING=false
     else
-        echo "
-$dashes
-$name
-$dashes
-"
+        center_title_with_message "Hai premuto d e visualizzi..." "$name"
         tail -f ../log/dcs_slow.log &
         DCS_PID=$!
         DCS_RUNNING=true
@@ -142,21 +158,12 @@ toggle_dcsa() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCSA_RUNNING" = true ]; then
-        echo "
-$dashes
- $name
-   nascosta
-$dashes
-"
+        center_title_with_message "Hai premuto a e visualizzi..." "$name nascosta"
         kill $DCSA_PID
         wait $DCSA_PID 2>/dev/null
         DCSA_RUNNING=false
     else
-        echo "
-$dashes
-$name
-$dashes
-"
+        center_title_with_message "Hai premuto a e visualizzi..." "$name"
         tail -f ../log/dcsa_slow.log &
         DCSA_PID=$!
         DCSA_RUNNING=true
@@ -171,21 +178,12 @@ toggle_monitor() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$MONITOR_RUNNING" = true ]; then
-        echo "
-$dashes
- $name
-   nascosti
-$dashes
-"
+        center_title_with_message "Hai premuto m e visualizzi..." "$name nascosti"
         kill $MONITOR_LOG_PID
         wait $MONITOR_LOG_PID 2>/dev/null
         MONITOR_RUNNING=false
     else
-        echo "
-$dashes
-$name
-$dashes
-"
+        center_title_with_message "Hai premuto m e visualizzi..." "$name"
         tail -f ../log/monitor.log &
         MONITOR_LOG_PID=$!
         MONITOR_RUNNING=true
@@ -208,20 +206,11 @@ toggle_single_mon() {
     esac
 
     if [ -z "${MONITOR_PIDS[$monitor_index]}" ]; then
-        echo "
-$dashes
-$monitor_name
-$dashes
-"
+        center_title_with_message "Hai premuto $monitor_index e visualizzi..." "$monitor_name"
         tail -f $log_file &
         MONITOR_PIDS[$monitor_index]=$!
     else
-        echo "
-$dashes
-$monitor_name
-   nascosto
-$dashes
-"
+        center_title_with_message "Hai premuto $monitor_index e visualizzi..." "$monitor_name nascosto"
         if ps -p ${MONITOR_PIDS[$monitor_index]} > /dev/null; then
             kill ${MONITOR_PIDS[$monitor_index]}
             wait ${MONITOR_PIDS[$monitor_index]} 2>/dev/null
@@ -232,11 +221,8 @@ $dashes
 }
 
 show_help() {
+    center_title_with_message "Hai premuto i e visualizzi..." "AIUTO"
     echo "
-
-----------------------
-       AIUTO
-----------------------
 
 DroneControlSystem:
   - Mostra i log del sistema di controllo dei droni.
@@ -261,12 +247,10 @@ Monitor:
   • [d] per mostrare DroneControlSystem
   • [h] per nascondere tutto
   • [m] per mostrare i Monitor
-
-  • Per i singoli Monitor
-       - [1] Coverage Area
-       - [2] Recharge Time
-       - [3] System Performance
-       - [4] Drone Charge
+       [1] Coverage Area
+       [2] Recharge Time
+       [3] System Performance
+       [4] Drone Charge
 
   -------------------------------
    Puoi premerli anche
@@ -309,12 +293,10 @@ echo "
   • [h] per nascondere tutto
   • [i] per info su ciascuna vista
   • [m] per mostrare i Monitor
-
-  • Per i singoli Monitor
-       - [1] Coverage Area
-       - [2] Recharge Time
-       - [3] System Performance
-       - [4] Drone Charge
+       [1] Coverage Area
+       [2] Recharge Time
+       [3] System Performance
+       [4] Drone Charge
 
   -------------------------------
    Puoi premerli anche
@@ -363,12 +345,8 @@ while true; do
         done
         MONITOR_RUNNING=false
         clear
+        center_title_with_message "Hai premuto h e visualizzi..." "Output nascosto"
         echo "
-        
----------------
-Output nascosto
----------------
-
  PREMI
 
   • [a] per mostrare tutto
@@ -376,12 +354,10 @@ Output nascosto
   • [d] per mostrare DroneControlSystem
   • [i] per info su ciascuna vista
   • [m] per mostrare i Monitor
-
-  • Per i singoli Monitor
-       - [1] Coverage Area
-       - [2] Recharge Time
-       - [3] System Performance
-       - [4] Drone Charge
+       [1] Coverage Area
+       [2] Recharge Time
+       [3] System Performance
+       [4] Drone Charge
 
   -------------------------------
    Puoi premerli anche
