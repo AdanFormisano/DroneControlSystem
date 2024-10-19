@@ -138,14 +138,14 @@ $dashes
 }
 
 toggle_dcsa() {
-    local name="Vista \"tutto\" nascosta"
+    local name="Vista generale"
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCSA_RUNNING" = true ]; then
         echo "
 $dashes
  $name
-   nascosto
+   nascosta
 $dashes
 "
         kill $DCSA_PID
@@ -231,6 +231,50 @@ $dashes
     fi
 }
 
+show_help() {
+    echo "
+
+----------------------
+       AIUTO
+----------------------
+
+DroneControlSystem:
+  - Mostra i log del sistema di controllo dei droni.
+
+Vista generale:
+  - Mostra una vista generale del sistema.
+
+Monitor:
+  - Mostra i log dei monitor specifici.
+
+  • [1] Coverage Area: Mostra i log dell'area di copertura.
+  • [2] Recharge Time: Mostra i log del tempo di ricarica.
+  • [3] System Performance: Mostra i log delle prestazioni del sistema.
+  • [4] Drone Charge: Mostra i log della carica dei droni.
+
+----------------------
+
+ PREMI
+
+  • [a] per mostrare tutto
+  • [c] per chiudere tutto
+  • [d] per mostrare DroneControlSystem
+  • [h] per nascondere tutto
+  • [m] per mostrare i Monitor
+
+  • Per i singoli Monitor
+       - [1] Coverage Area
+       - [2] Recharge Time
+       - [3] System Performance
+       - [4] Drone Charge
+
+  -------------------------------
+   Puoi premerli anche
+   mentre vedi l'output
+"
+    read -n 1 -r
+}
+
 ############################################
 # Avvio componenti
 ############################################
@@ -260,11 +304,10 @@ echo "
  PREMI
  
   • [a] per mostrare tutto
-
   • [c] per chiudere tutto
-
   • [d] per mostrare DroneControlSystem
-  
+  • [h] per nascondere tutto
+  • [i] per info su ciascuna vista
   • [m] per mostrare i Monitor
 
   • Per i singoli Monitor
@@ -297,6 +340,9 @@ while true; do
     [1-4])
         toggle_single_mon $key
         ;;
+    [Ii])
+        show_help
+        ;;
     [Hh])
         if [ "$DCS_RUNNING" = true ]; then
             toggle_dcs
@@ -326,11 +372,9 @@ Output nascosto
  PREMI
 
   • [a] per mostrare tutto
-
   • [c] per chiudere tutto
-
   • [d] per mostrare DroneControlSystem
-  
+  • [i] per info su ciascuna vista
   • [m] per mostrare i Monitor
 
   • Per i singoli Monitor
