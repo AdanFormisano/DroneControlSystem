@@ -161,4 +161,30 @@ void clearCache(const std::string &cachePath) {
         std::cerr << "Errore nella cancellazione della cache: " << e.what() << std::endl;
     }
 }
+
+void clearRedisCache() {
+    // Connessione a Redis
+    redisContext *context = redisConnect("127.0.0.1", 7777);
+    if (context == nullptr || context->err) {
+        if (context) {
+            std::cerr << "Errore nella connessione a Redis: " << context->errstr << std::endl;
+        } else {
+            std::cerr << "Impossibile allocare il contesto Redis" << std::endl;
+        }
+        return;
+    }
+
+    // Comando per svuotare la cache
+    redisReply *reply = (redisReply *)redisCommand(context, "FLUSHALL");
+    if (reply == nullptr) {
+        std::cerr << "Errore nell'esecuzione del comando FLUSHALL" << std::endl;
+    } else {
+        std::cout << "Cache di Redis svuotata" << std::endl;
+    }
+
+    // Libera la memoria
+    freeReplyObject(reply);
+    redisFree(context);
+}
+
 } // namespace utils

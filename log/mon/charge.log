@@ -1,48 +1,5 @@
 [ChargeMonitor] Initiated...
-[ChargeMonitor] No abnormal consumption of based drones until tick 334
-[ChargeMonitor] No abnormal consumption of DEAD drones until tick 334
-[ChargeMonitor] No abnormal consumption of based drones until tick 610
-[ChargeMonitor] No abnormal consumption of DEAD drones until tick 610
-[ChargeMonitor] No abnormal consumption of based drones until tick 822
-[ChargeMonitor] No abnormal consumption of DEAD drones until tick 822
-[ChargeMonitor] No abnormal consumption of based drones until tick 1169
-[ChargeMonitor] No abnormal consumption of DEAD drones until tick 1169
-[ChargeMonitor] No abnormal consumption of based drones until tick 1525
-[ChargeMonitor] No abnormal consumption of DEAD drones until tick 1525
-[ChargeMonitor] No abnormal consumption of based drones until tick 1811
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 2121
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 2593
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 3071
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 3537
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 4019
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 4524
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 5053
-[ChargeMonitor] DEAD Drone 32018 has wrong consumption 0.155389
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 5500
-[ChargeMonitor] DEAD Drone 32018 has wrong consumption 0.155389
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 5949
-[ChargeMonitor] DEAD Drone 32018 has wrong consumption 0.155389
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
-[ChargeMonitor] No abnormal consumption of based drones until tick 5999
-[ChargeMonitor] DEAD Drone 32018 has wrong consumption 0.155389
-[ChargeMonitor] DEAD Drone 8047 has wrong consumption 0.186204
-[ChargeMonitor] Error occurred in DroneChargeMonitor::checkDroneCharge's try block
+[ChargeMonitor] No abnormal consumption of based drones until tick 125
+[ChargeMonitor] No abnormal consumption of DEAD drones until tick 125
+[ChargeMonitor] No abnormal consumption of based drones until tick 501
+[ChargeMonitor] No abnormal consumption of DEAD drones until tick 501

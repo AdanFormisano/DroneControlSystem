@@ -7,31 +7,7 @@
 [CoverageMonitor] Got latest tick
 [CoverageMonitor] About to commit queries
 [CoverageMonitor] Commited queries
-[CoverageMonitor] Max Tick in DB: 536
-[CoverageMonitor] All waves were verified until tick 536
+[CoverageMonitor] Max Tick in DB: 125
+[CoverageMonitor] All waves were verified until tick 125
 [CoverageMonitor] Checking area coverage...
-[CoverageMonitor] All waves were verified until tick 536
-[CoverageMonitor] Checking wave verification...
-[CoverageMonitor] Getting wave verification
-[CoverageMonitor] Got work_disconnect_reconnect
-[CoverageMonitor] Got work_disconnect_dead
-[CoverageMonitor] Got work_dead
-[CoverageMonitor] Got latest tick
-[CoverageMonitor] About to commit queries
-[CoverageMonitor] Commited queries
-[CoverageMonitor] Max Tick in DB: 5406
-[CoverageMonitor] All waves were verified until tick 5406
-[CoverageMonitor] Checking area coverage...
-[CoverageMonitor] All waves were verified until tick 5406
-[CoverageMonitor] Checking wave verification...
-[CoverageMonitor] Getting wave verification
-[CoverageMonitor] Got work_disconnect_reconnect
-[CoverageMonitor] Got work_disconnect_dead
-[CoverageMonitor] Got work_dead
-[CoverageMonitor] Got latest tick
-[CoverageMonitor] About to commit queries
-[CoverageMonitor] Commited queries
-[CoverageMonitor] Max Tick in DB: 5999
-[CoverageMonitor] All waves were verified until tick 5999
-[CoverageMonitor] Checking area coverage...
-[CoverageMonitor] All waves were verified until tick 5999
+[CoverageMonitor] All waves were verified until tick 125

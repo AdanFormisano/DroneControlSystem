@@ -33,5 +33,6 @@ private:
 
     bool CheckSpawnWave() const;
     void SpawnWave();
+    void InitializeSpawnWave();
 };
 #endif // SYNCEDSCANNERMANAGER_H

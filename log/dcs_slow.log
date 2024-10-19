@@ -1,0 +1,91 @@
+[DroneControl] DroneControl created
+[ChargeBase] ChargeBase created
+[ScannerManager] ScannerManager created
+[TestGenerator] TestGenerator created
+[ChargeBase] Running
+[ScannerManager] Running
+[ScannerManager] Failed to get spawn_wave from Redis
+[DroneControl] Running
+[DroneControl] DB writer thread started
+[DroneControl] Sending wave spawn command
+[TestGenerator] TICK 0 Drone 232 state set to DISCONNECTED
+[DroneControl] Wave spawned
+[TestGenerator] TICK 1 Drone 86 state set to DEAD
+------------------------------
+[Main]              TICK: 0
+------------------------------
+------------------------------
+[DroneControl]      TICK: 0
+------------------------------
+------------------------------
+[ChargeBase]        TICK: 0
+------------------------------
+------------------------------
+[ScannerManager]    TICK: 0
+------------------------------
+[DroneControl] Sending wave spawn command
+[TestGenerator] TestGenerator started
+[TestGenerator] Running
+[DroneControl] DB count: 7377 max tick: 124
+[DroneControl] DB count: 599 max tick: 125
+[TestGenerator] Drone 1208 exploded
+[DroneControl] Wave spawned
+[TestGenerator] TICK 126 Drone 1208 state set to DEAD
+------------------------------
+[Main]              TICK: 100
+------------------------------
+------------------------------
+[DroneControl]      TICK: 100
+------------------------------
+------------------------------
+[ChargeBase]        TICK: 100
+------------------------------
+------------------------------
+[ScannerManager]    TICK: 100
+------------------------------
+[DroneControl] Sending wave spawn command
+[DroneControl] Wave spawned
+------------------------------
+[Main]              TICK: 200
+------------------------------
+------------------------------
+[ChargeBase]        TICK: 200
+------------------------------
+------------------------------
+[DroneControl]      TICK: 200
+------------------------------
+------------------------------
+[ScannerManager]    TICK: 200
+------------------------------
+[DroneControl] DB count: 351 max tick: 251
+[DroneControl] Sending wave spawn command
+[DroneControl] Wave spawned
+------------------------------
+[Main]              TICK: 300
+------------------------------
+------------------------------
+[ChargeBase]        TICK: 300
+------------------------------
+------------------------------
+[DroneControl]      TICK: 300
+------------------------------
+------------------------------
+[ScannerManager]    TICK: 300
+------------------------------
+[TestGenerator] Drone 3274 has high consumption factor of 1.911013
+[DroneControl] DB count: 7850 max tick: 376
+------------------------------
+[Main]              TICK: 400
+------------------------------
+------------------------------
+[DroneControl]      TICK: 400
+------------------------------
+------------------------------
+[ChargeBase]        TICK: 400
+------------------------------
+[DroneControl] Sending wave spawn command
+------------------------------
+[ScannerManager]    TICK: 400
+------------------------------
+[DroneControl] DB count: 350 max tick: 501
+[TestGenerator] Received signal 15, exiting gracefully...

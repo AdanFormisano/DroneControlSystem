@@ -209,21 +209,39 @@ void DroneControl::WriteDroneDataToDB() {
 }
 
 void DroneControl::SendWaveSpawnCommand() const {
-    // spdlog::warn("Sending wave spawn command");
     log_dc("Sending wave spawn command");
-    // std::cout << "[DroneControl] Sending wave spawn command" << std::endl;
     redis.incr("spawn_wave");
+
+    int dot_count = 0;
+    const int max_dots = 3;
+    std::string base_msg = "Waiting for wave to spawn";
+
+    // Stampa il messaggio iniziale
+    std::cout << base_msg << std::flush;
 
     // Wait for the wave to spawn
     while (std::stoi(redis.get("spawn_wave").value_or("-1")) != 0) {
-        // spdlog::warn("Waiting for wave to spawn...");
-        log_dc("Waiting for wave to spawn...");
-        // std::cout << "[DroneControl] Waiting for wave to spawn..." << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // Debug: stampa il valore di "spawn_wave" per verificare cosa sta succedendo
+        std::string wave_value = redis.get("spawn_wave").value_or("-1");
+        std::cout << "\rDEBUG: Current spawn_wave value: " << wave_value << "       " << std::flush;
+
+        // Aggiungi puntini incrementali
+        std::cout << "\r" << base_msg; // Torna all'inizio della riga
+        for (int i = 0; i < dot_count; i++) {
+            std::cout << "." << std::flush;
+        }
+
+        // Forza il flush del buffer per aggiornare immediatamente il terminale
+        std::cout << std::flush;
+
+        dot_count = (dot_count + 1) % (max_dots + 1);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Tempo di attesa più lungo per il debug
     }
-    // spdlog::warn("Wave spawned");
+
+    // Sovrascrivi l'ultima linea con il messaggio di successo
+    std::cout << "\rWave spawned        " << std::endl; // Gli spazi finali cancellano eventuali residui di puntini
     log_dc("Wave spawned");
-    // std::cout << "[DroneControl] Wave spawned" << std::endl;
 }
 
 void DroneControl::GetDronePaths() {

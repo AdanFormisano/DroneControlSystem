@@ -14,6 +14,7 @@ bool getSimStatus(sw::redis::Redis &redis);
 
 // Clear Redis cache
 void clearRedis();
+void clearRedisCache();
 void clearCache(const std::string &cachePath);
 
 // Used for synchronization of processes

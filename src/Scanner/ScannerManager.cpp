@@ -1,6 +1,7 @@
 #include "ScannerManager.h"
 #include "../../utils/LogUtils.h"
 #include "spdlog/spdlog.h"
+#include <thread>
 
 bool ScannerManager::CheckSpawnWave() const {
     try {
@@ -9,11 +10,17 @@ bool ScannerManager::CheckSpawnWave() const {
         // TODO: Better while condition
         while (true) {
             auto v = shared_redis.get("spawn_wave");
+            if (!v.has_value()) {
+                log_sm("Failed to get spawn_wave from Redis");
+                std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+            }
+
             int spawn_wave = std::stoi(v.value_or("-1"));
-            // spdlog::info("Checking spawn_wave: {}", spawn_wave);
+            // log_sm("Spawn wave = " + std::to_string(spawn_wave));
 
             if (spawn_wave == 1) {
                 // spdlog::info("Spawn wave = {}", spawn_wave);
+                // log_sm("Spawn wave = 1");
                 shared_redis.decr("spawn_wave");
                 return true;
             }
@@ -29,7 +36,7 @@ bool ScannerManager::CheckSpawnWave() const {
                 // spdlog::error("[ScannerManager] Timeout waiting for spawn_wave");
                 return false;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     } catch (const TimeoutError &e) {
         log_sm("Timeout spawning wave: " + std::string(e.what()));
@@ -38,7 +45,7 @@ bool ScannerManager::CheckSpawnWave() const {
         log_sm("IoError spawning wave: " + std::string(e.what()));
         // spdlog::error("IoError spawning wave: {}", e.what());
     } catch (const std::exception &e) {
-        log_sm("Error spawning wave: " + std::string(e.what()));
+        log_sm("Exception in CheckSpawnWave: " + std::string(e.what()));
         // spdlog::error("Error spawning wave: {}", e.what());
     } catch (...) {
         log_sm("Unknown error spawning wave");
@@ -131,8 +138,6 @@ void ScannerManager::Run() {
 
     // Close the message queue
     message_queue::remove("drone_fault_queue");
-
-
 
     // spdlog::info("ScannerManager finished");
     log_sm("Finished");

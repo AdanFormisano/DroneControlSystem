@@ -1,25 +1,48 @@
 #!/bin/bash
-echo "-----------------------------------"
-echo "
+
+# Funzione per centrare il testo
+center_text() {
+    local term_width=$(tput cols)
+    local text="$1"
+    local text_width=${#text}
+    local padding=$(( (term_width - text_width) / 2 ))
+    printf "%*s%s\n" $padding "" "$text"
+}
+
+# Testo da centrare
+header="
 ########################
 ## DroneControlSystem ##
 ########################
 "
-echo "Benvenuto in DroneControlSystem! 🤖
+welcome="🤖 Benvenuto in DroneControlSystem! 🤖
 
-Questo programma verifica che ogni punto di una area
-6×6 Km sia verificato almeno ogni 5 minuti
+Questo programma verifica che ogni punto di una
+area 6×6 Km sia verificato almeno ogni 5 minuti
 
 Per più info sul progetto, vai qui
 → https://tinyurl.com/ym49mmqw ←
 "
-
-echo "-----------------------------------"
-echo "
-Premi Invio per avviare la simulazione
+prompt="Premi Invio per avviare la simulazione
 (o Ctrl+C per terminare il programma)"
+separator="--------------------------
+"
+
+# Stampa il testo centrato
+# center_text "$separator"
+while IFS= read -r line; do
+    center_text "$line"
+done <<< "$header"
+# center_text "$separator"
+while IFS= read -r line; do
+    center_text "$line"
+done <<< "$welcome"
+center_text "$separator"
+while IFS= read -r line; do
+    center_text "$line"
+done <<< "$prompt"
 read
-echo "-----------------------------------"
+center_text "$separator"
 
 ############################################
 # Nomi monitor ad indici
@@ -58,8 +81,8 @@ sleep 0.2
 cleanup() {
     echo -e "\n☑️ Termino i processi..."
     kill -- -$DRONE_PID
-    if [ "$TAIL_RUNNING" = true ]; then
-        kill $TAIL_PID
+    if [ "$DCS_RUNNING" = true ]; then
+        kill $DCS_PID
     fi
     if [ "$MONITOR_RUNNING" = true ]; then
         kill $MONITOR_LOG_PID
@@ -67,7 +90,7 @@ cleanup() {
     for pid in "${MONITOR_PIDS[@]}"; do
         kill $pid
     done
-    wait $DRONE_PID $TAIL_PID $MONITOR_LOG_PID 2>/dev/null
+    wait $DRONE_PID $DCS_PID $MONITOR_LOG_PID 2>/dev/null
 
     echo -e "☑️ Termino Redis..."
     redis-cli -p $REDIS_PORT shutdown
@@ -82,53 +105,86 @@ trap cleanup SIGINT SIGTERM
 # Toggle viste log
 ############################################
 
-toggle_tail() {
-    if [ "$TAIL_RUNNING" = true ]; then
+generate_dashes() {
+    local name=$1
+    local name_length=${#name}
+    printf '%*s' "$name_length" '' | tr ' ' '-'
+}
+
+toggle_dcs() {
+    local name="DroneControlSystem"
+    local dashes=$(generate_dashes "$name")
+
+    if [ "$DCS_RUNNING" = true ]; then
         echo "
-
---------------------
- DroneControlSystem
-      nascosto
---------------------
-
+$dashes
+ $name
+   nascosto
+$dashes
 "
-        kill $TAIL_PID
-        wait $TAIL_PID 2>/dev/null
-        TAIL_RUNNING=false
+        kill $DCS_PID
+        wait $DCS_PID 2>/dev/null
+        DCS_RUNNING=false
     else
         echo "
-
-------------------
-DroneControlSystem
-------------------
-
+$dashes
+$name
+$dashes
 "
-        tail -f ../log/dcs.log &
-        TAIL_PID=$!
-        TAIL_RUNNING=true
+        tail -f ../log/dcs_slow.log &
+        DCS_PID=$!
+        DCS_RUNNING=true
     fi
 }
 
+toggle_dcsa() {
+    local name="Vista \"tutto\" nascosta"
+    local dashes=$(generate_dashes "$name")
+
+    if [ "$DCSA_RUNNING" = true ]; then
+        echo "
+$dashes
+ $name
+   nascosto
+$dashes
+"
+        kill $DCSA_PID
+        wait $DCSA_PID 2>/dev/null
+        DCSA_RUNNING=false
+    else
+        echo "
+$dashes
+$name
+$dashes
+"
+        tail -f ../log/dcsa_slow.log &
+        DCSA_PID=$!
+        DCSA_RUNNING=true
+    fi
+}
+
+DCSA_RUNNING=false
+DCSA_PID=0
+
 toggle_monitor() {
+    local name="Monitor"
+    local dashes=$(generate_dashes "$name")
+
     if [ "$MONITOR_RUNNING" = true ]; then
         echo "
-
-----------------
- M o n i t o r
-    nascosti
-----------------
-
+$dashes
+ $name
+   nascosti
+$dashes
 "
         kill $MONITOR_LOG_PID
         wait $MONITOR_LOG_PID 2>/dev/null
         MONITOR_RUNNING=false
     else
         echo "
-
----------------
- M o n i t o r
----------------
-
+$dashes
+$name
+$dashes
 "
         tail -f ../log/monitor.log &
         MONITOR_LOG_PID=$!
@@ -136,10 +192,12 @@ toggle_monitor() {
     fi
 }
 
-toggle_individual_monitor() {
+toggle_single_mon() {
     local monitor_index=$1
     local log_file
     local monitor_name=${MONITOR_NAMES[$monitor_index]}
+
+    local dashes=$(generate_dashes "$monitor_name")
 
     case $monitor_index in
     1) log_file="../log/mon/coverage.log" ;;
@@ -151,22 +209,18 @@ toggle_individual_monitor() {
 
     if [ -z "${MONITOR_PIDS[$monitor_index]}" ]; then
         echo "
-
----------------
- $monitor_name
----------------
-
+$dashes
+$monitor_name
+$dashes
 "
         tail -f $log_file &
         MONITOR_PIDS[$monitor_index]=$!
     else
         echo "
-
-----------------
+$dashes
 $monitor_name
    nascosto
-----------------
-
+$dashes
 "
         if ps -p ${MONITOR_PIDS[$monitor_index]} > /dev/null; then
             kill ${MONITOR_PIDS[$monitor_index]}
@@ -188,8 +242,8 @@ DRONE_PID=$!
 sleep 0.2
 
 # Variabili di stato per i log
-TAIL_RUNNING=false
-TAIL_PID=0
+DCS_RUNNING=false
+DCS_PID=0
 MONITOR_RUNNING=false
 MONITOR_LOG_PID=0
 declare -A MONITOR_PIDS
@@ -204,6 +258,8 @@ echo "-----------------------------------"
 ############################################
 echo "
  PREMI
+ 
+  • [a] per mostrare tutto
 
   • [c] per chiudere tutto
 
@@ -230,17 +286,23 @@ while true; do
     read -n 1 -r key
     case $key in
     [Dd])
-        toggle_tail
+        toggle_dcs
+        ;;
+    [Aa])
+        toggle_dcsa
         ;;
     [Mm])
         toggle_monitor
         ;;
     [1-4])
-        toggle_individual_monitor $key
+        toggle_single_mon $key
         ;;
     [Hh])
-        if [ "$TAIL_RUNNING" = true ]; then
-            toggle_tail
+        if [ "$DCS_RUNNING" = true ]; then
+            toggle_dcs
+        fi
+        if [ "$DCSA_RUNNING" = true ]; then
+            toggle_dcsa
         fi
         if [ "$MONITOR_RUNNING" = true ]; then
             toggle_monitor
@@ -262,6 +324,8 @@ Output nascosto
 ---------------
 
  PREMI
+
+  • [a] per mostrare tutto
 
   • [c] per chiudere tutto
 

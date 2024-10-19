@@ -58,6 +58,7 @@ int main() {
         DroneControl dc(drone_control_redis);
 
         // std::cout << "DroneControl process started" << std::endl;
+        // log_system("This monitor will start at the end of the simulation");
 
         // Start simulation
         dc.Run();
@@ -166,6 +167,9 @@ int main() {
                     } else {
                         auto main_redis = Redis(connection_options);
 
+                        SystemPerformanceMonitor sm(main_redis);
+                        sm.RunMonitor();
+
                         // Create named semaphore for synchronization
                         sem_t *sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
                         sem_t *sem_sync_sc = utils_sync::create_or_open_semaphore("/sem_sync_sc", 0);
@@ -213,15 +217,11 @@ int main() {
                         // Wait for child processes to finish
                         kill(pid_test_generator, SIGTERM);
                         waitpid(pid_drone_control, nullptr, 0);
-
-                        // Check if this should be here
-                        SystemPerformanceMonitor sm(main_redis);
-                        sm.RunMonitor();
-                        sm.JoinThread();
-
                         waitpid(pid_drone, nullptr, 0);
                         waitpid(pid_monitors, nullptr, 0);
                         waitpid(pid_charge_base, nullptr, 0);
+
+                        sm.JoinThread();
 
                         // Get shutoff time
                         auto shutoff_time = std::chrono::high_resolution_clock::now();
