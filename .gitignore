@@ -3,7 +3,6 @@
 
 # CLion settings
 .idea/
-
 /src/Database/.idea/
 
 # For now remove build directory
@@ -15,12 +14,6 @@ cmake-build-debug-lite/
 cmake-build-release/
 .idea/misc.xml
 .idea/vcs.xml
-log/dcs_slow.log
-log/dcs.log
-log/dcsa_slow.log
-log/dcsa.log
-log/monitor.log
-log/mon/charge.log
-log/mon/coverage.log
-log/mon/recharge.log
-log/mon/system.log
+
+# Logs
+log/
