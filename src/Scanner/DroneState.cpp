@@ -203,6 +203,7 @@ void Disconnected::hidden_to_base(Drone *drone) {
     drone->hidden_coords.y += -drone->dir.y * DRONE_STEP_SIZE; // Movimento "indietro"
     if (drone->hidden_coords.x <= 0) {
         drone->setState(Charging::getInstance());
+        return;
     }
 }
 
@@ -238,6 +239,7 @@ void Disconnected::run(Drone *drone) {
         // spdlog::info("[[DroneCH]] Drone {} is disconnected, coming from {}, waiting to die...", drone->id, utils::droneStateToString(drone->previous));
         if (drone->tick_drone >= drone->disconnected_tick + 20) {
             drone->setState(Dead::getInstance());
+            return;
         }
     }
 }

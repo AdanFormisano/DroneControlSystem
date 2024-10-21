@@ -68,7 +68,7 @@ La **ChargeBase** è l'unico punto dell'intera area in cui i droni si trovano in
 ---
 
 **INSERIRE QUI**  
-**SPIEGAZIONE ANTEPRIMA SISTEMA AD ONDE**
+**AGGIUNGERE SPIEGAZIONE SISTEMA AD ONDE**
 
 ---
 
