@@ -62,33 +62,54 @@ contrario, segnala eventuali anomalie.
 
 #### Modello concettuale del sistema
 
-Il sistema si compone di una **base centrale** (composta da componenti come **ChargeBase**, **DroneControl**, **Scanner**), situata esattamente al centro dell'area, che funge da punto di partenza e ricarica per i droni.  
-La **ChargeBase** è l'unico punto dell'intera area in cui i droni si trovano in uno stato di **non volo** e gestisce la ricarica di ciascun drone dopo un'operazione.
+Il sistema si compone di una **base centrale** (composta da componenti come **ChargeBase**, **DroneControl**, **Scanner**) situata al centro dell'area, che funge da punto di partenza e ricarica per i droni.  
+La **ChargeBase** è l'unico punto dell'intera area in cui i droni si trovano in uno stato di **non volo** e gestisce la ricarica di ciascun drone dopo ciascun suo giro di perlustrazione. Più precisamente gli stati di non volo sono due, ossia `CHARGING` e `IDLE`, e il giro di perlustrazione corrisponde allo stato di `WORKING` del drone. Per spiegare come ogni drone adempie alla verifica di ogni punto ogni cinque minuti almeno, vediamo come l'area è concettualmente strutturata.
 
----
+#### Struttura dell'area sorvegliata
 
-**INSERIRE QUI**  
-**AGGIUNGERE SPIEGAZIONE SISTEMA AD ONDE**
+L'area da sorvegliare è un quadrato di $6x6\mathrm{\,Km}$ $(36 \mathrm{\, Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
 
----
+Partendo dalla richiesta della traccia abbiamo pensato di vedere questi quadrati come delle _celle_ con al proprio centro il punto da verificare per il drone. Quest'ultimo condivide infatti l'istante di tempo $t$ in cui è coperto con ogni altro punto nella cella, facendo sì che al passaggio del drone sul punto al $t$-esimo istante di tempo, l'intera area del quadrato della griglia risulti simultaneamente coperta - dove il tempo è rappresentato, nel nostro sistema, da un'unità di tempo chiamata `tick` (un tick equivale ad un numero preciso di secondi che vedremo dopo).  
+Possiamo pensare a questa operazione di copertura come ad una scansione wireless dell'area della cella (da parte del drone) della portata di al più $(28,28)/2=14,14 \mathrm{\, m}$ a partire dal centro del quadrato, che è il punto su cui il drone transita durante lo stato di `WORKING`.
+Nel nostro sistema lo scorrere del tempo è reso da un while che
 
-1. **Partenza dei droni**:  
-   All'inizio della simulazione, tutti i droni partono dal **centro dell'area** e si dirigono verso il **lato sinistro** dell'area di sorveglianza per posizionarsi lungo una **linea di partenza** (detta `starting_line`).  
+Dando seguito a quanto detto, sul lato sinistro dell'area (ci riferiamo con _area_ all'area $6x6\mathrm{\,Km}$, e con _quadrato_/_cella_ ai quadrati di lato $20 \mathrm{m}$ inscritti al suo interno), abbiamo, per ogni quadrato un drone pronto a partire. Difatti il lato di sinistra dell'area è detto `starting_line`, ed è il punto da cui i droni partono per verificare i punti. Prima che ciò avvenga, ci sono alcuni altri stati per cui l sistema passa. Vediamoli meglio di seguito.
+
+#### Stati del sistema
+
+Facciamo ordine circa gli stati del sistema:
+
+1. **Avvio simulazione (`CHARGING`)**  
+   Avviata la simulazione, $300$ droni vengono generati al centro dell'area nello stato di `CHARGING`.
+
+2. **Attesa in base (`IDLE`)**  
+   I droni che raggiungono la carica massima non partono di lora spontee e/o subitaneamente verso la `starting_line`, ma attendono per un tempo imprecisato che il sistema (nelle vesti della componente Scanner) li scelga individualmente per la partenza, passando durante questa fase da `CHARGING`ad `IDLE`. Un drone in `IDLE` non svolge alcuna attività particolare eccetto quella di attendere di esser scelto per dirigersi alla `starting_line`.
+
+3. **Partenza droni (`TO_STARTING_LINE`)**  
+   Carichi al $100\%$, i droni scelti da Scanner partono dalla `ChargeBase` verso il lato sinistro dell'area, per posizionarsi lungo una linea di partenza, la suddetta `starting_line`. Ogni drone si disporrà a metà del lato sinistro di uno dei quadrati adiacenti la linea di partenza. Avremo perciò $300$ droni pronti a partire dal lato sinistro dell'area, uno per ogni quadrato.
    Durante questo spostamento, la maggior parte dei droni si muove **in diagonale** per raggiungere la propria posizione sulla linea di partenza, a eccezione di quelli che già si trovano sull'asse centrale.
 
-2. **Copertura dell'area**:  
-   Una volta raggiunta la linea di partenza, i droni si allineano e iniziano il loro volo in modalità `WORKING`, percorrendo in linea retta l'intera area fino al lato destro.  
-   Ogni drone segue una specifica linea orizzontale rispetto alla base dell'area $6x6\mathrm{\,Km}$ per garantire una copertura omogenea dell'area.
+4. **Pre-partenza (`READY`)**  
+   I droni giunti alla `starting_line` non passano subito a `WORKING`, ma entrano in uno stato di attesa chiamato `READY`, in cui rimangono fin quando ognuno dei $300$ droni non è arrivato alla `starting_line` ed è passato a sua volta a `READY`.
 
-3. **Ritorno alla base**:  
-   Terminata la copertura dell'area, i droni passano allo stato `TO_BASE` e tornano verso il **centro** per ricaricarsi.  
+5. **Copertura dell'area (`WORKING`)**  
+   Dopo che tutti i droni sono entrati in `READY`, essi entrano contemporaneamente nello stato di `WORKING`. Iniziano quindi il loro volo a $30 Km/h$ in linea retta (parallela alla base dell'area) verso il lato destro del perimetro dell'area.  
+   Mentre è in `WORKING`, un drone non fa altro che percorrere nel modo appena detto, passando sopra ciascun punto al centro dei 300 quadrati che separano la `starting_line` dal lato destro dell'area. Ogni volta che un drone sorvola un punto, lo verifica, verificando al contempo tutta l'area del quadrato di cui il punto è il centro.
+   Per far sì che il requisito di sorveglianza di ogni punto almeno ogni $5$ minuti sia rispettato, una nuova ondata (o onda) di droni parte non appena l'attuale ha percorso per tale tempo l'area da sinistra a destra, laddove con ondata s'intende la "colonna", linea verticale di $300$ droni parallela ai lati verticali dell'area. Logicamente, per far sì che ciò accada, l'onda di droni che parte scoccati cinque minuti dallo stato di `WORKING`, viene fatta partire prima e per tempo dalla ChargeBase alla volta della `starting_line`. Si noti che formalmente le onde di droni (nel SUD afferenti al componente Wave) vengono fatte partire ogni $5$ minuti, dove i minuti sono misurati coi tick a cui prima si faceva cenno.  
+   In questo modo, con onde di droni partenti ogni cinque minuti dalla `starting_line`, ogni punto dell'area è verificato sicuramente almeno ogni cinque minuti: quando un punto sulla linea di quadrati che il drone percorre sarà stato verificato, esso lo sarà di nuovo entro i prossimi cinque minuti grazie al drone della nuova onda che arriverà a sorvegliarlo trascorso il tempo detto.
+   Questo sistema forma un meccanismo ad onde che è possibile vedere nelle immagini a seguire, in cui nel lifetime di una simulazione è possibile osservare il susseguirsi di diverse onde di droni, ciascuna delle quali copre naturalmente per intero l'area da sinistra a destra.
+
+6. **Ritorno alla base (`TO_BASE`)**  
+   Quando un drone/onda (possiamo usare i termini in maniera intercambiabile, perché il movimento di un drone è equivalente a quello di un'onda) raggiunge il lato destro dell'area, termina il suo lavoro di verifica dei punti copertura dell'area, e passa allo stato `TO_BASE`. In questo stato non fa altro che tornare verso il **centro** dell'area per ricaricarsi, ed essere riutilizzato in un nuovo viaggio di copertura.
    Come nella fase di partenza, i droni che si trovano lontani dall'_asse centrale_ si muovono **diagonalmente** per raggiungere il centro, mentre quelli allineati proseguono in linea retta.
 
-4. **Gestione degli Stati di Guasto**:  
-   Durante uno qualsiasi degli stati di volo (`TO_STARTING_LINE`, `READY`, `WORKING`, `TO_BASE`), i droni possono entrare in uno dei seguenti fault state:
-   - **EXPLODED**: Il drone subisce un malfunzionamento critico e diventa irrecuperabile.
-   - **DISCONNECTED**: Il drone perde la connessione e tenta di riconnettersi.
-   - **HIGH_CONSUMPTION**: Il drone consuma più del previsto e continua a operare fino a quando la carica non si esaurisce.
+#### Stati di guasto dei droni
+
+Durante uno qualsiasi degli stati di volo (`TO_STARTING_LINE`, `READY`, `WORKING`, `TO_BASE`), i droni possono entrare in uno dei seguenti fault state:
+
+- **EXPLODED**: Il drone subisce un malfunzionamento critico e diventa irrecuperabile.
+- **DISCONNECTED**: Il drone perde la connessione e tenta di riconnettersi.
+- **HIGH_CONSUMPTION**: Il drone consuma più del previsto e continua a operare fino a quando la carica non si esaurisce.
 
 I droni con stato `DISCONNECTED` possono recuperare la connessione (`RECONNECTED`) tornando quindi allo stato precedente la disconnessione, oppure passare a `DEAD` se la connessione non viene ristabilita. I droni negli stati `EXPLODED`, e `HIGH_CONSUMPTION` finiscono invece sempre nello stato `DEAD`.
 
@@ -173,33 +194,6 @@ Redis è disponibile in C++ come client grazie a [redis-plus-plus](https://githu
 quello che è stato usato.
 Redis è stato usato per gestire i flussi di dati dei thread, compresi quelli dei droni, e per la comunicazione col
 database PostgreSQL.
-
-### Struttura dell'area sorvegliata
-
-AGGIORNARE A NUOVA IMPLEMENTAZIONE
-~~Il sistema gestisce l'area da sorvegliare dividendola in varie colonne, ognuna delle quali è divisa in zone rettangolari impilate virtualmente una sopra l'altra.~~
-
-~~A partire dalla richiesta nella traccia del progetto è possibile individuare _celle_ i quali punti condividono l'istante di tempo $t$ in cui vengono coperti dal drone. Ogni _cella_ è un quadrato di lato $20$ metri.  
-Più celle vanno dunque a formare una _zona_. In ogni zona figurano $124$ celle. Più precisamente due file (una sopra l'altra) di $62$ celle adiacenti creano una zona.~~
-
-~~Procedendo ad una velocità di $30$ km/h il drone è in grado di coprire almeno $124$ celle mantenendo soddisfatto il requisito che ogni punto sia verificato almeno ogni $5$ minuti.~~
-
-~~Le zone sono in totale $150$ per colonna, e le colonne sono $5$. Le prime $4$ colonne contando da sinistra sono larghe come detto $62$ celle ciascuna, mentre l'ultima a destra ha larghezza minore di $52$ celle.
-Considerando che lo spazio rimanente da coprire era di meno, abbiamo scelto di rendere minore la dimensione di una delle colonne ai lati per semplificarci i calcoli sulle logiche di movimento dei droni, evitando di creare un'area piccola centrale (o altrove posta) che si occupasse di recuperare lo spazio non occupato da eventuali colonne tutte uguali ai suoi lati.~~
-
-### Droni e verifica dei punti
-
-AGGIORNARE A NUOVA IMPLEMENTAZIONE (COME USATI: ONDE, QUADRATI, PUNTI, ...)
-~~Come richiesto dalla traccia del progetto, ogni punto dell'area deve essere _verificato_ almeno ogni $5$ minuti, ed un punto è _verificato_ al tempo $t$ se al tempo $t$ c'è almeno un drone a distanza inferiore a $10\,\mathrm{m}$ dal punto.
-Per questa ragione abbiamo pensato di dividere l'area, a livello più basso della nostra astrazione, in celle e in zone dopodiché.~~
-
-~~Ogni zona è sorvegliata contemporaneamente da $2$ droni, i quali partono rispettivamente (guardando da sinistra) dalla $1$ª cella per il drone nella fila in alto, e della $62$ª per il drone nella fila in basso, attraversando tutte le celle che li separano dalla cella di partenza dell'altro drone nella zona, e raggiungendo quindi taluna.
-In tal modo i due droni assegnati alla zona riescono a coprire, coadiuvando il loro lavoro, tutta la zona. E così fanno il resto dei droni nelle altre zone di ogni colonna.~~
-
-~~Una determinata zona è sorvegliata da un drone che parte dalla prima cella della zona più in alto a sinistra. Il drone attraversa in senso orario tutte le celle della zona fino a tornare alla cella di partenza &mdash; completanto tale ciclo in $5$ minuti.
-Il sistema, possedendo in ogni zona dei checkpoint coincidenti con le coordinate del punto centrale di ogni cella, monitorando le coordinate del movimento del drone, controlla se le coordinate coincidono con quelle che il drone avrebbe dovuto sorvolare.~~
-
-~~Il centro di controllo conserva dei checkpoint per il cammino di ogni drone. Questi ultimi sono usati per verificare la copertura della zona. Le coordinate ricevute dai droni in volo lungo il loro percorso vengono confrontate con quelle dei checkpoint. Se le coordinate dal drone non coincidono con quelle del checkpoint di turno, viene segnalata la mancata copertura della cella. Di conseguenza tutta l'area risulta non verificata.~~
 
 ### _Outsourcing_
 
