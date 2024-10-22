@@ -119,11 +119,23 @@ Ogni fault state è conseguenza di uno scenario attivato dal TestGenerator, che 
 
 #### Visualizzare il sistema
 
-La seguente è una vista ad alto livello delle componenti del sistema
+La seguente è una vista ad alto livello dell'area, delle componenti del sistema e di alcune delle fasi in cui sono coinvolte
 
 ##### Area da sorvegliare
 
-![[Area da sorvegliare]](../res/drone_area.png)
+![area](image-14.png)
+
+##### To starting line
+
+![to_strt](01_to_strt_line.gif)
+
+##### Working
+
+![working](02_working.gif)
+
+##### To base
+
+![to_base](03_to_base.gif)
 
 ##### Contesto del sistema
 
@@ -142,18 +154,11 @@ Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli
 
 #### Use case vista ampia del sistema
 
-![alt text](image.png)
-
-#### Use case a vista ristretta alternativa
-
-| Drone                      | Drone Control        |
-| -------------------------- | -------------------- |
-| ![drone](../res/drone.png) | ![DC](../res/DC.png) |
+![alt text](image-9.png)
 
 ## System requirements
 
-Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecniche e le funzionalità necessarie per
-implementare il sistema:
+Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecniche e le funzionalità necessarie per implementare il sistema:
 
 - **(1.1) Sistema di Copertura dell'Area di Sorveglianza**: Il sistema deve programmare e coordinare i percorsi di volo
   dei droni per garantire una copertura completa e costante dell'area di sorveglianza di $6\times6$ Km.
@@ -171,18 +176,19 @@ implementare il sistema:
 
 ### Architectural system view
 
-![alt text](image-1.png)
+![alt text](image-6.png)
 
-### Activity diagram Autonomia e ricarica dei droni
+### Activity diagram creazione Wave e droni
 
-![alt text](image-2.png)
+![alt text](image-5.png)
 
 ### State diagram Drone
 
 ![alt text](image-4.png)
 
-- Almeno un Message Sequence Chart UML per la comunicazione tra le
-  componenti del sistema.
+### Message sequence chart diagram carica Drone
+
+![alt text](image-7.png)
 
 ## Implementation
 
@@ -197,8 +203,7 @@ database PostgreSQL.
 
 ### _Outsourcing_
 
-Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre tecnologie e soluzioni di cui esso è
-altresì inevitabilmente composto, quali quelle del:
+Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre tecnologie e soluzioni di cui esso è altresì inevitabilmente composto, quali quelle del:
 
 - drone
 
