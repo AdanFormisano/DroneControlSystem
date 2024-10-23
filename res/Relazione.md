@@ -162,7 +162,7 @@ La seguente è una vista ad alto livello dell'area, delle componenti del sistema
 
 ##### Contesto del sistema
 
-![[Contesto del sistema]](../res/cntxt_view.png)
+![[Contesto del sistema]](ctx_view.png)
 
 ## User requirements
 
@@ -177,7 +177,7 @@ Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli
 
 #### Use case vista ampia del sistema
 
-![alt text](image-9.png)
+![alt text](ucase_diag.png)
 
 ## System requirements
 
@@ -199,19 +199,19 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
 
 ### Architectural system diagram
 
-![alt text](image-6.png)
+![alt text](arch_diag.png)
 
 ### Activity diagram creazione Wave e droni
 
-![alt text](image-5.png)
+![alt text](act_diag.png)
 
 ### State diagram Drone
 
-![alt text](image-4.png)
+![alt text](state_diag.png)
 
 ### Message sequence chart diagram carica Drone
 
-![alt text](image-7.png)
+![alt text](msc_diag.png)
 
 ## Implementation
 
