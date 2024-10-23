@@ -1,0 +1,37 @@
+class ChargeBase
+	[Run] ChargeBase's main execution function
+		Create or open 2 semaphores used for sync (sem_sync_cb: recieves GO command, sem_dc: sends tick completed status)
+		While simulation is running loop
+			Wait for sem_sync semaphore for GO command
+			Increase charge for every charging drone [ChargeDrone]
+			Check if new Drones need charging [ReadChargeStream]
+			Release sem_cb semaphore to comunicate tick completed
+			Increase internal tick counter
+		End loop
+
+	[ReadChargeStream] Check if new drones need to be charged
+		Read every element of "charge_stream" on Redis
+		Parse every element read
+			Update the local drone data [SetChargeData]
+		Trim the stream
+
+	[SetChargeData] Update the local data of a drone
+		Use the param of the function to update the drone's data saved in an unordered map
+		Calculate the rate of charge for the given drone
+
+	[ChargeDrone] Increase the charge value of a drone by the rate calculated for a tick
+		For every charging drone loop
+			If charge value < 100% then
+				Increase the value by the calculated rate
+			Else
+				Release the drone [ReleaseDrone]
+		
+		Remove the drone from the charging drones container
+
+	[ReleaseDrone] Remove the given charged drone from ChargeBase
+		Add on Redis the drone to the set of charged drones
+		Add on "scanner_stream" the info that the drones has completed charging process
+
+	[SetChargeRate] Creates the charging speed rate
+		Choose randomly the total charging duration (between 2 and 3 hours)
+		Calculate the charging rate for a single tick
