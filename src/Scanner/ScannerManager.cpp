@@ -10,10 +10,10 @@ bool ScannerManager::CheckSpawnWave() const {
         // TODO: Better while condition
         while (true) {
             auto v = shared_redis.get("spawn_wave");
-            if (!v.has_value()) {
-                log_sm("Failed to get spawn_wave from Redis");
-                std::this_thread::sleep_for(std::chrono::milliseconds(4000));
-            }
+            // if (!v.has_value()) {
+            //     log_sm("Failed to get spawn_wave from Redis");
+            //     std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+            // }
 
             int spawn_wave = std::stoi(v.value_or("-1"));
             // log_sm("Spawn wave = " + std::to_string(spawn_wave));
