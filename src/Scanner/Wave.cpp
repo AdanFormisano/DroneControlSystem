@@ -175,6 +175,11 @@ void Wave::Run() {
                     // std::cout << "Drone " << drone->id << " about to run" << std::endl;
                     // Execute the current state
                     drone->run();
+
+                    // ####################################################################################################
+                    //  UPLOAD DATA function
+                    // ####################################################################################################
+
                     // std::cout << "Drone " << drone->id << " ran" << std::endl;
 
                     // Create a DroneData object
@@ -188,6 +193,10 @@ void Wave::Run() {
 
                     // std::cout << "Drone " << drone->id << " added upload to pipe" << std::endl;
                     // std::cout << "Drone " << drone->id << " done" << std::endl;
+
+                    // ####################################################################################################
+                    // UPLOAD DATA function
+                    // ####################################################################################################
                 }
             }
 
