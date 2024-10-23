@@ -1,0 +1,36 @@
+class TestGenerator
+	[Constructor] Define scenarios with their percentages
+		[All_fine] 40% (Testing)
+
+		[High_consumption] 20%
+			ChooseRandomDrone
+			Generate high_consumption_factor (between 1.5 and 2)
+			Send IPC message to ScannerManager
+
+		[Death] 20%
+			ChooseRandomDrone
+			Send IPC message to ScannerManager
+
+		[Disconnected] 20%
+			ChooseRandomDrone
+			Calculate probability of reconnecting
+			If reconnect < 70% then
+				Generate reconnect_tick using ChooseRandomTick
+				Send IPC message to ScannerManager
+			Else (Drone will not reconnect)
+				Send IPC message to ScannerManager
+			End if
+
+	[Run] TestGenerator's main executing function
+		While True do
+			Generate scenario probability
+			Select correct scenario using generated probability
+			Sleep for 5s (Giving time to system to run)
+		End loop
+	
+	[ChooseRandomDrone] Calculates a Drone to select for scenarios
+		Select a Wave from "waves_alive" on Redis
+		Randomly select a Drone
+
+	[ChooseRandomTick] Generates # of tick after which the drone will reconnect
+		Randomly select a tick between 1 and 20
