@@ -3,22 +3,45 @@
 ## Indice
 
 - [Drone Control System](#drone-control-system)
+  - [Indice](#indice)
 - [Descrizione generale](#descrizione-generale)
-  - [Di cosa si occupa Drone Control System](#di-cosa-si-occupa-drone-control-system)
   - [Fini del sistema](#fini-del-sistema)
-  - [Schema del sistema](#schema-del-sistema)
-    - [Area da sorvegliare](#area-da-sorvegliare)
-    - [Contesto del sistema](#contesto-del-sistema)
+  - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
+    - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
+    - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
+    - [Stati del sistema](#stati-del-sistema)
+    - [Stati di guasto dei droni](#stati-di-guasto-dei-droni)
+    - [Visualizzare il sistema](#visualizzare-il-sistema)
+      - [Area da sorvegliare](#area-da-sorvegliare)
+      - [To starting line](#to-starting-line)
+      - [Working](#working)
+      - [To base](#to-base)
 - [User requirements](#user-requirements)
   - [Use case utente](#use-case-utente)
+    - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
 - [System requirements](#system-requirements)
-  - [Use case di sistema](#use-case-di-sistema)
+  - [Architectural system diagram](#architectural-system-diagram)
+  - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
+  - [State diagram Drone](#state-diagram-drone)
+  - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
 - [Implementation](#implementation)
   - [Implementazione software](#implementazione-software)
-  - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
-  - [Droni e verifica dei punti](#droni-e-verifica-dei-punti)
-  - [Outsourcing](#outsourcing)
-- [Risultati Sperimentali](#risultati-sperimentali)
+  - [_Outsourcing_](#outsourcing)
+  - [Implementare il sistema](#implementare-il-sistema)
+    - [Componente ChargeBase](#componente-chargebase)
+    - [Componente DroneManager](#componente-dronemanager)
+    - [Componente DroneControl](#componente-dronecontrol)
+    - [Componente Drone](#componente-drone)
+    - [Componente DroneZone](#componente-dronezone)
+    - [Componente Buffer](#componente-buffer)
+    - [Componente Globals](#componente-globals)
+  - [Database e Redis](#database-e-redis)
+    - [Schema del Database](#schema-del-database)
+      - [Connessione al Database](#connessione-al-database)
+      - [Definizione dello Schema della Tabella](#definizione-dello-schema-della-tabella)
+      - [Gestione delle Modifiche e Aggiornamenti](#gestione-delle-modifiche-e-aggiornamenti)
+    - [Connessioni Redis](#connessioni-redis)
+  - [Risultati Sperimentali](#risultati-sperimentali)
 
 ## Drone Control System
 
@@ -174,7 +197,7 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
 - **(3.1) Controllo autonomia dei Droni**: Il sistema deve gestire autonomamente l'autonomia di volo di ciascun drone,
   coordinando i tempi di rientro per la ricarica basandosi sul livello di carica della batteria.
 
-### Architectural system view
+### Architectural system diagram
 
 ![alt text](image-6.png)
 
@@ -203,24 +226,17 @@ database PostgreSQL.
 
 ### _Outsourcing_
 
-Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre tecnologie e soluzioni di cui esso è altresì inevitabilmente composto, quali quelle del:
+Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre tecnologie di cui esso è altresì composto, quali quelle del:
 
-- drone
+- sistema di comunicazione wireless droni⇒centro di controllo (e vva.): per trasmettere dati e conferme tra droni e centro di controllo
+- sistema GPS: per determinare con precisione la posizione del drone e muoverlo nell'area
 
-  - sistema di comunicazione a lungo raggio: per trasmettere dati e conferme al centro di controllo
-  - sistema di navigazione e posizionamento GPS: per determinare con precisione la posizione del drone
-
-- centro di controllo
-  - sistema di comunicazione per ricevere dati dai droni: assicura il flusso costante di informazioni dal campo
-
-Sebbene alcune di queste tecnologie e componenti siano parte dell'_environment_ del sistema (come il GPS), ognuna di
-esse rimane esterna ad esso, ed è naturalmente legata a misure di outsourcing in ogni caso imprescindibili.
+Sebbene alcune di queste tecnologie e componenti siano usate nel sistema (come il GPS), la loro implementazione è esterna e relegata a misure di outsourcing.
 
 ### Implementare il sistema
 
 Il sistema è strutturato secondo un'architettura modulare che comprende diverse componenti chiave, ciascuna realizzata
-attraverso file sorgente specifici. Ciascun modulo è progettato per operare sia in maniera autonoma sia in comunicazione
-con le altre parti del sistema, garantendo così una gestione efficiente e affidabile dell'intera flotta di droni.
+attraverso file sorgente specifici.
 
 #### Componente ChargeBase
 
