@@ -47,7 +47,7 @@
 ## Drone Control System
 
 Drone Control System è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area
-di $6\times6\,\mathrm{Km}$.
+di $6×6\,\mathrm{Km}$.
 
 Il sistema è sviluppato come progetto d'esame
 per [Ingegneria del software](https://corsidilaurea.uniroma1.it/it/view-course-details/2023/29923/20190322090929/1c0d2a0e-d989-463c-a09a-00b823557edd/8e637351-4a3a-47a1-ab11-dfe4ad47e446/4f7bd2b2-2f8e-4c38-b15f-7f3c310550b6/8bcc378c-9ff1-4263-87b7-04a394485a9f?guid_cv=8e637351-4a3a-47a1-ab11-dfe4ad47e446&current_erogata=1c0d2a0e-d989-463c-a09a-00b823557edd),
@@ -86,18 +86,17 @@ contrario, segnala eventuali anomalie.
 
 #### Modello concettuale del sistema
 
-Il sistema si compone di una **base centrale** (composta da componenti come **ChargeBase**, **DroneControl**, **Scanner**) situata al centro dell'area, che funge da punto di partenza e ricarica per i droni.  
-La **ChargeBase** è l'unico punto dell'intera area in cui i droni si trovano in uno stato di **non volo** e gestisce la ricarica di ciascun drone dopo ciascun suo giro di perlustrazione. Più precisamente gli stati di non volo sono due, ossia `CHARGING` e `IDLE`, e il giro di perlustrazione corrisponde allo stato di `WORKING` del drone. Per spiegare come ogni drone adempie alla verifica di ogni punto ogni cinque minuti almeno, vediamo come l'area è concettualmente strutturata.
+Il sistema si compone di una **base centrale** (composta da componenti come **`ChargeBase`**, **`DroneControl`**, **`ScannerManager`**) situata al centro dell'area, che funge da punto di partenza e ricarica per i droni.  
+La **`ChargeBase`** è l'unico punto dell'intera area in cui i droni si trovano in uno stato di **non volo** e gestisce la ricarica di ciascun drone dopo ciascun suo giro di perlustrazione. Più precisamente gli stati di non volo sono due, ossia `CHARGING` e `IDLE`, e il giro di perlustrazione corrisponde allo stato di `WORKING` del drone. Per spiegare come ogni drone adempie alla verifica di ogni punto ogni cinque minuti almeno, vediamo come l'area è concettualmente strutturata.
 
 #### Struttura dell'area sorvegliata
 
-L'area da sorvegliare è un quadrato di $6x6\mathrm{\,Km}$ $(36 \mathrm{\, Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
+L'area da sorvegliare è un quadrato di $6\times6\mathrm{\,Km}$ $(36 \mathrm{\, Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
 
 Partendo dalla richiesta della traccia abbiamo pensato di vedere questi quadrati come delle _celle_ con al proprio centro il punto da verificare per il drone. Quest'ultimo condivide infatti l'istante di tempo $t$ in cui è coperto con ogni altro punto nella cella, facendo sì che al passaggio del drone sul punto al $t$-esimo istante di tempo, l'intera area del quadrato della griglia risulti simultaneamente coperta - dove il tempo è rappresentato, nel nostro sistema, da un'unità di tempo chiamata `tick` (un tick equivale ad un numero preciso di secondi che vedremo dopo).
 Chiamiamo quindi `starting_line` la colonna di celle coincidenti col lato sinistro dell'area.
 
-Per far sì che il requisito di sorveglianza di ogni punto almeno ogni $5$ minuti sia rispettato, raggruppiamo i droni in gruppi di $300$ che chiamiamo onde.
-Una volta formata l'onda, questa parte dalla base verso la `starting_line`. I droni si muoveranno in diagonale.
+Per rispettare il requisito di sorveglianza di ogni punto almeno ogni $5$ minuti, raggruppiamo i droni in gruppi di $300$ che chiamiamo onde. Una volta formata l'onda, questa parte dalla base verso la `starting_line`. I droni si muoveranno in diagonale.
 Quando ogni drone è arrivato alla starting_line, l'onda parte col sorvegliare l'area. Questo processo si ripete ogni cinque minuti. È importante notare come il momento in cui l'ultimo drone della nuova onda arriva alla `starting_line` coincide col momento in cui l'onda precedente avrà lavorato per esattamente cinque minuti.
 
 Con onde di droni partenti ogni cinque minuti dalla `starting_line`, ogni punto dell'area è verificato almeno ogni cinque minuti: quando un punto sulla linea di quadrati che il drone percorre sarà stato verificato, esso lo sarà di nuovo entro i prossimi cinque minuti grazie al drone della nuova onda che arriverà a sorvegliarlo trascorso il tempo detto.
@@ -126,9 +125,9 @@ Facciamo ora ordine circa gli stati del sistema:
    Giunti alla base, i droni vengono ricaricati da `ChargeBase`.
 
 6. **Attesa in base (`IDLE`)**  
-   A carica completa (e non prima), i droni sono messi a disposizione di ScannerManager per essere riusati nel creare una nuova onda.
+   A carica completa (e non prima), i droni sono messi a disposizione di `ScannerManager` per essere riusati nel creare una nuova onda.
 
-#### Stati di guasto dei droni
+#### Stati di guasto dei droni e TestGenerator
 
 Durante uno qualsiasi degli stati di volo (`TO_STARTING_LINE`, `READY`, `WORKING`, `TO_BASE`), i droni possono entrare in uno dei seguenti fault state:
 
@@ -137,7 +136,7 @@ Durante uno qualsiasi degli stati di volo (`TO_STARTING_LINE`, `READY`, `WORKING
 - **HIGH_CONSUMPTION**: Il drone consuma più del previsto e continua a operare fino a quando la carica non si esaurisce.
 
 I droni con stato `DISCONNECTED` possono recuperare la connessione (`RECONNECTED`) tornando quindi allo stato precedente la disconnessione, oppure passare a `DEAD` se la connessione non viene ristabilita.
-I droni in `HIGH_CONSUMPTION` possono non riuscire ad arrivare alla base. In tal caso passano allo stato `DEAD`
+I droni in `HIGH_CONSUMPTION` possono non riuscire ad arrivare alla base. In tal caso passano a `DEAD`.
 
 Si noti che `HIGH_CONSUMPTION` è un "meta-stato", se vogliamo. Infatti nel SUD non compare come uno stato vero e proprio (gli altri, ad esempio, sì, essendo definiti in classi apposite), ma è semplicemente una condizione del drone in uno stato di volo che vede il proprio consumo moltiplicato di un fattore casuale scelto in un range di valori plausibile per uno stato di alto consumo di energia. Lo stesso dicasi per lo stato `IDLE`, che è presente nel sistema in qualità di un insieme contenente i droni carichi e disponibili al riuso.
 
@@ -232,6 +231,57 @@ Sebbene alcune di queste tecnologie e componenti siano usate nel sistema (come i
 ### Implementare il sistema
 
 Il sistema è strutturato secondo un'architettura modulare che comprende diverse componenti chiave, ciascuna realizzata attraverso file sorgente specifici.
+
+#### Componente Main
+
+Il `Main` è il meta-componente che gestisce i processi e le attività di tutto `DroneControlSystem`, eseguendole al momento opportuno.
+
+_Pseudocodice di Main_
+
+```
+[main] Main executing function
+	Create Redis' connections options
+
+	Fork to create DroneControl process
+		Create Redis connection
+		Create DroneControl object
+		Run DroneControl
+
+	Fork to create ScannerManager process
+		Create Redis' connection pool options
+		Create Redis pool
+		Create ScannerManager object
+		Run ScannerManager
+
+	Fork to create ChargeBase process
+		Create Redis connection
+		Create ChargeBase
+		Create random_device used for creating charging rates
+		SetEngine in ChargeBase
+		Run ChargeBase
+
+	Fork to create TestGenerator process
+		Create Redis connection
+		Create TestGenerator object
+		Run TestGenerator
+
+	Fork to create Monitors process
+		# Create and run all monitors
+
+	End forks
+
+	Create Redis connection
+	Create semaphores (sem_sync_dc, sem_sync_sc, sem_sync_cb, sem_dc, sem_sc, sem_cb)
+	While simultion is running do
+		Post on semaphores (sem_sync_dc, sem_sync_sc, sem_sync_cb) to signal start of new tick
+		Wait on semaphores (sem_dc, sem_sc, sem_cb) that signal end of tick for simulating processes
+		Increase internal tick count
+	End loop
+	Wait for child processes to finish
+	Kill TestGenerator process
+
+
+```
 
 #### Componente ChargeBase
 
@@ -629,29 +679,54 @@ class Wave
 		Signal synchronizer to remove a thread from the synch process
 ```
 
-#### Componente Buffer
+#### Componente TestGenerator
 
-`Buffer.hpp` è un template utilizzato per la gestione dei dati condivisi tra le componenti del sistema, garantendo il corretto trasferimento di informazioni tra i moduli senza corruzione dei dati.
+`TestGenerator` è il componente che si occupa di generatore scenari pseudocasuali che influenzano il sistema. Ogni scenario si verifica con una determinata probabilità, e fra questi vi sono gli scenari in cui il drone consuma di pìu, si disconnette, ecc.
 
-_Pseudocodice di Buffer:_
+_Pseudocodice di TestGenerator_
 
-```cpp
-// CODE
 ```
+class TestGenerator
+	[Constructor] Define scenarios with their percentages
+		[All_fine] 40% (Testing)
 
-#### Componente Globals
+		[High_consumption] 20%
+			ChooseRandomDrone
+			Generate high_consumption_factor (between 1.5 and 2)
+			Send IPC message to ScannerManager
 
-I file `globals.h` e `globals.cpp` definiscono variabili, costanti e funzioni ausiliarie utilizzate in più parti del sistema per facilitare l'accesso a informazioni comuni e ridurre la duplicazione del codice.
+		[Death] 20%
+			ChooseRandomDrone
+			Send IPC message to ScannerManager
 
-_Pseudocodice di Globals:_
+		[Disconnected] 20%
+			ChooseRandomDrone
+			Calculate probability of reconnecting
+			If reconnect < 70% then
+				Generate reconnect_tick using ChooseRandomTick
+				Send IPC message to ScannerManager
+			Else (Drone will not reconnect)
+				Send IPC message to ScannerManager
+			End if
 
-```cpp
-// CODE
+	[Run] TestGenerator's main executing function
+		While True do
+			Generate scenario probability
+			Select correct scenario using generated probability
+			Sleep for 5s (Giving time to system to run)
+		End loop
+
+	[ChooseRandomDrone] Calculates a Drone to select for scenarios
+		Select a Wave from "waves_alive" on Redis
+		Randomly select a Drone
+
+	[ChooseRandomTick] Generates # of tick after which the drone will reconnect
+		Randomly select a tick between 1 and 20
 ```
 
 #### Componente Database
 
-Le operazioni di lettura e scrittura nei log e nel tracciamento dello stato dei droni vengono gestite attraverso il modulo `Database`, che si interfaccia con PostgreSQL, e Redis, che fornisce un sistema di coda e comunicazione in tempo reale.
+DroneControlSystem utilizza un database `dcs` PostgreSQL per memorizzare e gestire i dati relativi all'attività e allo stato dei droni durante le missioni di sorveglianza. La gestione del database è implementata nel file `Database.cpp`
 
 _Pseudocodice del Database:_
 
@@ -688,105 +763,59 @@ class Buffer
 
 ```
 
+#### Altre componenti
+
+_AGGIUNGERE QUI, EVENTUALMENTE, ALTRE COMPONENTI_
+
 ### Schema del Database
 
-Analizziamo ora lo schema del database. Questo ci permetterà di fornire una descrizione dettagliata di come i dati vengono memorizzati.
+Di seguito gli schemi delle tabelle del database `dcs` usato
 
-Drone Control System utilizza un database PostgreSQL per memorizzare e gestire i dati relativi all'attività e allo stato dei droni durante le missioni di sorveglianza. La gestione del database è implementata nel file `Database.cpp`, specificamente nella funzione `get_DB()`, che si occupa di stabilire la connessione al database e di configurare lo schema necessario.
+#### Tab `drone_logs`
 
-#### Connessione al Database
+| Column     | Data Type      | Constraint                         | Info                                |
+| ---------- | -------------- | ---------------------------------- | ----------------------------------- |
+| `tick_n`   | `INT`          | `PRIMARY KEY` `(tick_n, drone_id)` | Il tick attuale della simulazione   |
+| `drone_id` | `INT`          | `NOT NULL`                         | ID univoco del drone                |
+| `status`   | `VARCHAR(255)` | \-                                 | Stato attuale del drone             |
+| `charge`   | `FLOAT`        | \-                                 | % di carica attuale del drone       |
+| `wave`     | `INT`          | \-                                 | L'onda a cui ∈ il drone             |
+| `x`        | `FLOAT`        | \-                                 | Coord x posizione attuale drone     |
+| `y`        | `FLOAT`        | \-                                 | Coord y posizione attuale drone     |
+| `checked`  | `BOOLEAN`      | \-                                 | Indica se drone ha verificato punto |
 
-La funzione inizia con la verifica dell'esistenza del database denominato 'dcs'. Se il database non è presente, viene creato utilizzando le credenziali standard:
+#### Tab `system_performance_logs`
 
-```cpp
-pqxx::connection C("user=postgres password=admin@123 hostaddr=127.0.0.1 port=5432");
-pqxx::nontransaction N(C);
-pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='dcs'");
-if (R.empty()) {
-    pqxx::work W(C);
-    W.exec("CREATE DATABASE dcs");
-    W.commit();
-}
-```
+| Column                 | Data Type | Constraint    | Info                                 |
+| ---------------------- | --------- | ------------- | ------------------------------------ |
+| `tick_n`               | `INT`     | `PRIMARY KEY` | FK di `drone_logs(tick_n)`           |
+| `working_drones_count` | `INT`     | \-            | Droni attualm. a lavoro              |
+| `waves_count`          | `INT`     | \-            | ???                                  |
+| `performance`          | `FLOAT`   | \-            | Il liv. di performance per quel tick |
 
-User e password sono ovviamente personalizzabili a discrezione dell'utente del sistema.
+#### Tab `drone_charge_logs`
 
-Una volta assicurata l'esistenza del database, si procede con la connessione specifica al database 'dcs' per iniziare le operazioni di gestione dei dati.
-
-#### Definizione dello Schema della Tabella
-
-La tabella principale utilizzata per registrare i dati dei droni è `drone_logs`. Questa tabella viene definita come segue:
-
-```sql
-CREATE TABLE drone_logs (
-    tick_n INT,
-    drone_id INT NOT NULL,
-    status VARCHAR(255),
-    charge FLOAT,
-    zone VARCHAR(255),  // TODO: Change to int
-    x FLOAT,
-    y FLOAT,
-    checked BOOLEAN,
-    CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id)
-);
-```
-
-Questo schema è progettato per registrare informazioni dettagliate per ogni "tick" della simulazione, ovvero ogni unità
-di tempo in cui il sistema verifica e aggiorna lo stato dei droni. I campi includono:
-
-- `tick_n`: il numero del tick di simulazione.
-- `drone_id`: un identificativo univoco per il drone.
-- `status`: lo stato attuale del drone, come "in volo", "in ricarica", etc.
-- `charge`: la percentuale di carica rimanente della batteria del drone.
-- `zone`: la zona di sorveglianza assegnata al drone.
-- `x` e `y`: le coordinate correnti del drone nella zona di sorveglianza.
-- `checked`: un booleano che indica se il drone ha verificato un punto specifico nel suo ultimo tick.
-
-#### Gestione delle Modifiche e Aggiornamenti
-
-Se la connessione al database è stata stabilita con successo, la tabella `drone_logs` viene sovrascritta ad ogni avvio
-del sistema per garantire che i dati riflettano l'ultimo schema desiderato. Questo approccio permette di aggiornare
-facilmente lo schema se necessario per future estensioni o modifiche al sistema.
-
----
+| Column               | Data Type | Constraint    | Info                                |
+| -------------------- | --------- | ------------- | ----------------------------------- |
+| `drone_id`           | `INT`     | `PRIMARY KEY` | FK di `drone_logs(drone_id)`        |
+| `consumption_factor` | `FLOAT`   | \-            | Sale se `HIGH_CONSUMPTION`          |
+| `arrived_at_base`    | `BOOLEAN` | \-            | Indica se il drone è giunto in base |
 
 ### Connessioni Redis
 
-Le connessioni e le operazioni Redis sono fondamentali per la comunicazione asincrona all'interno del progetto. Il
-codice relativo si trova in `ChargeBase.cpp`, `DroneManager.cpp`, e `DroneControl.cpp`, dove è possibile osservare l'uso
-pratico dei canali Redis, delle sottoscrizioni e delle pubblicazioni di messaggi.  
-La struttura del database e le tabelle sono gestite direttamente tramite query SQL all'interno del codice del progetto,
-come si evince dalle richieste di tipo `DatabaseRequest` che includono una query SQL come stringa.  
-La classe `Database` fornisce un'interfaccia asincrona per aggiungere richieste di database a un buffer, che poi vengono
-processate da un thread dedicato. Questo approccio è utile per ridurre il carico e i tempi di attesa sul thread
-principale del programma.
+Le connessioni e le operazioni Redis sono cruciali per la comunicazione tra i vari processi all'interno del progetto. Le operazioni con Redis sono integrate in diverse parti del codice sorgente.
+Eccole qui elencate:
 
-Le operazioni con Redis sono integrate in diverse parti del codice sorgente. Ecco alcuni esempi, nei vari file, delle
-operazioni Redis usate:
-
-**DroneControl.cpp:**
-
-- Sincronizzazione con il server Redis utilizzando `utils::SyncWait(redis)`.
-- Recupero e verifica dello stato della simulazione tramite `redis.get("sim_running")`.
-- Lettura dello stream dei dati per gli aggiornamenti dei droni con `redis.command("XLEN", "drone_stream")`.
-
-**DroneManager.cpp:**
-
-- Attesa sincrona per il Redis server con `utils::SyncWait(shared_redis)`.
-- Controllo dello stato della simulazione con `shared_redis.get("sim_running")`.
-- Gestione delle zone con comandi come `shared_redis.scard("zones_to_swap")` e `shared_redis.spop("zones_to_swap")`.
-
-**ChargeBase.cpp:**
-
-- Recupero di un'istanza singleton di `ChargeBase` con un riferimento Redis passato al costruttore.
-- Verifica dello stato della simulazione con `redis.get("sim_running")`.
-- Monitoraggio dello stream di carica con `redis.command("XLEN", "charge_stream")`.
-- Lettura e trimming degli stream Redis con comandi come `redis.xread` e `redis.command("XTRIM", ...)`.
-- Aggiornamento dello stato del drone nella hash Redis con
-  `redis.hset("drone:" + data[0].second, "status", "CHARGING")`.
-
-Quindi, Redis viene utilizzato per mantenere una comunicazione costante tra il centro di controllo e i droni, oltre che
-per registrare e recuperare i dati di stato necessari al funzionamento del sistema.
+| Connessione       | Dettagli                                                                         | Usata da                              |
+| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------- |
+| `spawn_wave`      | VALUE flag per indicare se è necessaria una nuova Wave o meno                    | ScannerManager, DroneControl          |
+| `waves_alive`     | SET per tracciare quali Waves sono attualmente attive nella simulazione          | Wave, TestGenerator                   |
+| `charged_drones`  | SET per tracciare quali Droni sono attualmente completamente carichi/disponibili | Wave, ChargeBase                      |
+| `scanner_stream`  | STREAM usato per caricare ogni aggiornamento di stato dei Droni                  | DroneControl, Wave, Drone, ChargeBase |
+| `charge_stream`   | STREAM usato per caricare i dati necessari a ChargeBase                          | ChargeBase, Drone                     |
+| `connection_pool` | Usato da Waves per un utilizzo efficiente del multi-threading Redis              | ScannerManager, Wave, Drone           |
+| `scanner_group`   | Gruppo di consumer usato per la lettura in blocco di `scanner_stream`            | DroneControl                          |
+| `pipeline`        | Usato per caricare in blocco i dati su `scanner_stream`                          | Wave                                  |
 
 ### Risultati Sperimentali
 
