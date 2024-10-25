@@ -39,14 +39,14 @@ void log_dcs(const std::string &process, const std::string &message) {
     log_dcsa(full_message);
 }
 
-void log_dcs_slow(const std::string &process, const std::string &message) {
-    if (slow_log_counter % SLOW_LOG_INTERVAL == 0) {
-        std::string full_message = "[" + process + "] " + message;
-        dcsa_slow_log << full_message << std::endl;
-        std::cout << full_message << std::endl;
-    }
-    slow_log_counter++;
-}
+// void log_dcs_slow(const std::string &process, const std::string &message) {
+//     if (slow_log_counter % SLOW_LOG_INTERVAL == 0) {
+//         std::string full_message = "[" + process + "] " + message;
+//         dcsa_slow_log << full_message << std::endl;
+//         std::cout << full_message << std::endl;
+//     }
+//     slow_log_counter++;
+// }
 
 void flush_log_buffer(int tick, std::ofstream &log_stream) {
     if (log_buffer.find(tick) != log_buffer.end()) {
@@ -73,7 +73,7 @@ void flush_log_buffer(int tick, std::ofstream &log_stream) {
     }
 }
 
-void log_dcs_sync(const std::string &process, const std::string &message) {
+void log_dcs_slow(const std::string &process, const std::string &message) {
     static int last_synced_tick = 0;
 
     // Verifica se il messaggio rappresenta un tick
@@ -102,7 +102,7 @@ void log_dcs_sync(const std::string &process, const std::string &message) {
     }
 }
 
-void log_dcsa_sync(const std::string &process, const std::string &message) {
+void log_dcsa_slow(const std::string &process, const std::string &message) {
     static int last_synced_tick = 0;
 
     // Verifica se il messaggio rappresenta un tick
@@ -160,8 +160,8 @@ void log(const std::string &message) {
 
 void log_cb(const std::string &message) {
     log_dcs("ChargeBase", message);
-    log_dcs_sync("ChargeBase", message);
-    log_dcsa_sync("ChargeBase", message);
+    log_dcs_slow("ChargeBase", message);
+    log_dcsa_slow("ChargeBase", message);
 }
 
 void log_charge(const std::string &message) {
@@ -178,8 +178,8 @@ void log_coverage(const std::string &message) {
 
 void log_d(const std::string &message) {
     log_dcs("Drone", message);
-    // log_dcs_sync("Drone", message);
-    log_dcsa_sync("Drone", message);
+    // log_dcs_slow("Drone", message);
+    log_dcsa_slow("Drone", message);
 }
 
 void log_db(const std::string &message) {
@@ -190,14 +190,14 @@ void log_db(const std::string &message) {
 
 void log_dc(const std::string &message) {
     log_dcs("DroneControl", message);
-    log_dcs_sync("DroneControl", message);
-    log_dcsa_sync("DroneControl", message);
+    log_dcs_slow("DroneControl", message);
+    log_dcsa_slow("DroneControl", message);
 }
 
 void log_ds(const std::string &message) {
     log_dcs("DroneState", message);
-    // log_dcs_sync("DroneState", message);
-    log_dcsa_sync("DroneState", message);
+    // log_dcs_slow("DroneState", message);
+    log_dcsa_slow("DroneState", message);
 }
 
 void log_error(const std::string &process, const std::string &message) {
@@ -216,8 +216,8 @@ void log_error(const std::string &process, const std::string &message) {
 
 void log_main(const std::string &message) {
     log_dcs("Main", message);
-    log_dcs_sync("Main", message);
-    log_dcsa_sync("Main", message);
+    log_dcs_slow("Main", message);
+    log_dcsa_slow("Main", message);
 }
 
 void log_monitor(const std::string &message) {
@@ -234,8 +234,8 @@ void log_recharge(const std::string &message) {
 
 void log_sm(const std::string &message) {
     log_dcs("ScannerManager", message);
-    log_dcs_sync("ScannerManager", message);
-    log_dcsa_sync("ScannerManager", message);
+    log_dcs_slow("ScannerManager", message);
+    log_dcsa_slow("ScannerManager", message);
 }
 
 void log_system(const std::string &message) {
@@ -246,12 +246,12 @@ void log_system(const std::string &message) {
 
 void log_tg(const std::string &message) {
     log_dcs("TestGenerator", message);
-    log_dcs_sync("TestGenerator", message);
-    log_dcsa_sync("TestGenerator", message);
+    log_dcs_slow("TestGenerator", message);
+    log_dcsa_slow("TestGenerator", message);
 }
 
 void log_wv(const std::string &message) {
     log_dcs("Wave", message);
-    // log_dcs_sync("Wave", message);
-    log_dcsa_sync("Wave", message);
+    // log_dcs_slow("Wave", message);
+    log_dcsa_slow("Wave", message);
 }

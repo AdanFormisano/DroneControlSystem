@@ -13,16 +13,20 @@ extern std::ofstream recharge_log;
 extern std::ofstream system_log;
 extern std::ofstream charge_log;
 
-void log_all(const std::string &message);  // Log cumulativo
-void log_main(const std::string &message); // Su dcs_log + [Main]
-void log_dc(const std::string &message);   // Su dcs_log + [DroneControl]
-void log_d(const std::string &message);    // Su dcs_log + [Drone]
-void log_ds(const std::string &message);   // Su dcs_log + [DroneState]
-void log_cb(const std::string &message);   // Su dcs_log + [ChargeBase]
-void log_tg(const std::string &message);   // Su dcs_log + [TestGenerator]
-void log_sm(const std::string &message);   // Su dcs_log + [ScannerManager]
-void log_wv(const std::string &message);   // Su dcs_log + [Wave]
-void log(const std::string &message);      // Su dcs_log
+void log_all(const std::string &message);                             // Log cumulativo
+void log_main(const std::string &message);                            // Su dcs_log + [Main]
+void log_dc(const std::string &message);                              // Su dcs_log + [DroneControl]
+void log_d(const std::string &message);                               // Su dcs_log + [Drone]
+void log_ds(const std::string &message);                              // Su dcs_log + [DroneState]
+void log_cb(const std::string &message);                              // Su dcs_log + [ChargeBase]
+void log_tg(const std::string &message);                              // Su dcs_log + [TestGenerator]
+void log_sm(const std::string &message);                              // Su dcs_log + [ScannerManager]
+void log_wv(const std::string &message);                              // Su dcs_log + [Wave]
+void log(const std::string &message);                                 // Su dcs_log
+void log_dcsa(const std::string &message);                            // Su dcsa_log
+void log_dcs(const std::string &process, const std::string &message); // Su dcs_log + [process]
+void log_dcs_slow(const std::string &process, const std::string &message);
+void log_dcsa_slow(const std::string &message);
 
 void log_db(const std::string &message);
 
@@ -34,6 +38,8 @@ void log_charge(const std::string &message);
 
 void log_error(const std::string &message, const std::string &process = "");
 
-void close_logs(); // Funzione per chiudere tutti i file di log
+void flush_log_buffer(int tick, std::ofstream &log_stream); // Svuota il buffer di log
+
+void close_logs();
 
 #endif // LOG_UTILS_H
