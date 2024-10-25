@@ -5,12 +5,12 @@ toggle_dcs() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCS_RUNNING" = true ]; then
-        center_title_with_message "Hai premuto d e visualizzi..." "$name nascosto"
+        center_title_with_message "Hai premuto \"d\" e hai reso" "$name nascosto"
         kill $DCS_PID
         wait $DCS_PID 2>/dev/null
         DCS_RUNNING=false
     else
-        center_title_with_message "Hai premuto d e visualizzi..." "$name"
+        center_title_with_message "Hai premuto \"d\" e visualizzi" "$name"
         # tail -f ../log/dcs_slow.log &
         tail -F ../log/dcs_slow.log &
         # less +F ../log/dcs_slow.log &
@@ -24,12 +24,12 @@ toggle_dcsa() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCSA_RUNNING" = true ]; then
-        center_title_with_message "Hai premuto a e visualizzi..." "$name nascosta"
+        center_title_with_message "Hai premuto \"a\" e hai reso" "$name nascosta"
         kill $DCSA_PID
         wait $DCSA_PID 2>/dev/null
         DCSA_RUNNING=false
     else
-        center_title_with_message "Hai premuto a e visualizzi..." "$name"
+        center_title_with_message "Hai premuto \"a\" e visualizzi" "$name"
         # tail -f ../log/dcsa_slow.log &
         tail -F ../log/dcsa_slow.log &
         # less +F ../log/dcsa_slow.log &
@@ -43,12 +43,12 @@ toggle_dcsa_fast() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCSAF_RUNNING" = true ]; then
-        center_title_with_message "Hai premuto a e visualizzi..." "$name nascosta"
+        center_title_with_message "Hai premuto \"D\" e hai reso" "$name nascosta"
         kill $DCSAF_PID
         wait $DCSAF_PID 2>/dev/null
         DCSAF_RUNNING=false
     else
-        center_title_with_message "Hai premuto a e visualizzi..." "$name"
+        center_title_with_message "Hai premuto \"D\" e visualizzi" "$name"
         tail -F ../log/dcsa.log &
         DCSAF_PID=$!
         DCSAF_RUNNING=true
@@ -60,12 +60,12 @@ toggle_monitor() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$MONITOR_RUNNING" = true ]; then
-        center_title_with_message "Hai premuto m e visualizzi..." "$name nascosti"
+        center_title_with_message "Hai premuto \"m\" e hai reso" "$name nascosti"
         kill $MONITOR_LOG_PID
         wait $MONITOR_LOG_PID 2>/dev/null
         MONITOR_RUNNING=false
     else
-        center_title_with_message "Hai premuto m e visualizzi..." "$name"
+        center_title_with_message "Hai premuto \"m\" e visualizzi" "$name"
         # tail -f ../log/monitor.log &
         tail -F ../log/monitor.log &
         # less +F ../log/monitor.log &
@@ -90,13 +90,13 @@ toggle_single_mon() {
     esac
 
     if [ -z "${MONITOR_PIDS[$monitor_index]}" ]; then
-        center_title_with_message "Hai premuto $monitor_index e visualizzi..." "$monitor_name"
+        center_title_with_message "Hai premuto \"$monitor_index\" e visualizzi" "$monitor_name"
         # tail -f $log_file &
         tail -F $log_file &
         # less +F $log_file &
         MONITOR_PIDS[$monitor_index]=$!
     else
-        center_title_with_message "Hai premuto $monitor_index e visualizzi..." "$monitor_name nascosto"
+        center_title_with_message "Hai premuto \"$monitor_index\" e hai reso" "$monitor_name nascosto"
         if ps -p ${MONITOR_PIDS[$monitor_index]} > /dev/null; then
             kill ${MONITOR_PIDS[$monitor_index]}
             wait ${MONITOR_PIDS[$monitor_index]} 2>/dev/null
@@ -129,6 +129,6 @@ toggle_hide(){
         done
         MONITOR_RUNNING=false
         clear
-        center_title_with_message "Hai premuto h e visualizzi..." "Output nascosto"
+        center_title_with_message "Hai premuto \"h\" e hai reso" "Output nascosto"
         echo "$instructions"
 }
