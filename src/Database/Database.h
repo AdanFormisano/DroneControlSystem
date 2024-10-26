@@ -18,6 +18,15 @@ public:
 
     pqxx::connection &getConnection() { return *conn; }
 
+    void CreateDB(
+        const std::string &dbname,
+        const std::string &user,
+        const std::string &password,
+        const std::string &hostaddr,
+        const std::string &port);
+
+    void CreateTables();
+
     void get_DB();
 
     std::tuple<std::string,

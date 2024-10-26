@@ -5,27 +5,30 @@
 #include <iostream>
 #include <pqxx/pqxx>
 
-void Database::ConnectToDB(const std::string &dbname,
-                           const std::string &user,
-                           const std::string &password,
-                           const std::string &hostaddr,
-                           const std::string &port) {
+void Database::ConnectToDB(
+    const std::string &dbname,
+    const std::string &user,
+    const std::string &password,
+    const std::string &hostaddr,
+    const std::string &port) {
     ConnectToDB_();
 }
 
-// Function to read credentials from config file
-std::tuple<std::string, std::string, std::string, std::string, std::string> Database::ReadCredentialsFromConfig() {
-    // Leggo credenziali
+// Read credentials from config file
+std::tuple<std::string, std::string,
+           std::string, std::string,
+           std::string>
+Database::ReadCredentialsFromConfig() {
     std::ifstream configFile("../res/doc/config.json");
     if (!configFile.is_open()) {
         throw std::runtime_error("Could not open config.json. Check file or path.");
     }
 
-    // Parse JSON
+    // Parso JSON
     nlohmann::json config;
     configFile >> config;
 
-    // Estrai le credenziali dal JSON
+    // Estraggo credenziali da JSON
     const std::string dbname = config["database"]["name"];
     const std::string user = config["database"]["user"];
     const std::string password = config["database"]["password"];
@@ -39,7 +42,6 @@ std::tuple<std::string, std::string, std::string, std::string, std::string> Data
 void Database::ConnectToDB_() {
     auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
 
-    // Crea la stringa di connessione
     std::string connectionString = "dbname=" + dbname +
                                    " user=" + user +
                                    " password=" + password +
@@ -53,77 +55,92 @@ void Database::ConnectToDB_() {
     }
 }
 
+// Create the DB
+void Database::CreateDB(
+    const std::string &dbname,
+    const std::string &user,
+    const std::string &password,
+    const std::string &hostaddr,
+    const std::string &port) {
+    // Connessione al server PostgreSQL (senza specificare un DB)
+    std::string serverConnectionString = "user=" + user +
+                                         " password=" + password +
+                                         " hostaddr=" + hostaddr +
+                                         " port=" + port;
+    pqxx::connection C(serverConnectionString);
+    pqxx::nontransaction N(C);
+
+    // Se il DB non esiste, crealo
+    if (pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='" + dbname + "'"); R.empty()) {
+        log_db("Creating " + dbname + " database");
+        N.exec("CREATE DATABASE " + dbname);
+    }
+}
+
+// Create tables
+void Database::CreateTables() {
+    if (conn && conn->is_open()) {
+        pqxx::work W(*conn);
+        W.exec("DROP TABLE IF EXISTS drone_logs");
+        W.exec("DROP TABLE IF EXISTS monitor_logs");
+        W.exec("DROP TABLE IF EXISTS system_performance_logs");
+        W.exec("DROP TABLE IF EXISTS drone_charge_logs");
+
+        W.exec(
+            "CREATE TABLE drone_logs ("
+            "tick_n INT, "
+            "drone_id INT NOT NULL, "
+            "status VARCHAR(255), "
+            "charge FLOAT, "
+            "wave INT, "
+            "x FLOAT, "
+            "y FLOAT, "
+            "checked BOOLEAN, "
+            "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
+
+        W.exec(
+            "CREATE TABLE monitor_logs ("
+            "tick_n INT PRIMARY KEY, "
+            "wave_cover INT[], "
+            "area_cover VARCHAR(255), "
+            "charge_drone_id INT[], "
+            "charge_percentage INT[], "
+            "charge_needed INT[], "
+            "recharge_drone_id INT[], "
+            "recharge_duration INT[], "
+            "time_to_read INT[]);");
+
+        W.exec(
+            "CREATE TABLE system_performance_logs ("
+            "tick_n INT PRIMARY KEY, "
+            "working_drones_count INT, "
+            "waves_count INT, "
+            "performance FLOAT);");
+
+        W.exec(
+            "CREATE TABLE drone_charge_logs ("
+            "drone_id INT PRIMARY KEY, "
+            "consumption_factor FLOAT, "
+            "arrived_at_base BOOLEAN);");
+
+        W.commit();
+    } else {
+        log_error("Database", "Failed to connect to DB");
+    }
+}
+
 // Get or create db
 void Database::get_DB() {
     try {
-        // Leggi le credenziali dal file di configurazione
+        // Legge le credenziali dal config.json
         auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
-
-        // Connessione al server PostgreSQL (senza specificare un DB)
-        std::string serverConnectionString = "user=" + user +
-                                             " password=" + password +
-                                             " hostaddr=" + hostaddr +
-                                             " port=" + port;
-        pqxx::connection C(serverConnectionString);
-        pqxx::nontransaction N(C);
-
-        // Se il DB non esiste, crearlo
-        if (pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='" + dbname + "'"); R.empty()) {
-            log_db("Creating " + dbname + " database");
-            N.exec("CREATE DATABASE " + dbname);
-        }
-
-        // Connessione al DB specificato
+        CreateDB(dbname, user, password, hostaddr, port);
         ConnectToDB_();
-
-        if (conn && conn->is_open()) {
-            pqxx::work W(*conn);
-            W.exec("DROP TABLE IF EXISTS drone_logs");
-            W.exec("DROP TABLE IF EXISTS monitor_logs");
-            W.exec("DROP TABLE IF EXISTS system_performance_logs");
-            W.exec("DROP TABLE IF EXISTS drone_charge_logs");
-
-            W.exec(
-                "CREATE TABLE drone_logs ("
-                "tick_n INT, "
-                "drone_id INT NOT NULL, "
-                "status VARCHAR(255), "
-                "charge FLOAT, "
-                "wave INT, "
-                "x FLOAT, "
-                "y FLOAT, "
-                "checked BOOLEAN, "
-                "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
-
-            W.exec(
-                "CREATE TABLE monitor_logs ("
-                "tick_n INT PRIMARY KEY, "
-                "wave_cover INT[], "
-                "area_cover VARCHAR(255), "
-                "charge_drone_id INT[], "
-                "charge_percentage INT[], "
-                "charge_needed INT[], "
-                "recharge_drone_id INT[], "
-                "recharge_duration INT[], "
-                "time_to_read INT[]);");
-
-            W.exec(
-                "CREATE TABLE system_performance_logs ("
-                "tick_n INT PRIMARY KEY, "
-                "working_drones_count INT, "
-                "waves_count INT, "
-                "performance FLOAT);");
-
-            W.exec(
-                "CREATE TABLE drone_charge_logs ("
-                "drone_id INT PRIMARY KEY, "
-                "consumption_factor FLOAT, "
-                "arrived_at_base BOOLEAN);");
-
-            W.commit();
-        } else {
-            log_error("Database", "Failed to connect to DB");
-        }
+        CreateTables();
+    } catch (const pqxx::sql_error &e) {
+        log_error("Database", "SQL error: " + std::string(e.what()) + " Query was: " + e.query());
+    } catch (const pqxx::broken_connection &e) {
+        log_error("Database", "Connection error: " + std::string(e.what()));
     } catch (const std::exception &e) {
         log_error("Database", "Failed to get DB: " + std::string(e.what()));
     }
@@ -135,7 +152,13 @@ void Database::ExecuteQuery(const std::string &query) const {
         return;
     }
 
-    pqxx::work W(*conn);
-    W.exec(query);
-    W.commit();
+    try {
+        pqxx::work W(*conn);
+        W.exec(query);
+        W.commit();
+    } catch (const pqxx::sql_error &e) {
+        log_error("Database", "SQL error: " + std::string(e.what()) + " Query was: " + e.query());
+    } catch (const std::exception &e) {
+        log_error("Database", "Failed to execute query: " + std::string(e.what()));
+    }
 }
