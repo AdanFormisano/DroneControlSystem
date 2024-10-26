@@ -2,9 +2,9 @@
 
 # Termina tail esistenti
 # pkill -f "tail -f ../log"
-if pgrep -f "tail -f ../log" > /dev/null; then
-    pkill -f "tail -f ../log"
-fi
+# if pgrep -F "tail -F ../log" > /dev/null; then
+#     pkill -F "tail -F ../log"
+# fi
 # pkill -f "less +F ../log"
 
 # Altri sh che servono
