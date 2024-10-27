@@ -4,35 +4,51 @@ source sh/strings.sh
 
 cleanup() {
     echo -e "\n☑️ Termino i processi..."
+    
+    # Chiude il processo Drone
     if [ -n "$DRONE_PID" ]; then
         kill -- -$DRONE_PID
     fi
+    
+    # Chiude il processo DCS
     if [ "$DCS_RUNNING" = true ] && [ -n "$DCS_PID" ]; then
         kill $DCS_PID
     fi
+    
+    # Chiude il processo DCSA
+    if [ "$DCSA_RUNNING" = true ] && [ -n "$DCSA_PID" ]; then
+        kill $DCSA_PID
+    fi
+
+    # Chiude il processo MONITOR
     if [ "$MONITOR_RUNNING" = true ] && [ -n "$MONITOR_LOG_PID" ]; then
         kill $MONITOR_LOG_PID
     fi
+    
+    # Chiude il processo DCSA Fast
     if [ "$DCSAF_RUNNING" = true ] && [ -n "$DCSAF_PID" ]; then
-    kill $DCSAF_PID
+        kill $DCSAF_PID
     fi
+    
+    # Chiude i monitor specifici
     for pid in "${MONITOR_PIDS[@]}"; do
         if [ -n "$pid" ]; then
             kill $pid
         fi
     done
-    wait $DRONE_PID $DCS_PID $MONITOR_LOG_PID 2>/dev/null
+
+    # Attesa per garantire che i processi siano terminati
+    wait $DRONE_PID $DCS_PID $DCSA_PID $MONITOR_LOG_PID $DCSAF_PID 2>/dev/null
 
     echo -e "☑️ Termino Redis..."
     if pgrep redis-server > /dev/null; then
-        # pkill redis-server
         redis-cli -p $REDIS_PORT shutdown
     fi
 
     echo -e "\n✅ Programma terminato\n"
     exit
     # pkill -f "tail -f ../log"
-    pkill -F "tail -f ../log"
+    pkill -F "tail -F ../log"
     # pkill -f "less +F ../log"
 
 }

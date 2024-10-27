@@ -15,7 +15,7 @@ void NewBuffer::WriteToBuffer(std::vector<DroneData> &data) {
         // Bulk insert into buffer
         buffer.insert(buffer.end(), std::make_move_iterator(data.begin()), std::make_move_iterator(data.end()));
     } catch (const std::exception &e) {
-        log_error("Error writing to the buffer: " + std::string(e.what()));
+        log_error("NewBuffer", "Error writing to the buffer: " + std::string(e.what()));
         // std::cerr << "Error writing to the buffer: " << e.what() << std::endl;
     }
 }
@@ -29,7 +29,8 @@ std::vector<DroneData> NewBuffer::ReadFromBuffer() {
         buffer.clear();
         return data;
     } catch (const std::exception &e) {
-        log_error("Error reading from the buffer: " + std::string(e.what()));
+        // log_error("Error reading from the buffer: " + std::string(e.what()));
+        log_error("NewBuffer", "Error reading from the buffer: " + std::string(e.what()));
         // std::cerr << "Error reading from the buffer: " << e.what() << std::endl;
         return {};
     }

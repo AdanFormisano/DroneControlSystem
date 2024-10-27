@@ -25,18 +25,32 @@ toggle_dcsa() {
 
     if [ "$DCSA_RUNNING" = true ]; then
         center_title_with_message "Hai premuto \"a\" e hai reso" "$name nascosta"
-        kill $DCSA_PID
-        wait $DCSA_PID 2>/dev/null
+        
+        # Controllo e chiusura PID
+        if ps -p $DCSA_PID > /dev/null; then
+            kill $DCSA_PID
+            wait $DCSA_PID 2>/dev/null || true
+            if ps -p $DCSA_PID > /dev/null; then
+                kill -9 $DCSA_PID # Chiusura forzata se necessario
+            fi
+        fi
+        
         DCSA_RUNNING=false
+        DCSA_PID=0
     else
         center_title_with_message "Hai premuto \"a\" e visualizzi" "$name"
-        # tail -f ../log/dcsa_slow.log &
-        tail -F ../log/dcsa_slow.log &
-        # less +F ../log/dcsa_slow.log &
+
+        # Usa `tail -f` anziché `tail -F`
+        tail -f ../log/dcsa_slow.log &
         DCSA_PID=$!
         DCSA_RUNNING=true
     fi
 }
+
+
+
+
+
 
 toggle_dcsa_fast() {
     local name="DCSA Fast"
@@ -44,12 +58,23 @@ toggle_dcsa_fast() {
 
     if [ "$DCSAF_RUNNING" = true ]; then
         center_title_with_message "Hai premuto \"D\" e hai reso" "$name nascosta"
-        kill $DCSAF_PID
-        wait $DCSAF_PID 2>/dev/null
+        
+        # Controllo e chiusura PID
+        if ps -p $DCSAF_PID > /dev/null; then
+            kill $DCSAF_PID
+            wait $DCSAF_PID 2>/dev/null || true
+            if ps -p $DCSAF_PID > /dev/null; then
+                kill -9 $DCSAF_PID # Chiusura forzata se necessario
+            fi
+        fi
+        
         DCSAF_RUNNING=false
+        DCSAF_PID=0
     else
         center_title_with_message "Hai premuto \"D\" e visualizzi" "$name"
-        tail -F ../log/dcsa.log &
+
+        # Usa `tail -f` anziché `tail -F`
+        tail -f ../log/dcsa.log &
         DCSAF_PID=$!
         DCSAF_RUNNING=true
     fi
@@ -106,29 +131,33 @@ toggle_single_mon() {
     fi
 }
 
-toggle_hide(){
-        if [ "$DCS_RUNNING" = true ]; then
+toggle_hide() {
+    if [ "$DCS_RUNNING" = true ]; then
         toggle_dcs
-        fi
-        if [ "$DCSA_RUNNING" = true ]; then
-            toggle_dcsa
-        fi
-        if [ "$MONITOR_RUNNING" = true ]; then
-            toggle_monitor
-        fi
-        if [ "$DCSAF_RUNNING" = true ]; then
-            toggle_dcsa_fast
-        fi
-        for index in "${!MONITOR_PIDS[@]}"; do
-            pid=${MONITOR_PIDS[$index]}
+    fi
+    if [ "$DCSA_RUNNING" = true ]; then
+        toggle_dcsa
+    fi
+    if [ "$MONITOR_RUNNING" = true ]; then
+        toggle_monitor
+    fi
+    if [ "$DCSAF_RUNNING" = true ]; then
+        toggle_dcsa_fast
+    fi
+    for index in "${!MONITOR_PIDS[@]}"; do
+        pid=${MONITOR_PIDS[$index]}
+        if ps -p $pid > /dev/null; then
+            kill $pid
+            wait $pid 2>/dev/null || true
             if ps -p $pid > /dev/null; then
-                kill $pid
-                wait $pid 2>/dev/null
+                kill -9 $pid # Chiusura forzata se necessario
             fi
-            unset MONITOR_PIDS[$index]
-        done
-        MONITOR_RUNNING=false
-        clear
-        center_title_with_message "Hai premuto \"h\" e hai reso" "Output nascosto"
-        echo "$instructions"
+        fi
+        unset MONITOR_PIDS[$index]
+    done
+    MONITOR_RUNNING=false
+    sleep 0.2 # Attesa per evitare sovrapposizioni di processi
+    clear
+    center_title_with_message "Hai premuto \"h\" e hai reso" "Output nascosto"
+    echo "$instructions"
 }

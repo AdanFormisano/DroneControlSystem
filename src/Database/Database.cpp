@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <pqxx/pqxx>
+#include <thread>
 
 void Database::ConnectToDB(
     const std::string &dbname,
@@ -131,18 +132,39 @@ void Database::CreateTables() {
 
 // Get or create db
 void Database::get_DB() {
-    try {
-        // Legge le credenziali dal config.json
-        auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
-        CreateDB(dbname, user, password, hostaddr, port);
-        ConnectToDB_();
-        CreateTables();
-    } catch (const pqxx::sql_error &e) {
-        log_error("Database", "SQL error: " + std::string(e.what()) + " Query was: " + e.query());
-    } catch (const pqxx::broken_connection &e) {
-        log_error("Database", "Connection error: " + std::string(e.what()));
-    } catch (const std::exception &e) {
-        log_error("Database", "Failed to get DB: " + std::string(e.what()));
+    const int max_retries = 5;       // Numero massimo di tentativi
+    const int retry_delay_ms = 1000; // Ritardo tra i tentativi (in millisecondi)
+    int retry_count = 0;
+
+    while (retry_count < max_retries) {
+        try {
+            // Legge le credenziali dal config.json
+            auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
+            CreateDB(dbname, user, password, hostaddr, port);
+            ConnectToDB_();
+            CreateTables();
+            log_db("Successfully connected to DB on attempt " + std::to_string(retry_count + 1));
+            break; // Esci dal loop se la connessione è riuscita
+        } catch (const pqxx::sql_error &e) {
+            log_error("Database", "SQL error: " + std::string(e.what()) + " Query was: " + e.query());
+        } catch (const pqxx::broken_connection &e) {
+            log_error("Database", "Connection error: " +
+                                      std::string(e.what()) + " (Attempt " +
+                                      std::to_string(retry_count + 1) + " of " +
+                                      std::to_string(max_retries) + ")");
+        } catch (const std::exception &e) {
+            log_error("Database", "Failed to get DB: " +
+                                      std::string(e.what()) + " (Attempt " +
+                                      std::to_string(retry_count + 1) + " of " +
+                                      std::to_string(max_retries) + ")");
+        }
+
+        retry_count++;
+        if (retry_count < max_retries) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(retry_delay_ms));
+        } else {
+            log_error("Database", "Maximum retry attempts reached. Could not connect to DB.");
+        }
     }
 }
 

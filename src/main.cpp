@@ -44,7 +44,8 @@ int main() {
     pid_t pid_drone_control = fork();
     if (pid_drone_control == -1) {
         // spdlog::error("Fork for DroneControl failed");
-        log_error("Fork for DroneControl failed");
+        // log_error("Fork for DroneControl failed");
+        log_error("Main", "Fork for DroneControl failed");
         // std::cerr << "Fork for DroneControl failed" << std::endl;
         return 1;
     } else if (pid_drone_control == 0) {
@@ -67,7 +68,8 @@ int main() {
         pid_t pid_drone = fork();
         if (pid_drone == -1) {
             // spdlog::error("Fork for Drone failed");
-            log_error("Fork for Drone failed");
+            // log_error("Fork for Drone failed");
+            log_error("Main", "Fork for Drone failed");
             // std::cerr << "Fork for Drone failed" << std::endl;
             return 1;
         } else if (pid_drone == 0) {
@@ -92,7 +94,8 @@ int main() {
             pid_t pid_charge_base = fork();
             if (pid_charge_base == -1) {
                 // spdlog::error("Fork for ChargeBase failed");
-                log_error("Fork for ChargeBase failed");
+                // log_error("Fork for ChargeBase failed");
+                log_error("Main", "Fork for ChargeBase failed");
                 // std::cerr << "Fork for ChargeBase failed" << std::endl;
                 return 1;
             } else if (pid_charge_base == 0) {
@@ -114,7 +117,8 @@ int main() {
                 pid_t pid_test_generator = fork();
                 if (pid_test_generator == -1) {
                     // spdlog::error("Fork for TestGenerator failed");
-                    log_error("Fork for TestGenerator failed");
+                    // log_error("Fork for TestGenerator failed");
+                    log_error("Main", "Fork for TestGenerator failed");
                     // std::cerr << "Fork for TestGenerator failed" << std::endl;
                     return 1;
                 } else if (pid_test_generator == 0) {
@@ -137,7 +141,8 @@ int main() {
                     pid_t pid_monitors = fork();
                     // In Main process
                     if (pid_monitors == -1) {
-                        log_error("Fork for Monitors failed");
+                        // log_error("Fork for Monitors failed");
+                        log_error("Main", "Fork for Monitors failed");
                         // std::cerr << "Fork for Monitors failed" << std::endl;
                     } else if (pid_monitors == 0) {
                         // In child Monitors process

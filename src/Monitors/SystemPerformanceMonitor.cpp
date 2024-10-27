@@ -26,7 +26,7 @@ void SystemPerformanceMonitor::checkPerformance() {
                     query += "(" + std::to_string(tick_n) + ", " + std::to_string(working_drones_count) + ", " + std::to_string(waves_count) + ", " + std::to_string(performance) + "), ";
                 }
                 query = query.substr(0, query.size() - 2);
-                query += ";";
+                query += " ON CONFLICT (tick_n) DO NOTHING;"; // Gestione dei duplicati
 
                 // simulateQueryExecution(performance_data.size());
                 log_system("Executing query...");
@@ -84,7 +84,7 @@ void SystemPerformanceMonitor::checkPerformance() {
                     query += "(" + std::to_string(tick_n) + ", " + std::to_string(working_drones_count) + ", " + std::to_string(waves_count) + ", " + std::to_string(performance) + "), ";
                 }
                 query = query.substr(0, query.size() - 2);
-                query += ";";
+                query += " ON CONFLICT (tick_n) DO NOTHING;"; // Gestione dei duplicati
 
                 // simulateQueryExecution(performance_data.size());
                 log_system("Executing query...");
