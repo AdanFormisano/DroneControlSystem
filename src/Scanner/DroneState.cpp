@@ -20,6 +20,7 @@ void ToStartingLine::enter(Drone *drone) {
 
 void ToStartingLine::run(Drone *drone) {
     if (drone->charge - DRONE_CONSUMPTION_RATE * drone->high_consumption_factor <= 0.0f) {
+        drone->ctx->incrDronesNotWaiting();
         drone->setState(Dead::getInstance());
         return;
     }
@@ -236,6 +237,10 @@ void Disconnected::run(Drone *drone) {
     } else {
         // spdlog::info("[[DroneCH]] Drone {} is disconnected, coming from {}, waiting to die...", drone->id, utils::droneStateToString(drone->previous));
         if (drone->tick_drone >= drone->disconnected_tick + 20) {
+            // Check if the drone was in a READY or TO_STARTING_LINE state
+            if (drone->previous == drone_state_enum::READY || drone->previous == drone_state_enum::TO_STARTING_LINE) {
+                drone->ctx->incrDronesNotWaiting();
+            }
             drone->setState(Dead::getInstance());
         }
     }

@@ -26,7 +26,9 @@ public:
 
     [[nodiscard]] int getId() const { return id; }
     [[nodiscard]] int getReadyDrones() const { return ready_drones; }
+    [[nodiscard]] int getDronesNotWaiting() const { return drones_not_waiting; }
     void incrReadyDrones() { ready_drones++; }
+    void incrDronesNotWaiting() { drones_not_waiting++; }
 
 private:
     int id = 0;
@@ -34,6 +36,7 @@ private:
     // std::vector<std::unique_ptr<Drone>> drones;
     ThreadSemaphore *sem_sync;
     int ready_drones = 0;
+    int drones_not_waiting = 0;
 
     void setDroneFault(int wave_drone_id, drone_state_enum state, int reconnect_tick, float high_consumption_factor) const;
     void UploadData() const;
