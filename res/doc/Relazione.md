@@ -47,22 +47,15 @@
 
 # DroneControlSystem
 
-_DroneControlSystem_ è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area
-di $6×6\,\mathrm{Km}$.
+_DroneControlSystem_ è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area di $6×6\,\mathrm{Km}$.
 
-Il sistema è sviluppato come progetto d'esame
-per [Ingegneria del software](https://corsidilaurea.uniroma1.it/it/view-course-details/2023/29923/20190322090929/1c0d2a0e-d989-463c-a09a-00b823557edd/8e637351-4a3a-47a1-ab11-dfe4ad47e446/4f7bd2b2-2f8e-4c38-b15f-7f3c310550b6/8bcc378c-9ff1-4263-87b7-04a394485a9f?guid_cv=8e637351-4a3a-47a1-ab11-dfe4ad47e446&current_erogata=1c0d2a0e-d989-463c-a09a-00b823557edd),
-corso tenuto dal prof [Enrico Tronci](https://corsidilaurea.uniroma1.it/it/users/enricotronciuniroma1it)
-a [La Sapienza](https://www.uniroma1.it/), ed è basato sul progetto gentilmente proposto dal prof nel
-main.pdf [qui](https://drive.google.com/drive/folders/15HrKGosqsuBBe8qWCm1qB_PvIbRLohqZ), al punto _4.2 Controllo
-formazione droni_.
+Il sistema è sviluppato come progetto d'esame per [Ingegneria del software](https://corsidilaurea.uniroma1.it/it/view-course-details/2023/29923/20190322090929/1c0d2a0e-d989-463c-a09a-00b823557edd/8e637351-4a3a-47a1-ab11-dfe4ad47e446/4f7bd2b2-2f8e-4c38-b15f-7f3c310550b6/8bcc378c-9ff1-4263-87b7-04a394485a9f?guid_cv=8e637351-4a3a-47a1-ab11-dfe4ad47e446&current_erogata=1c0d2a0e-d989-463c-a09a-00b823557edd), corso tenuto dal prof [Enrico Tronci](https://corsidilaurea.uniroma1.it/it/users/enricotronciuniroma1it) a [La Sapienza](https://www.uniroma1.it/), ed è basato sul progetto gentilmente proposto dal prof nel `main.pdf` [qui](https://drive.google.com/drive/folders/15HrKGosqsuBBe8qWCm1qB_PvIbRLohqZ), al punto _4.2 Controllo formazione droni_.
 
 # Descrizione generale
 
 ## Fini del sistema
 
-Il sistema progettato è basato, come detto, su una delle tracce di progetto fornite dal prof Tronci. La
-traccia è la seguente:
+Il sistema progettato è basato, come detto, su una delle tracce di progetto fornite dal prof Tronci. La traccia è la seguente:
 
 > Si progetti il centro di controllo per una formazione di droni che deve sorvegliare un'area di dati. Ogni drone ha
 > un'autonomia di $30$ minuti di volo ed impiega un tempo di minimo $2h$ e massimo $3h$ per ricaricarsi. Il tempo di
@@ -92,7 +85,7 @@ La **`ChargeBase`** è l'unico punto dell'intera area in cui i droni si trovano 
 
 ### Struttura dell'area sorvegliata
 
-L'area da sorvegliare è un quadrato di $6\times6\mathrm{\,Km}$ $(36\,\mathrm{Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
+L'area da sorvegliare è un quadrato di $6\times6\mathrm{\,Km}$ $(36\ \mathrm{Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
 
 Partendo dalla richiesta della traccia abbiamo pensato di vedere questi quadrati come delle _celle_ con al proprio centro il punto da verificare per il drone. Quest'ultimo condivide infatti l'istante di tempo $t$ in cui è coperto con ogni altro punto nella cella, facendo sì che al passaggio del drone sul punto al $t$-esimo istante di tempo, l'intera area del quadrato della griglia risulti simultaneamente coperta - dove il tempo è rappresentato, nel nostro sistema, da un'unità di tempo chiamata `tick` (un tick equivale ad un numero preciso di secondi che vedremo dopo).
 Chiamiamo quindi `starting_line` la colonna di celle coincidenti col lato sinistro dell'area.
