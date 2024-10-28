@@ -6,12 +6,14 @@
 #include <pqxx/pqxx>
 #include <thread>
 
-void Database::ConnectToDB(
-    const std::string &dbname,
-    const std::string &user,
-    const std::string &password,
-    const std::string &hostaddr,
-    const std::string &port) {
+void Database::ConnectToDB (
+    const std::string& dbname,
+    const std::string& user,
+    const std::string& password,
+    const std::string& hostaddr,
+    const std::string& port
+    )
+{
     ConnectToDB_();
 }
 
@@ -19,6 +21,7 @@ void Database::ConnectToDB(
 std::tuple<std::string, std::string,
            std::string, std::string,
            std::string>
+
 Database::ReadCredentialsFromConfig() {
     std::ifstream configFile("../res/doc/config.json");
     if (!configFile.is_open()) {
@@ -83,9 +86,11 @@ void Database::CreateTables() {
     if (conn && conn->is_open()) {
         pqxx::work W(*conn);
         W.exec("DROP TABLE IF EXISTS drone_logs");
-        W.exec("DROP TABLE IF EXISTS monitor_logs");
+        W.exec("DROP TABLE IF EXISTS wave_coverage_logs");
+        W.exec("DROP TABLE IF EXISTS area_coverage_logs");
         W.exec("DROP TABLE IF EXISTS system_performance_logs");
         W.exec("DROP TABLE IF EXISTS drone_charge_logs");
+        W.exec("DROP TABLE IF EXISTS drone_recharge_logs");
 
         W.exec(
             "CREATE TABLE drone_logs ("
@@ -93,23 +98,27 @@ void Database::CreateTables() {
             "drone_id INT NOT NULL, "
             "status VARCHAR(255), "
             "charge FLOAT, "
-            "wave INT, "
+            "wave_id INT, "
             "x FLOAT, "
             "y FLOAT, "
             "checked BOOLEAN, "
             "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
 
         W.exec(
-            "CREATE TABLE monitor_logs ("
+            "CREATE TABLE wave_coverage_logs ("
+            "tick_n INT, "
+            "wave_id INT, "
+            "drone_id INT, "
+            "issue_type VARCHAR(255), "
+            "CONSTRAINT PK_wave_coverage_logs PRIMARY KEY (tick_n, drone_id));");
+
+        W.exec(
+            "CREATE TABLE area_coverage_logs ("
             "tick_n INT PRIMARY KEY, "
-            "wave_cover INT[], "
-            "area_cover VARCHAR(255), "
-            "charge_drone_id INT[], "
-            "charge_percentage INT[], "
-            "charge_needed INT[], "
-            "recharge_drone_id INT[], "
-            "recharge_duration INT[], "
-            "time_to_read INT[]);");
+            "wave_ids INT[], "
+            "drone_ids INT[], "
+            "X INT[], "
+            "Y INT[]);");
 
         W.exec(
             "CREATE TABLE system_performance_logs ("
@@ -121,8 +130,17 @@ void Database::CreateTables() {
         W.exec(
             "CREATE TABLE drone_charge_logs ("
             "drone_id INT PRIMARY KEY, "
+            "consumption FLOAT, "
             "consumption_factor FLOAT, "
             "arrived_at_base BOOLEAN);");
+
+        W.exec(
+                "CREATE TABLE drone_recharge_logs ("
+                "drone_id INT PRIMARY KEY, "
+                "recharge_duration_ticks INT, "
+                "recharge_duration_min FLOAT,"
+                "start_tick INT, "
+                "end_tick INT);");
 
         W.commit();
     } else {

@@ -4,15 +4,18 @@
 #include "Monitor.h"
 #include <fstream>
 
-void DroneChargeMonitor::checkDroneCharge() {
-    log_charge("Initiated...");
+void DroneChargeMonitor::checkDroneCharge()
+{
     // std::cout << "[Monitor-DC] Initiated..." << std::endl;
+    log_charge("Initiated...");
 
     std::unordered_set<DroneData, DroneDataHash> based_drones;
     std::unordered_set<DroneData, DroneDataHash> dead_drones;
 
-    while (tick_last_read < sim_duration_ticks - 5) {
-        try {
+    while (tick_last_read < sim_duration_ticks - 5)
+    {
+        try
+        {
             std::this_thread::sleep_for(std::chrono::seconds(10));
 
             pqxx::work W(db.getConnection());
@@ -32,67 +35,73 @@ void DroneChargeMonitor::checkDroneCharge() {
             checkDeadDrones(dead_drones, W);
 
             W.commit();
-        } catch (...) {
+        }
+        catch (const std::exception& e)
+        {
+            // std::cerr << "[Monitor-DC] Error occurred: " << e.what() << std::endl;
             log_error("DroneChargeMonitor", "Error occurred");
             log_charge("Error occurred in DroneChargeMonitor::checkDroneCharge's try block");
-            // std::cerr << "[Monitor-DC] Error occurred" << std::endl;
         }
     }
+    //std::cout << "[Monitor-DC] Finished" << std::endl;
+    log_charge("Finished");
 }
 
-void DroneChargeMonitor::checkBasedDrones(const std::unordered_set<DroneData, DroneDataHash> &based_drones, pqxx::work &W) {
-    if (!based_drones.empty() && write_based_drones) {
-        std::string query = "INSERT INTO drone_charge_logs (drone_id, consumption_factor, arrived_at_base) VALUES ";
-        for (const auto &[drone_id, consumption_factor, arrived_at_base] : based_drones) {
-            log_charge("Drone " + std::to_string(drone_id) + " has wrong consumption " + std::to_string(consumption_factor));
+void DroneChargeMonitor::checkBasedDrones(std::unordered_set<DroneData, DroneDataHash>& based_drones, pqxx::work& W)
+{
+    if (!based_drones.empty() && write_based_drones)
+    {
+        std::string query = "INSERT INTO drone_charge_logs (drone_id, consumption, consumption_factor, arrived_at_base) VALUES ";
+        for (const auto& [drone_id, consumption_factor, arrived_at_base] : based_drones)
+        {
             // std::cout << "[Monitor-DC] Drone " << drone_id << " has wrong consumption " << consumption_factor << std::endl;
-            query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor) + ", " +
-                     std::to_string(arrived_at_base) + "), ";
+            log_charge("Drone " + std::to_string(drone_id) + " has wrong consumption " + std::to_string(consumption_factor));
+            query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor) + ", " + std::to_string(consumption_factor / DRONE_CONSUMPTION_RATE) + ", TRUE), ";
         }
         query = query.substr(0, query.size() - 2);
-
+        query += ";";
         W.exec(query);
 
         write_based_drones = false;
 
         // Remove from based_drones the drones that were written to the DB
-        // for (auto drone_id : failed_drones)
-        // {
-        //     based_drones.erase({drone_id, 0.0f, true});
-        // }
-    } else {
+        based_drones.clear();
+    }
+    else
+    {
+        //std::cout << "[Monitor-DC] No new abnormal consumption of based drones until tick " << tick_last_read << std::endl;
         log_charge("No abnormal consumption of based drones until tick " + std::to_string(tick_last_read));
-        // std::cout << "[Monitor-DC] No abnormal consumption of based drones until tick " << tick_last_read << std::endl;
     }
 }
 
-void DroneChargeMonitor::checkDeadDrones(const std::unordered_set<DroneData, DroneDataHash> &dead_drones, pqxx::work &W) {
-    if (!dead_drones.empty() && write_dead_drones) {
-        std::string query = "INSERT INTO drone_charge_logs (drone_id, consumption_factor, arrived_at_base) VALUES ";
-        for (const auto &[drone_id, consumption_factor, arrived_at_base] : dead_drones) {
-            log_charge("DEAD Drone " + std::to_string(drone_id) + " has wrong consumption " + std::to_string(consumption_factor));
+void DroneChargeMonitor::checkDeadDrones(std::unordered_set<DroneData, DroneDataHash>& dead_drones, pqxx::work& W)
+{
+    if (!dead_drones.empty() && write_dead_drones)
+    {
+        std::string query = "INSERT INTO drone_charge_logs (drone_id, consumption, consumption_factor, arrived_at_base) VALUES ";
+        for (const auto& [drone_id, consumption_factor, arrived_at_base] : dead_drones)
+        {
             // std::cout << "[Monitor-DC] DEAD Drone " << drone_id << " has wrong consumption " << consumption_factor << std::endl;
+            log_charge("DEAD Drone " + std::to_string(drone_id) + " has wrong consumption " + std::to_string(consumption_factor));
 
-            query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor) + ", " +
-                     std::to_string(arrived_at_base) + "), ";
+            query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor) + ", " + std::to_string(consumption_factor / DRONE_CONSUMPTION_RATE) + ", FALSE), ";
         }
         query = query.substr(0, query.size() - 2);
-        query += " ON CONFLICT DO NOTHING;";
-
-        // auto test_q = "TEST QUERY";
-
-        // std::cout << "QUERY: " << query << std::endl;
-
+        query += ";";
         W.exec(query);
 
         write_dead_drones = false;
-    } else {
-        log_charge("No abnormal consumption of DEAD drones until tick " + std::to_string(tick_last_read));
-        // std::cout << "[Monitor-DC] No abnormal consumption of DEAD drones until tick " << tick_last_read << std::endl;
+        dead_drones.clear();
+    }
+    else
+    {
+        // std::cout << "[Monitor-DC] No new abnormal consumption of DEAD drones until tick " << tick_last_read << std::endl;
+        log_charge("No new abnormal consumption of DEAD drones until tick " + std::to_string(tick_last_read));
     }
 }
 
-std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataHash> DroneChargeMonitor::getBasedDrones(pqxx::work &W) {
+std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataHash> DroneChargeMonitor::getBasedDrones(pqxx::work& W)
+{
     std::unordered_set<DroneData, DroneDataHash> based_drones;
 
     // A based drone is a drone with CHARGING status. We need to check if the value he has is the same as the expected one
@@ -102,7 +111,7 @@ std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataH
         "fal.first_tick_alive, "
         "lta.last_tick_alive, "
         "fal.drone_id, "
-        "lta.wave, "
+        "lta.wave_id, "
         "lta.charge, "
         "lta.last_tick_alive - fal.first_tick_alive AS ticks_alive "
         "FROM ("
@@ -112,23 +121,26 @@ std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataH
         "ORDER BY drone_id, tick_n ASC "
         ") fal "
         "JOIN ("
-        "SELECT tick_n AS last_tick_alive, drone_id, wave, charge "
+        "SELECT tick_n AS last_tick_alive, drone_id, wave_id, charge "
         "FROM drone_logs "
         "WHERE status = 'CHARGING'"
         ") lta "
-        "ON fal.drone_id = lta.drone_id;");
+        "ON fal.drone_id = lta.drone_id;"
+    );
 
-    for (const auto &row : r) {
+    for (const auto& row : r)
+    {
         const int drone_id = row["drone_id"].as<int>();
         const auto charge = row["charge"].as<float>();
-        const int ticks_alive = row["ticks_alive"].as<int>();
+        const int ticks_alive = row["ticks_alive"].as<int>() + 1;
         const float optimal_chg = 100.0f - (ticks_alive * DRONE_CONSUMPTION_RATE);
 
         // Calculate how much charge was used per tick
         const float used_per_tick = (100.0f - charge) / ticks_alive;
         DroneData tmp_data = {drone_id, used_per_tick, true};
 
-        if (charge < optimal_chg && !failed_drones.contains(drone_id)) {
+        if (charge < optimal_chg && !failed_drones.contains(drone_id))
+        {
             // based_drones.push_back({drone_id, used_per_tick, true});
             based_drones.insert(tmp_data);
 
@@ -143,7 +155,8 @@ std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataH
     return based_drones;
 }
 
-std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataHash> DroneChargeMonitor::getDeadDrones(pqxx::work &W) {
+std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataHash> DroneChargeMonitor::getDeadDrones(pqxx::work& W)
+{
     std::unordered_set<DroneData, DroneDataHash> dead_drones;
 
     std::string query = R"(
@@ -151,7 +164,7 @@ SELECT
     fal.first_tick_alive,
     lta.last_tick_alive,
     fal.drone_id,
-    lta.wave,
+    lta.wave_id,
     lta.charge,
     lta.last_tick_alive - fal.first_tick_alive AS ticks_alive
 FROM (
@@ -161,20 +174,22 @@ FROM (
     ORDER BY drone_id, tick_n ASC
 ) fal
 JOIN (
-    SELECT tick_n AS last_tick_alive, drone_id, wave, charge
+    SELECT tick_n AS last_tick_alive, drone_id, wave_id, charge
     FROM drone_logs
     WHERE status = 'DEAD'
 ) lta
 ON fal.drone_id = lta.drone_id;
 )";
 
-    try {
+    try
+    {
         auto r = W.exec(query);
 
-        for (const auto &row : r) {
+        for (const auto& row : r)
+        {
             const int drone_id = row["drone_id"].as<int>();
             const auto charge = row["charge"].as<float>();
-            const int ticks_alive = row["ticks_alive"].as<int>();
+            const int ticks_alive = row["ticks_alive"].as<int>() + 1;
             const float optimal_chg = 100.0f - (ticks_alive * DRONE_CONSUMPTION_RATE);
 
             // Calculate how much charge was used per tick
@@ -182,7 +197,8 @@ ON fal.drone_id = lta.drone_id;
 
             DroneData tmp_data = {drone_id, used_per_tick, false};
 
-            if (charge < optimal_chg && !failed_drones.contains(drone_id)) {
+            if (charge < optimal_chg && !failed_drones.contains(drone_id))
+            {
                 // dead_drones.push_back({drone_id, used_per_tick, false});
                 dead_drones.insert(tmp_data);
 
@@ -193,9 +209,11 @@ ON fal.drone_id = lta.drone_id;
                 failed_drones.insert(drone_id);
             }
         }
-    } catch (...) {
-        log_error("DroneChargeMonitor", "Error executing query");
+    }
+    catch (...)
+    {
         // std::cerr << "[Monitor-DC] Error executing query" << std::endl;
+        log_error("DroneChargeMonitor", "Error executing query");
     }
 
     return dead_drones;

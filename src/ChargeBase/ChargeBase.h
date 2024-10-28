@@ -2,11 +2,13 @@
 #define DRONECONTROLSYSTEM_CHARGEBASE_H
 
 #include <vector>
+#include <boost/interprocess/ipc/message_queue.hpp>
 #include <spdlog/spdlog.h>
 #include "../globals.h"
 #include "sw/redis++/redis++.h"
 
 using namespace sw::redis;
+using namespace boost::interprocess;
 
 class ChargeBase
 {
@@ -27,6 +29,7 @@ public:
     void Run();
 
 private:
+    message_queue mq_charge;
     std::mt19937 engine;
     Redis& redis;
     std::string current_stream_id = "0-0";

@@ -1,6 +1,5 @@
- ☐ Script:
-     ☐ Default show ticks of DCS
-
+ ✔ Script: @done (24-10-27 23:09)
+     ✔ Default show ticks of DCS @done (24-10-27 23:09)
  ✔ Entry with state CHARGING_COMPLETED is missing from DB @done (24-10-01 14:09)
      Currently when a drone has finished charging is added to a set on Redis, but no entry in the DB is added
      => we have no actual representation of a drone finishing charging in the DB
@@ -14,13 +13,20 @@
 
 ============================================= 
  ☐ Find a way to exit everything even if tick number in DB is slightly less then 5999 aka number of total tick
+ ☐ Implement pseudo-random scenario selector for TestGenerator
+     TestGenerator dynamically changes the probability of a scenario if it hasn´t been selected in a while
  ☐ Implement CORRECTLY timeout features throughout the project to signal a "blocked" state
- ☐ Debug why DEAD is present twice in the DB
- ☐ When a wave is READY but a drone died before readying up, the entire wave will block in READY state
-
+ ☐ Implement scenario for wrong recharge rate
+ 
+ ✔ Fixed "extra" waiting in READY tick and extra step for reaching base @done (24-10-27 23:25)
+ ✔ Fix tick duration for simulation @done (24-10-27 23:15)
+ ✔ When a wave is READY but a drone died before readying up, the entire wave will block in READY state @done (24-10-27 23:09)
+ ✔ Check how an old state ends its life when a new setState is called @done (24-10-07 19:24)
+     aka BOOOOOOOWORKINGOOOOOOOM gets printed
+ ✔ Debug why DEAD is present twice in the DB @done (24-10-07 19:24)
  ✔ Create separate process for monitors @done (24-10-01 14:09)
  ✔ Debug case where charge is 0% and drone should go to DEAD
- ✔ Consider encreasing High_consumption factor (at least 1.5x)
+ ✔ Consider increasing High_consumption factor (at least 1.5x)
  ✔ Consider increasing High_consumption factor (at least 1.5x) @done (24-09-30 12:07)
  ✔ Correctly terminate the simulation @done (24-09-25 18:15)
      ✔ Check if DB has all the simulated ticks @done (24-09-25 18:15)
@@ -33,19 +39,33 @@
     ✔ With named_semaphores implemented Redis' use for sync (in process init) is not needed @done (24-09-23 18:33)
 
 =============================================
- ☐ SystemPerformance
-     Perfomance degradation %-base. More drone explodes less performance the system has
- ☐ DroneChargeMonitor
-     ☐ Fix query for drones that arrived at base
-     ☐ Fix query for exploded drones
- ☐ CoverageMonitor
-     ☐ Output should be the coords that the drone is not covering anymore (change also in monitor db)
-         For each tick a set of coords need to be covered. If the drone dies the coords
-     ☐ Extreme cases (eg. DISCONNECTED -> WORKING)
+ ☐ BIG ISSUE: Because DB's writing is async and not ordered saving max_tick does´t make sense because the completeness of a tick is not checked anywhere
+ ☐ Remove comments from query strings...thx chatgpt :D
 
+ ☐ DroneChargeMonitor
+     ☐ [?] Change the unordered_set<DroneData> back to a vector
+
+     ✔ Show how many times the consumption higher then 1 (eg. x1.34) @done (24-10-28 11:18)
+     ✔ Fix monitor not writing on DB table (probably corraleted to the caught error) @done (24-10-28 10:54)
+     ✔ Fix query for drones that arrived at base @done (24-10-07 20:27)
+     ✔ Fix query for exploded drones @done (24-10-07 20:27)
+
+ ☐ CoverageMonitor
+     ☐ Set screen output
+     ☐ Fix INSERT errors
+     ☐ Fix coords issue with ints and floats (for X and Y)
+
+     ✔ Output should be the coords that the drone is not covering anymore (change also in monitor db) @done (24-10-28 02:17)
+         For each tick a set of coords need to be covered. If the drone dies the coords
+     ✔ Extreme cases (eg. DISCONNECTED -> WORKING) @done (24-10-28 02:17)
+     ✘ Fix "tick_n > 0" into tick_n > latest tick @cancelled (24-10-28 02:38)
      ✔ WaveCoverageMonitor @done (24-10-01 14:09)
      ✔ AreaCoverageMonitor @done (24-10-01 14:09)
      ✔ Change DEAD state to "Empty" Drone => DB will have entries for dead drones that the monitors can analyze (for the duration of the wave life) @done (24-10-01 14:09)
      ✔ When a drone is WORKING and then disconnects the monitor should detected it as an issue @done (24-10-01 14:09)
+
+ ✔ SystemPerformance @done (24-10-27 22:59)
+     Performance degradation %-base. More drone explodes less performance the system has
+     ✔ Move to the end of system simulation @done (24-10-27 22:59)
 
  ✔ RechargeTimeMonitor @done (24-09-23 21:18)

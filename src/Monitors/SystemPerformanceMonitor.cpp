@@ -125,7 +125,7 @@ void SystemPerformanceMonitor::getPerformanceData(int last_processed_tick) {
 
     // Get the number of working drones and their respective waves
     const std::string q =
-        "SELECT tick_n, COUNT(drone_id) AS working_drones_count, COUNT(DISTINCT wave) AS waves_count "
+        "SELECT tick_n, COUNT(drone_id) AS working_drones_count, COUNT(DISTINCT wave_id) AS waves_count "
         "FROM drone_logs "
         "WHERE status = 'WORKING' AND tick_n > " +
         std::to_string(last_processed_tick) + " "

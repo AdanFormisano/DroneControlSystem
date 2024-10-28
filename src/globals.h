@@ -12,7 +12,7 @@
 // #define OLD_DRONE_CONSUMPTION_RATE 0.00672f // Normal consumption rate
 #define DRONE_CONSUMPTION_RATE 0.13444f
 // #define DRONE_CONSUMPTION 0.01072f  // Higher consumption rate used for testing purposes
-#define TICK_TIME_SIMULATED 2.42f
+#define TICK_TIME_SIMULATED 2.4f
 #define DRONE_STEP_SIZE 20.0f
 #define ZONE_NUMBER 750
 #define WAVE_DISTANCE_TICKS 125
@@ -148,11 +148,12 @@ struct DroneData {
 };
 
 struct ChargingDroneData {
-    int id;
-    int wave_id;
-    float charge;
+    int id{};
+    int wave_id{};
+    float charge{};
     drone_state_enum state;
-    float charge_rate;
+    float charge_rate{};
+    float charge_rate_factor = 1.0f;
 
     ChargingDroneData() = default;
     ChargingDroneData(int id, int wave_id, float charge, drone_state_enum state, float charge_rate)
@@ -188,6 +189,12 @@ struct TG_data {
     int reconnect_tick;         // Contains the number of ticks after the disconnection
     // when the drone reconnected (-1 if not reconnecting)
     float high_consumption_factor; // Multiplies the drone consumption value
+};
+
+struct TG_charge_data
+{
+    int drone_id;               // ID of the drone
+    float charge_rate_factor;   // Multiplies the drone charge rate
 };
 
 struct drone_fault {

@@ -47,7 +47,7 @@ namespace utils_sync
         sem_t* sem = sem_open(name, O_CREAT, 0644, initial_value);
         if (sem == SEM_FAILED)
         {
-            spdlog::error("Failed to create semaphore: {}", strerror(errno));
+            std::cerr << "Failed to create semaphore: " << strerror(errno) << std::endl;
             return nullptr;
         }
         return sem;
