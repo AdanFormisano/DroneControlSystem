@@ -1,50 +1,51 @@
-# DroneControlSystem
+# Indice
 
-## Indice
-
+- [Indice](#indice)
 - [DroneControlSystem](#dronecontrolsystem)
-  - [Indice](#indice)
-  - [Descrizione generale](#descrizione-generale)
-    - [Fini del sistema](#fini-del-sistema)
-    - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
-      - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
-      - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
-      - [Stati del sistema](#stati-del-sistema)
-      - [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
-      - [Visualizzare il sistema](#visualizzare-il-sistema)
-        - [Area da sorvegliare](#area-da-sorvegliare)
-        - [To starting line](#to-starting-line)
-        - [Working](#working)
-        - [To base](#to-base)
-    - [User requirements](#user-requirements)
-      - [Use case utente](#use-case-utente)
-        - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
-    - [System requirements](#system-requirements)
-      - [Architectural system diagram](#architectural-system-diagram)
-      - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
-      - [State diagram Drone](#state-diagram-drone)
-      - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
-    - [Implementation](#implementation)
-      - [Implementazione software](#implementazione-software)
-      - [_Outsourcing_](#outsourcing)
-      - [Implementare il sistema](#implementare-il-sistema)
-        - [Componente Main](#componente-main)
-        - [Componente ChargeBase](#componente-chargebase)
-        - [Componente ScannerManager](#componente-scannermanager)
-        - [Componente DroneControl](#componente-dronecontrol)
-        - [Componente Drone](#componente-drone)
-        - [Componente Wave](#componente-wave)
-        - [Componente TestGenerator](#componente-testgenerator)
-        - [Componente Database](#componente-database)
-        - [Altre componenti](#altre-componenti)
-      - [Schema del Database](#schema-del-database)
-        - [Tab drone_logs](#tab-drone_logs)
-        - [Tab system_performance_logs](#tab-system_performance_logs)
-        - [Tab drone_charge_logs](#tab-drone_charge_logs)
-      - [Connessioni Redis](#connessioni-redis)
-      - [Risultati Sperimentali](#risultati-sperimentali)
+- [Descrizione generale](#descrizione-generale)
+  - [Fini del sistema](#fini-del-sistema)
+  - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
+    - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
+    - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
+    - [Stati del sistema](#stati-del-sistema)
+    - [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
+    - [Visualizzare il sistema](#visualizzare-il-sistema)
+    - [Area da sorvegliare](#area-da-sorvegliare)
+    - [To starting line](#to-starting-line)
+    - [Working](#working)
+    - [To base](#to-base)
+- [User requirements](#user-requirements)
+  - [Use case utente](#use-case-utente)
+  - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
+- [System requirements](#system-requirements)
+  - [Architectural system diagram](#architectural-system-diagram)
+  - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
+  - [State diagram Drone](#state-diagram-drone)
+  - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
+- [Implementation](#implementation)
+  - [Implementazione software](#implementazione-software)
+  - [_Outsourcing_](#outsourcing)
+  - [Implementare il sistema](#implementare-il-sistema)
+  - [Componente Main](#componente-main)
+  - [Componente ChargeBase](#componente-chargebase)
+  - [Componente ScannerManager](#componente-scannermanager)
+  - [Componente DroneControl](#componente-dronecontrol)
+  - [Componente Drone](#componente-drone)
+  - [Componente Wave](#componente-wave)
+  - [Componente TestGenerator](#componente-testgenerator)
+  - [Componente Database](#componente-database)
+  - [Altre componenti](#altre-componenti)
+  - [Schema del Database](#schema-del-database)
+	- [Tab drone_logs](#tab-drone_logs)
+	- [Tab wave_coverage_logs](#tab-wave_coverage_logs)
+	- [Tab area_coverage_logs](#tab-area_coverage_logs)
+	- [Tab system_performance_logs](#tab-system_performance_logs)
+	- [Tab drone_charge_logs](#tab-drone_charge_logs)
+	- [Tab drone_recharge_logs](#tab-drone_recharge_logs)
+  - [Connessioni Redis](#connessioni-redis)
+- [Risultati Sperimentali](#risultati-sperimentali)
 
-## DroneControlSystem
+# DroneControlSystem
 
 _DroneControlSystem_ è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area
 di $6×6\,\mathrm{Km}$.
@@ -56,11 +57,11 @@ a [La Sapienza](https://www.uniroma1.it/), ed è basato sul progetto gentilmente
 main.pdf [qui](https://drive.google.com/drive/folders/15HrKGosqsuBBe8qWCm1qB_PvIbRLohqZ), al punto _4.2 Controllo
 formazione droni_.
 
-## Descrizione generale
+# Descrizione generale
 
-### Fini del sistema
+## Fini del sistema
 
-Il sistema progettato è basato, come detto in apertura, su una delle tracce di progetto fornite dal prof Tronci. La
+Il sistema progettato è basato, come detto, su una delle tracce di progetto fornite dal prof Tronci. La
 traccia è la seguente:
 
 > Si progetti il centro di controllo per una formazione di droni che deve sorvegliare un'area di dati. Ogni drone ha
@@ -82,14 +83,14 @@ traccia è la seguente:
 Il sistema si occupa quindi di verificare che ogni punto dell'area sia sorvegliato ogni cinque minuti, e, in caso
 contrario, segnala eventuali anomalie.
 
-### Modello concettuale ed illustrazione del sistema
+## Modello concettuale ed illustrazione del sistema
 
-#### Modello concettuale del sistema
+### Modello concettuale del sistema
 
 Il sistema si compone di una **base centrale** (composta da componenti come **`ChargeBase`**, **`DroneControl`**, **`ScannerManager`**) situata al centro dell'area, che funge da punto di partenza e ricarica per i droni.  
 La **`ChargeBase`** è l'unico punto dell'intera area in cui i droni si trovano in uno stato di **non volo** e gestisce la ricarica di ciascun drone dopo ciascun suo giro di perlustrazione. Più precisamente gli stati di non volo sono due, ossia `CHARGING` e `IDLE`, e il giro di perlustrazione corrisponde allo stato di `WORKING` del drone. Per spiegare come ogni drone adempie alla verifica di ogni punto ogni cinque minuti almeno, vediamo come l'area è concettualmente strutturata.
 
-#### Struttura dell'area sorvegliata
+### Struttura dell'area sorvegliata
 
 L'area da sorvegliare è un quadrato di $6\times6\mathrm{\,Km}$ $(36\,\mathrm{Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
 
@@ -102,7 +103,7 @@ Quando ogni drone è arrivato alla starting_line, l'onda parte col sorvegliare l
 Con onde di droni partenti ogni cinque minuti dalla `starting_line`, ogni punto dell'area è verificato almeno ogni cinque minuti: quando un punto sulla linea di quadrati che il drone percorre sarà stato verificato, esso lo sarà di nuovo entro i prossimi cinque minuti grazie al drone della nuova onda che arriverà a sorvegliarlo trascorso il tempo detto.
 Questo sistema forma un meccanismo ad onde che è possibile vedere nelle immagini a seguire, in cui nel lifetime di una simulazione è possibile osservare il susseguirsi di diverse onde di droni, ciascuna delle quali copre naturalmente per intero l'area da sinistra a destra.
 
-#### Stati del sistema
+### Stati del sistema
 
 Facciamo ora ordine circa gli stati del sistema:
 
@@ -127,7 +128,7 @@ Facciamo ora ordine circa gli stati del sistema:
 6. **Attesa in base (`IDLE`)**  
    A carica completa (e non prima), i droni sono messi a disposizione di `ScannerManager` per essere riusati nel creare una nuova onda.
 
-#### Stati di guasto dei droni e TestGenerator
+### Stati di guasto dei droni e TestGenerator
 
 Durante uno qualsiasi degli stati di volo (`TO_STARTING_LINE`, `READY`, `WORKING`, `TO_BASE`), i droni possono entrare in uno dei seguenti fault state:
 
@@ -142,27 +143,27 @@ Si noti che `HIGH_CONSUMPTION` è un "meta-stato". Nel SUD non compare come uno 
 
 Ogni fault state è conseguenza di uno scenario attivato dal TestGenerator, che è l'entità adibita alla generazione tramite generatori pseudocasuali di avvenimenti riguardanti l'environment di DroneControlSystem.
 
-#### Visualizzare il sistema
+### Visualizzare il sistema
 
 La seguente è una vista ad alto livello dell'area, delle componenti del sistema e di alcune delle fasi in cui sono coinvolte
 
-##### Area da sorvegliare
+#### Area da sorvegliare
 
 ![area](../med/area.png)
 
-##### To starting line
+#### To starting line
 
 ![to_strt](../med/01_to_strt_line.gif)
 
-##### Working
+#### Working
 
 ![working](../med/02_working.gif)
 
-##### To base
+#### To base
 
 ![to_base](../med/03_to_base.gif)
 
-##### Contesto del sistema
+#### Contesto del sistema
 
 ![context](../med/ctx_view.png)
 
@@ -175,9 +176,9 @@ Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli
 - **(3) Autonomia e ricarica dei droni**: ogni drone ha $30$ minuti di autonomia e deve ricaricarsi in un tempo compreso
   tra le $[2, 3]$ ore
 
-### Use case utente
+## Use case utente
 
-#### Use case vista ampia del sistema
+### Use case vista ampia del sistema
 
 Questi diagrammi use-case contengono scenari d'uso del sistema da parte dei vari suoi attori
 
@@ -196,32 +197,32 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
   la gestione delle emergenze.
 - **(3.1) Controllo autonomia dei Droni**: Il sistema deve gestire autonomamente l'autonomia di volo di ciascun drone, coordinando i tempi di rientro per la ricarica basandosi sul livello di carica della batteria.
 
-### Architectural system diagram
+## Architectural system diagram
 
 ![arch](../med/arch_diag.png)
 
-### Activity diagram creazione Wave e droni
+## Activity diagram creazione Wave e droni
 
 ![act](../med/act_diag.png)
 
-### State diagram Drone
+## State diagram Drone
 
 ![state](../med/state_diag.png)
 
-### Message sequence chart diagram carica Drone
+## Message sequence chart diagram carica Drone
 
 ![msc](../med/msc_diag.png)
 
 ## Implementation
 
-### Implementazione software
+## Implementazione software
 
 Il sistema è implementato in [C++](https://isocpp.org/), e fa uso di [Redis](https://redis.io/) e
 di [PostgreSQL](https://www.postgresql.org/).
 Redis è disponibile in C++ come client grazie a [redis-plus-plus](https://github.com/sewenew/redis-plus-plus), ed è quello che è stato usato.
 Redis è stato usato per gestire i flussi di dati dei thread, compresi quelli dei droni, e per la comunicazione col database PostgreSQL.
 
-### _Outsourcing_
+## _Outsourcing_
 
 Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre tecnologie di cui esso è altresì composto, quali quelle del:
 
@@ -230,11 +231,11 @@ Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre
 
 Sebbene alcune di queste tecnologie e componenti siano usate nel sistema (come il GPS), la loro implementazione è esterna e relegata a misure di outsourcing.
 
-### Implementare il sistema
+## Implementare il sistema
 
 Il sistema è strutturato secondo un'architettura modulare che comprende diverse componenti chiave, ciascuna realizzata attraverso file sorgente specifici.
 
-#### Componente Main
+### Componente Main
 
 Il `Main` è il meta-componente che gestisce i processi e le attività di tutto `DroneControlSystem`, eseguendole al momento opportuno.
 
@@ -283,7 +284,7 @@ _Pseudocodice di Main_
 	Kill TestGenerator process
 ```
 
-#### Componente ChargeBase
+### Componente ChargeBase
 
 Questa componente è responsabile per la gestione della ricarica dei droni, assicurando che i droni siano pronti per le operazioni di volo secondo le necessità del sistema.
 
@@ -329,7 +330,7 @@ class ChargeBase
 		Calculate the charging rate for a single tick
 ```
 
-#### Componente ScannerManager
+### Componente ScannerManager
 
 Lo `ScannerManager` coordina le operazioni della flotta di droni, gestendo lo stato di ciascun drone/onda
 
@@ -384,7 +385,7 @@ class ScannerManager
 		Close the IPC message queue
 ```
 
-#### Componente DroneControl
+### Componente DroneControl
 
 Il modulo `DroneControl` si occupa di impartire le istruzioni operative ai droni, garantendo che ogni area sia monitorata in conformità con i requisiti di progetto.
 
@@ -434,7 +435,7 @@ class DroneControl
 		Close sem_sync and sem_dc semaphores
 ```
 
-#### Componente Drone
+### Componente Drone
 
 Il `Drone` è un componente fondamentale del sistema e di una Wave (onda), dotato di funzionalità per il volo e la sorveglianza (outsourcing). Ogni drone ha un'autonomia limitata e necessita di ricarica dopo un periodo di attività (working).
 
@@ -610,7 +611,7 @@ class DroneState
 			Add DroneID to vector of Drones that need to be deleted
 ```
 
-#### Componente Wave
+### Componente Wave
 
 Wave si occupa di creare e in parte gestire le operazioni dell'onda di droni che sorveglia l'area.
 
@@ -679,7 +680,7 @@ class Wave
 		Signal synchronizer to remove a thread from the synch process
 ```
 
-#### Componente TestGenerator
+### Componente TestGenerator
 
 `TestGenerator` è il componente che si occupa di generatore scenari pseudocasuali che influenzano il sistema. Ogni scenario si verifica con una determinata probabilità, e fra questi vi sono gli scenari in cui il drone consuma di pìu, si disconnette, ecc.
 
@@ -724,7 +725,7 @@ class TestGenerator
 		Randomly select a tick between 1 and 20
 ```
 
-#### Componente Database
+### Componente Database
 
 DroneControlSystem utilizza un database `dcs` PostgreSQL per memorizzare e gestire i dati relativi all'attività e allo stato dei droni durante le missioni di sorveglianza. La gestione del database è implementata nel file `Database.cpp`
 
@@ -762,15 +763,15 @@ class Buffer
 		return Buffer's size
 ```
 
-#### Altre componenti
+### Altre componenti
 
 _AGGIUNGERE QUI, EVENTUALMENTE, ALTRE COMPONENTI_
 
-### Schema del Database
+## Schema del Database
 
 Di seguito gli schemi delle tabelle del database `dcs` usato
 
-#### Tab `drone_logs`
+### Tab `drone_logs`
 
 | Column     | Data Type      | Constraint                         | Info                                |
 | ---------- | -------------- | ---------------------------------- | ----------------------------------- |
@@ -783,7 +784,7 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 | `y`        | `FLOAT`        | \-                                 | Coord y posizione attuale drone     |
 | `checked`  | `BOOLEAN`      | \-                                 | Indica se drone ha verificato punto |
 
-#### Tab `wave_coverage_logs`
+### Tab `wave_coverage_logs`
 
 | Column       | Data Type      | Constraint                         | Info                       |
 | ------------ | -------------- | ---------------------------------- | -------------------------- |
@@ -792,7 +793,7 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 | `drone_id`   | `INT`          |                                    |                            |
 | `issue_type` | `VARCHAR(255)` |                                    |                            |
 
-#### Tab area_coverage_logs
+### Tab `area_coverage_logs`
 
 | Column      | Data Type | Constraint    | Info                       |
 | ----------- | --------- | ------------- | -------------------------- |
@@ -802,7 +803,7 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 | `X`         | `INT[]`   | \-            |                            |
 | `Y`         | `INT[]`   | \-            |                            |
 
-#### Tab `system_performance_logs`
+### Tab `system_performance_logs`
 
 | Column                 | Data Type | Constraint    | Info                                 |
 | ---------------------- | --------- | ------------- | ------------------------------------ |
@@ -811,7 +812,7 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 | `waves_count`          | `INT`     | \-            | ???                                  |
 | `performance`          | `FLOAT`   | \-            | Il liv. di performance per quel tick |
 
-#### Tab `drone_charge_logs`
+### Tab `drone_charge_logs`
 
 | Column               | Data Type | Constraint    | Info                                |
 | -------------------- | --------- | ------------- | ----------------------------------- |
@@ -820,7 +821,7 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 | `consumption_factor` | `FLOAT`   | \-            | Sale se `HIGH_CONSUMPTION`          |
 | `arrived_at_base`    | `BOOLEAN` | \-            | Indica se il drone è giunto in base |
 
-#### Tab drone_recharge_logs
+### Tab `drone_recharge_logs`
 
 | Column                    | Data Type | Constraint    | Info                         |
 | ------------------------- | --------- | ------------- | ---------------------------- |
@@ -830,7 +831,7 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 | `start_tick`              | `INT`     |               |                              |
 | `end_tick`                | `INT`     |               |                              |
 
-### Connessioni Redis
+## Connessioni Redis
 
 Le connessioni e le operazioni Redis sono cruciali per la comunicazione tra i vari processi all'interno del progetto. Le operazioni con Redis sono integrate in diverse parti del codice sorgente.
 Eccole qui elencate:
@@ -847,6 +848,6 @@ Eccole qui elencate:
 | `scanner_group`   | Gruppo di consumer usato per la lettura in blocco di `scanner_stream`            | DroneControl                          |
 | `pipeline`        | Usato per caricare in blocco i dati su `scanner_stream`                          | Wave                                  |
 
-### Risultati Sperimentali
+## Risultati Sperimentali
 
 Descrivere i risultati ottenuti dalla simulazione del sistema.
