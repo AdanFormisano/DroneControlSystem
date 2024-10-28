@@ -783,6 +783,25 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 | `y`        | `FLOAT`        | \-                                 | Coord y posizione attuale drone     |
 | `checked`  | `BOOLEAN`      | \-                                 | Indica se drone ha verificato punto |
 
+#### Tab `wave_coverage_logs`
+
+| Column       | Data Type      | Constraint                         | Info                       |
+| ------------ | -------------- | ---------------------------------- | -------------------------- |
+| `tick_n`     | `INT`          | `PRIMARY KEY` `(tick_n, drone_id)` | FK di `drone_logs(tick_n)` |
+| `wave_id`    | `INT`          |                                    |                            |
+| `drone_id`   | `INT`          |                                    |                            |
+| `issue_type` | `VARCHAR(255)` |                                    |                            |
+
+#### Tab area_coverage_logs
+
+| Column      | Data Type | Constraint    | Info                       |
+| ----------- | --------- | ------------- | -------------------------- |
+| `tick_n`    | `INT`     | `PRIMARY KEY` | FK di `drone_logs(tick_n)` |
+| `wave_ids`  | `INT[]`   | \-            |                            |
+| `drone_ids` | `INT[]`   | \-            |                            |
+| `X`         | `INT[]`   | \-            |                            |
+| `Y`         | `INT[]`   | \-            |                            |
+
 #### Tab `system_performance_logs`
 
 | Column                 | Data Type | Constraint    | Info                                 |
@@ -797,8 +816,19 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 | Column               | Data Type | Constraint    | Info                                |
 | -------------------- | --------- | ------------- | ----------------------------------- |
 | `drone_id`           | `INT`     | `PRIMARY KEY` | FK di `drone_logs(drone_id)`        |
+| `consumption`        | `FLOAT`   | \-            | Sale mentre drone è in volo         |
 | `consumption_factor` | `FLOAT`   | \-            | Sale se `HIGH_CONSUMPTION`          |
 | `arrived_at_base`    | `BOOLEAN` | \-            | Indica se il drone è giunto in base |
+
+#### Tab drone_recharge_logs
+
+| Column                    | Data Type | Constraint    | Info                         |
+| ------------------------- | --------- | ------------- | ---------------------------- |
+| `drone_id`                | `INT`     | `PRIMARY KEY` | FK di `drone_logs(drone_id)` |
+| `recharge_duration_ticks` | `INT`     |               |                              |
+| `recharge_duration_min`   | `FLOAT`   |               |                              |
+| `start_tick`              | `INT`     |               |                              |
+| `end_tick`                | `INT`     |               |                              |
 
 ### Connessioni Redis
 
@@ -809,8 +839,9 @@ Eccole qui elencate:
 | ----------------- | -------------------------------------------------------------------------------- | ------------------------------------- |
 | `spawn_wave`      | VALUE flag per indicare se è necessaria una nuova Wave o meno                    | ScannerManager, DroneControl          |
 | `waves_alive`     | SET per tracciare quali Waves sono attualmente attive nella simulazione          | Wave, TestGenerator                   |
-| `charged_drones`  | SET per tracciare quali Droni sono attualmente completamente carichi/disponibili | Wave, ChargeBase                      |
-| `scanner_stream`  | STREAM usato per caricare ogni aggiornamento di stato dei Droni                  | DroneControl, Wave, Drone, ChargeBase |
+| `charged_drones`  | SET per tracciare quali droni sono attualmente completamente carichi/disponibili | Wave, ChargeBase                      |
+| `charging_drones` | SET per tracciare quali droni sono attualmente in carica carichi/disponibili     | ChargeBase, TestGenerator             |
+| `scanner_stream`  | STREAM usato per caricare ogni aggiornamento di stato dei droni                  | DroneControl, Wave, Drone, ChargeBase |
 | `charge_stream`   | STREAM usato per caricare i dati necessari a ChargeBase                          | ChargeBase, Drone                     |
 | `connection_pool` | Usato da Waves per un utilizzo efficiente del multi-threading Redis              | ScannerManager, Wave, Drone           |
 | `scanner_group`   | Gruppo di consumer usato per la lettura in blocco di `scanner_stream`            | DroneControl                          |

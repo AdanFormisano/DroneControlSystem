@@ -13,7 +13,7 @@ drone_logs
 
 wave_coverage_logs
 	tick_n IN
-        wave_id INT
+	wave_id INT
 	drone_id INT
 	issue_type VARCHAR(255)
 	CONSTRAINT PK_wave_coverage_logs PRIMARY KEY (tick_n, drone_id))
