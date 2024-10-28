@@ -26,22 +26,16 @@ void ToStartingLine::run(Drone *drone) {
     }
 
     // Check if the drone has reached the starting line
-    if (drone->position.x == -2990) {
-        // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
-        // Change the state to READY
+    if (drone->position.x + drone->dir.x * DRONE_STEP_SIZE <= -2990) {
+        drone->position.x = -2990;
+        drone->position.y = drone->starting_line.y; // TODO check if this is correct
+        drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
         drone->setState(Ready::getInstance());
-        return;
     } else {
-        if (drone->dir.x * DRONE_STEP_SIZE + drone->position.x <= -2990) {
-            drone->position.x = -2990;
-            drone->position.y = drone->starting_line.y; // TODO check if this is correct
-            drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-        } else {
-            drone->position.x += drone->dir.x * DRONE_STEP_SIZE;
-            drone->position.y += drone->dir.y * DRONE_STEP_SIZE;
-            drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-            // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
-        }
+        drone->position.x += drone->dir.x * DRONE_STEP_SIZE;
+        drone->position.y += drone->dir.y * DRONE_STEP_SIZE;
+        drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
+        // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
     }
 }
 
@@ -71,6 +65,7 @@ void Ready::run(Drone *drone) {
         // spdlog::info("TICK {} Drone {} is waiting for all drones to be ready", drone->tick_drone, drone->id);
     } else {
         // Change the state to WORKING
+        drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
         drone->setState(Working::getInstance());
         return;
     }
@@ -93,6 +88,7 @@ void Working::run(Drone *drone) {
 
     // Move to the right by 20 units
     if (drone->position.x >= 2990) {
+        drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
         drone->setState(ToBase::getInstance());
         return;
     } else {
@@ -118,22 +114,16 @@ void ToBase::run(Drone *drone) {
     }
 
     // Check if the drone has reached the starting line
-    if (drone->position.x == 0) {
-        // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
-        // Change the state to READY
+    if (drone->dir.x * DRONE_STEP_SIZE + drone->position.x <= 0) {
+        drone->position.x = 0;
+        drone->position.y = 0; // TODO check if this is correct
+        drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
         drone->setState(Charging::getInstance());
-        return;
     } else {
-        if (drone->dir.x * DRONE_STEP_SIZE + drone->position.x <= 0) {
-            drone->position.x = 0;
-            drone->position.y = 0; // TODO check if this is correct
-            drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-        } else {
-            drone->position.x += drone->dir.x * DRONE_STEP_SIZE;
-            drone->position.y += -drone->dir.y * DRONE_STEP_SIZE;
-            drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-            // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
-        }
+        drone->position.x += drone->dir.x * DRONE_STEP_SIZE;
+        drone->position.y += -drone->dir.y * DRONE_STEP_SIZE;
+        drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
+        // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
     }
 }
 

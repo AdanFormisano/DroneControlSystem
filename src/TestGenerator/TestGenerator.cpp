@@ -4,7 +4,7 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 
-TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "drone_fault_queue"), gen(rd()), dis(0, 1), dis_charge(1.5, 2), dis_drone(0, 299),
+TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_or_create, "drone_fault_queue", 100, sizeof(TG_data)), gen(rd()), dis(0, 1), dis_charge(1.5, 2), dis_drone(0, 299),
                                              dis_tick(1, 20) {
     // spdlog::info("Creating TestGenerator object");
     std::cout << "[TestGenerator] TestGenerator created" << std::endl;
@@ -28,7 +28,7 @@ TestGenerator::TestGenerator(Redis &redis) : test_redis(redis), mq(open_only, "d
                        drone_state_enum::NONE, -1, high_consumption_factor};
         mq.send(&msg, sizeof(msg), 0);
 
-        spdlog::warn("Drone {} has high consumption factor of {}", drone_id, high_consumption_factor);
+        std::cout << "[TestGenerator] Drone " << drone_id << " has high consumption factor of " << high_consumption_factor << std::endl;
     };
 
     // Drone_failure scenario (drone stops working) [5%]

@@ -176,7 +176,7 @@ void DroneControl::WriteDroneDataToDB()
 
         if (!drones_data.empty())
         {
-            std::string query = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave, x, y, checked) VALUES ";
+            std::string query = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave_id, x, y, checked) VALUES ";
             int count = 0;
 
             for (const auto& data : drones_data)
@@ -201,7 +201,7 @@ void DroneControl::WriteDroneDataToDB()
                     {
                         std::cerr << "Error executing query: " << e.what() << std::endl;
                     }
-                    query = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave, x, y, checked) VALUES ";
+                    query = "INSERT INTO drone_logs (tick_n, drone_id, status, charge, wave_id, x, y, checked) VALUES ";
                     count = 0;
                 }
             }

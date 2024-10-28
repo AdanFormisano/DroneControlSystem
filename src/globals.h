@@ -12,7 +12,7 @@
 // #define OLD_DRONE_CONSUMPTION_RATE 0.00672f // Normal consumption rate
 #define DRONE_CONSUMPTION_RATE 0.13444f
 // #define DRONE_CONSUMPTION 0.01072f  // Higher consumption rate used for testing purposes
-#define TICK_TIME_SIMULATED 2.42f
+#define TICK_TIME_SIMULATED 2.4f
 #define DRONE_STEP_SIZE 20.0f
 #define ZONE_NUMBER 750
 #define WAVE_DISTANCE_TICKS 125
