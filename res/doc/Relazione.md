@@ -116,7 +116,7 @@ Facciamo ora ordine circa gli stati del sistema:
    Quando un drone/onda (possiamo usare i termini in maniera intercambiabile, perché il movimento di un drone è equivalente a quello di un'onda) raggiunge il lato destro dell'area, termina il suo lavoro di verifica dei punti copertura dell'area, e passa allo stato `TO_BASE`. In questo stato non fa altro che tornare verso il **centro** dell'area per ricaricarsi, ed essere riutilizzato in un nuovo viaggio di copertura.
 
 5. **Ricarica droni (`CHARGING`)**  
-   Giunti alla base, i droni vengono ricaricati da `ChargeBase`.
+   Giunti alla base, i droni vengono ricaricati da `ChargeBase`. In particolare, esso è composto da slot che accolgono i droni che vengono a ricaricarsi - uno slot per drone. Il tempo di ricarica, come richiesto dal requisito di progetto, ha una durata nell'intervallo di $[2,3]\ h$ (questo valore è rigenerato ad ogni nuova ricarica del drone).
 
 6. **Attesa in base (`IDLE`)**  
    A carica completa (e non prima), i droni sono messi a disposizione di `ScannerManager` per essere riusati nel creare una nuova onda.
@@ -134,7 +134,11 @@ I droni in `HIGH_CONSUMPTION` possono non riuscire ad arrivare alla base. In tal
 
 Si noti che `HIGH_CONSUMPTION` è un "meta-stato". Nel SUD non compare come uno stato vero e proprio (gli altri, ad esempio, sì, essendo definiti in classi apposite), ma è semplicemente una condizione del drone in uno stato di volo che vede il proprio consumo moltiplicato di un fattore casuale scelto in un range di valori plausibile per uno stato di alto consumo di energia. Lo stesso dicasi per lo stato `IDLE`, che è presente nel sistema in qualità di un insieme contenente i droni carichi e disponibili al riuso.
 
-Ogni fault state è conseguenza di uno scenario attivato dal TestGenerator, che è l'entità adibita alla generazione tramite generatori pseudocasuali di avvenimenti riguardanti l'environment di DroneControlSystem.
+Nel caso in cui il drone sia in `ChargeBase`, c'è un altro scenario che può colpirlo:
+
+- **RECHARGE_MALFUNCTION**: Il tempo di ricarica è fuori dal range prestabilito (quindi fuori da $[2,3]\ h$).
+
+Ogni fault state è conseguenza di uno scenario attivato dal TestGenerator, che è l'entità adibita alla generazione tramite generatori pseudocasuali di avvenimenti riguardanti l'environment di `DroneControlSystem`.
 
 ### Visualizzare il sistema
 
@@ -779,50 +783,50 @@ Di seguito gli schemi delle tabelle del database `dcs` usato
 
 ### Tab `wave_coverage_logs`
 
-| Column       | Data Type      | Constraint                         | Info                       |
-| ------------ | -------------- | ---------------------------------- | -------------------------- |
-| `tick_n`     | `INT`          | `PRIMARY KEY` `(tick_n, drone_id)` | FK di `drone_logs(tick_n)` |
-| `wave_id`    | `INT`          |                                    |                            |
-| `drone_id`   | `INT`          |                                    |                            |
-| `issue_type` | `VARCHAR(255)` |                                    |                            |
+| Column       | Data Type      | Constraint                         | Info                                |
+| ------------ | -------------- | ---------------------------------- | ----------------------------------- |
+| `tick_n`     | `INT`          | `PRIMARY KEY` `(tick_n, drone_id)` | Il tick attuale della simulazione   |
+| `wave_id`    | `INT`          | -                                  | L'ID dell'onda                      |
+| `drone_id`   | `INT`          | -                                  | ID univoco del drone                |
+| `issue_type` | `VARCHAR(255)` | -                                  | Descriz. dell'eventuale fault state |
 
 ### Tab `area_coverage_logs`
 
-| Column      | Data Type | Constraint    | Info                       |
-| ----------- | --------- | ------------- | -------------------------- |
-| `tick_n`    | `INT`     | `PRIMARY KEY` | FK di `drone_logs(tick_n)` |
-| `wave_ids`  | `INT[]`   | \-            |                            |
-| `drone_ids` | `INT[]`   | \-            |                            |
-| `X`         | `INT[]`   | \-            |                            |
-| `Y`         | `INT[]`   | \-            |                            |
+| Column      | Data Type | Constraint    | Info                                                |
+| ----------- | --------- | ------------- | --------------------------------------------------- |
+| `tick_n`    | `INT`     | `PRIMARY KEY` | FK di `drone_logs(tick_n)`                          |
+| `wave_ids`  | `INT[]`   | \-            | Gli ID delle onde senza copertura                   |
+| `drone_ids` | `INT[]`   | \-            | Gli ID dei droni che non hanno coperto              |
+| `X`         | `INT[]`   | \-            | Coordinate X del checkpoint che non è stato coperto |
+| `Y`         | `INT[]`   | \-            | Coordinate Y del checkpoint che non è stato coperto |
 
 ### Tab `system_performance_logs`
 
-| Column                 | Data Type | Constraint    | Info                                 |
-| ---------------------- | --------- | ------------- | ------------------------------------ |
-| `tick_n`               | `INT`     | `PRIMARY KEY` | FK di `drone_logs(tick_n)`           |
-| `working_drones_count` | `INT`     | \-            | Droni attualm. a lavoro              |
-| `waves_count`          | `INT`     | \-            | ???                                  |
-| `performance`          | `FLOAT`   | \-            | Il liv. di performance per quel tick |
+| Column                 | Data Type | Constraint    | Info                                      |
+| ---------------------- | --------- | ------------- | ----------------------------------------- |
+| `tick_n`               | `INT`     | `PRIMARY KEY` | FK di `drone_logs(tick_n)`                |
+| `working_drones_count` | `INT`     | \-            | Droni attualm. a lavoro                   |
+| `waves_count`          | `INT`     | \-            | Num. di onde che stanno lavorando         |
+| `performance`          | `FLOAT`   | \-            | Il liv. in % di performance per quel tick |
 
 ### Tab `drone_charge_logs`
 
-| Column               | Data Type | Constraint    | Info                                |
-| -------------------- | --------- | ------------- | ----------------------------------- |
-| `drone_id`           | `INT`     | `PRIMARY KEY` | FK di `drone_logs(drone_id)`        |
-| `consumption`        | `FLOAT`   | \-            | Sale mentre drone è in volo         |
-| `consumption_factor` | `FLOAT`   | \-            | Sale se `HIGH_CONSUMPTION`          |
-| `arrived_at_base`    | `BOOLEAN` | \-            | Indica se il drone è giunto in base |
+| Column               | Data Type | Constraint    | Info                                     |
+| -------------------- | --------- | ------------- | ---------------------------------------- |
+| `drone_id`           | `INT`     | `PRIMARY KEY` | ID univoco del drone                     |
+| `consumption`        | `FLOAT`   | \-            | Valore medio di consumo ∀ tick del drone |
+| `consumption_factor` | `FLOAT`   | \-            | Il fattore `HIGH_CONSUMPTION`            |
+| `arrived_at_base`    | `BOOLEAN` | \-            | Indica se il drone è giunto in base      |
 
 ### Tab `drone_recharge_logs`
 
-| Column                    | Data Type | Constraint    | Info                         |
-| ------------------------- | --------- | ------------- | ---------------------------- |
-| `drone_id`                | `INT`     | `PRIMARY KEY` | FK di `drone_logs(drone_id)` |
-| `recharge_duration_ticks` | `INT`     |               |                              |
-| `recharge_duration_min`   | `FLOAT`   |               |                              |
-| `start_tick`              | `INT`     |               |                              |
-| `end_tick`                | `INT`     |               |                              |
+| Column                    | Data Type | Constraint    | Info                            |
+| ------------------------- | --------- | ------------- | ------------------------------- |
+| `drone_id`                | `INT`     | `PRIMARY KEY` | FK di `drone_logs(drone_id)`    |
+| `recharge_duration_ticks` | `INT`     | -             | Durata in tick della ricarica   |
+| `recharge_duration_min`   | `FLOAT`   | -             | Durata in minuti della ricarica |
+| `start_tick`              | `INT`     | -             | Tick di inizio ricarica         |
+| `end_tick`                | `INT`     | -             | Tick di fine ricarica           |
 
 ## Connessioni Redis
 
