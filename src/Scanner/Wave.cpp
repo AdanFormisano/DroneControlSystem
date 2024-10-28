@@ -270,19 +270,22 @@ void Wave::Run()
         // std::cout << "Wave " << id << " finished" << std::endl;
         log_wv("Wave " + std::to_string(id) + " finished");
     }
+    catch (const TimeoutError &e)
+    {
+        log_error("Wave", "Timeout running wave " + std::to_string(id) + ": " + std::string(e.what()));
+        // std::cerr << "Timeout running wave " << id << ": " << e.what() << std::endl;
+    }
+    catch (const IoError &e)
+    {
+        // std::cerr << "IoError running wave " << id << ": " << e.what() << std::endl;
+        log_error("Wave", "IoError running wave " + std::to_string(id) + ": " + std::string(e.what()));
+    }
     catch (const std::exception& e)
     {
         // std::cerr << "Error running wave: " << e.what() << std::endl;
         log_error("Wave", e.what());
-    } catch (const TimeoutError &e)
-    {
-        log_error("Wave", "Timeout running wave " + std::to_string(id) + ": " + std::string(e.what()));
-        // std::cerr << "Timeout running wave " << id << ": " << e.what() << std::endl;
-    } catch (const IoError &e)
-    {
-        // std::cerr << "IoError running wave " << id << ": " << e.what() << std::endl;
-        log_error("Wave", "IoError running wave " + std::to_string(id) + ": " + std::string(e.what()));
-    } catch (...) {
+    }
+    catch (...) {
         // std::cerr << "Unknown error running wave " << id << std::endl;
         log_error("Wave", "Unknown error running wave " + std::to_string(id));
     }

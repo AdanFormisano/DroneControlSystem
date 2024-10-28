@@ -42,7 +42,7 @@ void CoverageMonitor::checkCoverage()
     }
 }
 
-void CoverageMonitor::checkWaveVerification()
+void CoverageMonitor::checkCoverageVerification()
 {
     // std::cout << "[Monitor-CV] Checking wave verification..." << std::endl;
     log_coverage("Checking wave verification...");
