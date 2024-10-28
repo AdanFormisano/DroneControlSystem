@@ -1,52 +1,52 @@
-# Drone Control System
+# DroneControlSystem
 
 ## Indice
 
-- [Drone Control System](#drone-control-system)
+- [DroneControlSystem](#dronecontrolsystem)
   - [Indice](#indice)
-- [Descrizione generale](#descrizione-generale)
-  - [Fini del sistema](#fini-del-sistema)
-  - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
-    - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
-    - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
-    - [Stati del sistema](#stati-del-sistema)
-    - [Stati di guasto dei droni](#stati-di-guasto-dei-droni)
-    - [Visualizzare il sistema](#visualizzare-il-sistema)
-      - [Area da sorvegliare](#area-da-sorvegliare)
-      - [To starting line](#to-starting-line)
-      - [Working](#working)
-      - [To base](#to-base)
-- [User requirements](#user-requirements)
-  - [Use case utente](#use-case-utente)
-    - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
-- [System requirements](#system-requirements)
-  - [Architectural system diagram](#architectural-system-diagram)
-  - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
-  - [State diagram Drone](#state-diagram-drone)
-  - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
-- [Implementation](#implementation)
-  - [Implementazione software](#implementazione-software)
-  - [_Outsourcing_](#outsourcing)
-  - [Implementare il sistema](#implementare-il-sistema)
-    - [Componente ChargeBase](#componente-chargebase)
-    - [Componente ScannerManager](#componente-scannermanager)
-    - [Componente DroneControl](#componente-dronecontrol)
-    - [Componente Drone](#componente-drone)
-    - [Componente Wave](#componente-wave)
-    - [Componente Buffer](#componente-buffer)
-    - [Componente Globals](#componente-globals)
-    - [Componente Database](#componente-database)
-  - [Database e Redis](#database-e-redis)
-    - [Schema del Database](#schema-del-database)
-      - [Connessione al Database](#connessione-al-database)
-      - [Definizione dello Schema della Tabella](#definizione-dello-schema-della-tabella)
-      - [Gestione delle Modifiche e Aggiornamenti](#gestione-delle-modifiche-e-aggiornamenti)
-    - [Connessioni Redis](#connessioni-redis)
-  - [Risultati Sperimentali](#risultati-sperimentali)
+  - [Descrizione generale](#descrizione-generale)
+    - [Fini del sistema](#fini-del-sistema)
+    - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
+      - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
+      - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
+      - [Stati del sistema](#stati-del-sistema)
+      - [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
+      - [Visualizzare il sistema](#visualizzare-il-sistema)
+        - [Area da sorvegliare](#area-da-sorvegliare)
+        - [To starting line](#to-starting-line)
+        - [Working](#working)
+        - [To base](#to-base)
+    - [User requirements](#user-requirements)
+      - [Use case utente](#use-case-utente)
+        - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
+    - [System requirements](#system-requirements)
+      - [Architectural system diagram](#architectural-system-diagram)
+      - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
+      - [State diagram Drone](#state-diagram-drone)
+      - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
+    - [Implementation](#implementation)
+      - [Implementazione software](#implementazione-software)
+      - [_Outsourcing_](#outsourcing)
+      - [Implementare il sistema](#implementare-il-sistema)
+        - [Componente Main](#componente-main)
+        - [Componente ChargeBase](#componente-chargebase)
+        - [Componente ScannerManager](#componente-scannermanager)
+        - [Componente DroneControl](#componente-dronecontrol)
+        - [Componente Drone](#componente-drone)
+        - [Componente Wave](#componente-wave)
+        - [Componente TestGenerator](#componente-testgenerator)
+        - [Componente Database](#componente-database)
+        - [Altre componenti](#altre-componenti)
+      - [Schema del Database](#schema-del-database)
+        - [Tab drone_logs](#tab-drone_logs)
+        - [Tab system_performance_logs](#tab-system_performance_logs)
+        - [Tab drone_charge_logs](#tab-drone_charge_logs)
+      - [Connessioni Redis](#connessioni-redis)
+      - [Risultati Sperimentali](#risultati-sperimentali)
 
-## Drone Control System
+## DroneControlSystem
 
-Drone Control System è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area
+_DroneControlSystem_ è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area
 di $6×6\,\mathrm{Km}$.
 
 Il sistema è sviluppato come progetto d'esame
@@ -91,7 +91,7 @@ La **`ChargeBase`** è l'unico punto dell'intera area in cui i droni si trovano 
 
 #### Struttura dell'area sorvegliata
 
-L'area da sorvegliare è un quadrato di $6\times6\mathrm{\,Km}$ $(36 \mathrm{\, Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
+L'area da sorvegliare è un quadrato di $6\times6\mathrm{\,Km}$ $(36\,\mathrm{Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
 
 Partendo dalla richiesta della traccia abbiamo pensato di vedere questi quadrati come delle _celle_ con al proprio centro il punto da verificare per il drone. Quest'ultimo condivide infatti l'istante di tempo $t$ in cui è coperto con ogni altro punto nella cella, facendo sì che al passaggio del drone sul punto al $t$-esimo istante di tempo, l'intera area del quadrato della griglia risulti simultaneamente coperta - dove il tempo è rappresentato, nel nostro sistema, da un'unità di tempo chiamata `tick` (un tick equivale ad un numero preciso di secondi che vedremo dopo).
 Chiamiamo quindi `starting_line` la colonna di celle coincidenti col lato sinistro dell'area.
@@ -138,7 +138,7 @@ Durante uno qualsiasi degli stati di volo (`TO_STARTING_LINE`, `READY`, `WORKING
 I droni con stato `DISCONNECTED` possono recuperare la connessione (`RECONNECTED`) tornando quindi allo stato precedente la disconnessione, oppure passare a `DEAD` se la connessione non viene ristabilita.
 I droni in `HIGH_CONSUMPTION` possono non riuscire ad arrivare alla base. In tal caso passano a `DEAD`.
 
-Si noti che `HIGH_CONSUMPTION` è un "meta-stato", se vogliamo. Infatti nel SUD non compare come uno stato vero e proprio (gli altri, ad esempio, sì, essendo definiti in classi apposite), ma è semplicemente una condizione del drone in uno stato di volo che vede il proprio consumo moltiplicato di un fattore casuale scelto in un range di valori plausibile per uno stato di alto consumo di energia. Lo stesso dicasi per lo stato `IDLE`, che è presente nel sistema in qualità di un insieme contenente i droni carichi e disponibili al riuso.
+Si noti che `HIGH_CONSUMPTION` è un "meta-stato". Nel SUD non compare come uno stato vero e proprio (gli altri, ad esempio, sì, essendo definiti in classi apposite), ma è semplicemente una condizione del drone in uno stato di volo che vede il proprio consumo moltiplicato di un fattore casuale scelto in un range di valori plausibile per uno stato di alto consumo di energia. Lo stesso dicasi per lo stato `IDLE`, che è presente nel sistema in qualità di un insieme contenente i droni carichi e disponibili al riuso.
 
 Ogni fault state è conseguenza di uno scenario attivato dal TestGenerator, che è l'entità adibita alla generazione tramite generatori pseudocasuali di avvenimenti riguardanti l'environment di DroneControlSystem.
 
@@ -178,6 +178,8 @@ Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli
 ### Use case utente
 
 #### Use case vista ampia del sistema
+
+Questi diagrammi use-case contengono scenari d'uso del sistema da parte dei vari suoi attori
 
 ![alt text](../med/ucase_diag.png)
 
@@ -279,8 +281,6 @@ _Pseudocodice di Main_
 	End loop
 	Wait for child processes to finish
 	Kill TestGenerator process
-
-
 ```
 
 #### Componente ChargeBase
@@ -760,7 +760,6 @@ class Buffer
 
 	[getSize] Return the size of the buffer
 		return Buffer's size
-
 ```
 
 #### Altre componenti
