@@ -93,12 +93,18 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
 {
     // Set the drone state to the new state parameter
     int drone_id = wave_drone_id % 1000; // Get the drone id from the wave_drone_id
-    drones[drone_id]->previous = drones[drone_id]->getCurrentState()->getState();
+    try
+    {
+        drones[drone_id]->previous = drones[drone_id]->getCurrentState()->getState();
+    } catch (const std::exception& e)
+    {
+        std::cerr << "Error setting drone fault: " << e.what() << std::endl;
+    }
 
-    if(state!=drone_state_enum::NONE)
+    if(state != drone_state_enum::NONE)
     {
         drones[drone_id]->setState(getDroneState(state));
-        std::cout << "[TestGenerator] TICK " << tick << " Drone " << wave_drone_id << " state set to " <<
+        std::cout << "[ScannerManagercc] TICK " << tick << " Drone " << wave_drone_id << " state set to " <<
             utils::droneStateToString(state) << std::endl;
     }
 
@@ -157,20 +163,27 @@ bool Wave::AllDronesAreDead()
     return std::ranges::all_of(drones, [](const std::unique_ptr<Drone>& d) { return d == nullptr; });
 }
 
+void waveSignalHandler(int signal) {
+    std::cerr << "[Wave] Error: Segmentation fault (signal " << signal << ")" << std::endl;
+    // Perform any cleanup here if necessary
+    exit(signal);
+}
+
 void Wave::Run()
 {
-    // std::cout << "Wave " << id << " started" << std::endl;
-    // tick_sync.thread_started();
-    sem_sync->add_thread();
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    // A redis pipeline is used to upload the data to the redis server
-    // Create a pipeline from the group of redis co nnections
-    auto pipe = redis.pipeline(false);
-
-    while (!AllDronesAreDead())
+    try
     {
-        try
+        // std::signal(SIGSEGV, waveSignalHandler);
+        // std::cout << "Wave " << id << " started" << std::endl;
+        // tick_sync.thread_started();
+        sem_sync->add_thread();
+        auto start_time = std::chrono::high_resolution_clock::now();
+
+        // A redis pipeline is used to upload the data to the redis server
+        // Create a pipeline from the group of redis co nnections
+        auto pipe = redis.pipeline(false);
+
+        while (!AllDronesAreDead())
         {
             // std::cout << "[" << std::this_thread::get_id() << "] Wave " << id << " - TICK " << tick << " just started" << std::endl;
             // std::cout << "Wave " << id << " tick " << tick << " drones are all dead: "<< AreDroneDead << std::endl;
@@ -230,29 +243,20 @@ void Wave::Run()
             // std::cout << "Wave " << id << " tick " << tick << " synced" << std::endl;
             tick++;
         }
-        catch (const TimeoutError& e)
-        {
-            // /spdlog::error("Timeout running wave {}: {}", id, e.what());
-            std::cerr << "Timeout running wave " << id << ": " << e.what() << std::endl;
-        } catch (const IoError& e)
-        {
-            // spdlog::error("IoError running wave {}: {}", id, e.what());
-            std::cerr << "IoError running wave " << id << ": " << e.what() << std::endl;
-        } catch (...)
-        {
-            std::cerr << "Unknown error running wave " << id << std::endl;
-        }
+        // Remove self from alive waves on Redis
+        redis.srem("waves_alive", std::to_string(id));
+
+        // tick_sync.thread_finished();
+        sem_sync->remove_thread();
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+        // spdlog::info("Wave {} duration: {}ms", id, duration.count());
+        // spdlog::info("Wave {} finished", id);
+        std::cout << "Wave " << id << " duration: " << duration.count() << "ms" << std::endl;
+        std::cout << "Wave " << id << " finished" << std::endl;
     }
-
-    // Remove self from alive waves on Redis
-    redis.srem("waves_alive", std::to_string(id));
-
-    // tick_sync.thread_finished();
-    sem_sync->remove_thread();
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    // spdlog::info("Wave {} duration: {}ms", id, duration.count());
-    // spdlog::info("Wave {} finished", id);
-    std::cout << "Wave " << id << " duration: " << duration.count() << "ms" << std::endl;
-    std::cout << "Wave " << id << " finished" << std::endl;
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error running wave: " << e.what() << std::endl;
+    }
 }

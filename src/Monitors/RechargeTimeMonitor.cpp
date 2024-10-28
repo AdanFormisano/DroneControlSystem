@@ -25,7 +25,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
 
     try
     {
-        while (tick_last_read < sim_duration_ticks - 5)
+        while (tick_last_read < sim_duration_ticks - 1)
         {
             std::this_thread::sleep_for(std::chrono::seconds(10));
             std::cout << "[Monitor-RC] Checking drones recharge time..." << std::endl;
@@ -40,6 +40,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
             // Get drones that are charged
             getChargedDrones(W);
 
+            // std::string q = "INSERT INTO drone_recharge_logs (drone_id, recharge_duration_ticks, recharge_duration_min, start_tick, end_tick) VALUES ";
             // Check if drones are charging for the right amount of time
             for (const auto& drone : drone_recharge_time)
             {
@@ -47,37 +48,41 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
                 const int start_tick = drone.second.first;
                 const int end_tick = drone.second.second;
 
-                if (end_tick != -1)
+                if (end_tick != -1 && !drone_id_written.contains(drone_id))
                 {
                     const int delta_time = end_tick - start_tick;
                     const float duration_minutes = (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60;
-                    if (delta_time >= 2975 && delta_time <= 4463)
+                    if (delta_time >= 3000 && delta_time <= 4500)
                     {
                         std::cout << "[Monitor-RC] Drone " << drone_id << " has charged for " << duration_minutes <<
                             " minutes" << std::endl;
                     }
                     else
                     {
-                        std::cout << "[Monitor-RC] Drone " << drone_id << " has charged for " << duration_minutes <<
-                            " minutes...wrong amount of time" << std::endl;
-
+                        // std::cout << "[Monitor-RC] Drone " << drone_id << " has charged for " << duration_minutes <<
+                        //     " minutes...wrong amount of time" << std::endl;
                         std::string q =
-                            "INSERT INTO drone_recharge_logs (drone_id, recharge_duration_ticks, recharge_duration_min, start_tick, end_tick) "
-                            "VALUES (" + std::to_string(drone_id) + ", " + std::to_string(delta_time) + ", " +
-                            std::to_string(duration_minutes) + ", " + std::to_string(start_tick) + ", " +
-                            std::to_string(end_tick) + ");";
+                            "INSERT INTO drone_recharge_logs (drone_id, recharge_duration_ticks, recharge_duration_min, start_tick, end_tick) VALUES ("
+                            + std::to_string(drone_id) + ", "
+                            + std::to_string(delta_time) + ", "
+                            + std::to_string(duration_minutes) + ", "
+                            + std::to_string(start_tick) + ", "
+                            + std::to_string(end_tick) + ");";
 
                         W.exec(q);
                     }
+                    drone_id_written.insert(drone_id);
                 }
             }
+            // q = q.substr(0, q.size() - 2) + ";";
+            // W.exec(q);
             W.commit();
         }
         std::cout << "[Monitor-RC] Finished" << std::endl;
     }
     catch (const std::exception& e)
     {
-        spdlog::error("RECHARGE-MONITOR: {}", e.what());
+        std::cerr << "[Monitor-RC] Error: " << e.what() << std::endl;
     }
 }
 

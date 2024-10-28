@@ -49,7 +49,7 @@ void DroneChargeMonitor::checkBasedDrones(std::unordered_set<DroneData, DroneDat
         for (const auto& [drone_id, consumption_factor, arrived_at_base] : based_drones)
         {
             std::cout << "[Monitor-DC] Drone " << drone_id << " has wrong consumption " << consumption_factor << std::endl;
-            query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor / DRONE_CONSUMPTION_RATE) + ", " + std::to_string(consumption_factor) + ", TRUE), ";
+            query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor) + ", " + std::to_string(consumption_factor / DRONE_CONSUMPTION_RATE) + ", TRUE), ";
         }
         query = query.substr(0, query.size() - 2);
         query += ";";
@@ -75,7 +75,7 @@ void DroneChargeMonitor::checkDeadDrones(std::unordered_set<DroneData, DroneData
         {
             std::cout << "[Monitor-DC] DEAD Drone " << drone_id << " has wrong consumption " << consumption_factor << std::endl;
 
-            query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor / DRONE_CONSUMPTION_RATE) + ", " + std::to_string(consumption_factor) + ", FALSE), ";
+            query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor) + ", " + std::to_string(consumption_factor / DRONE_CONSUMPTION_RATE) + ", FALSE), ";
         }
         query = query.substr(0, query.size() - 2);
         query += ";";

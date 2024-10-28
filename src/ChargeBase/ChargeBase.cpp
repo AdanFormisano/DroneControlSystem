@@ -15,7 +15,7 @@ ChargeBase* ChargeBase::getInstance(Redis& redis)
     return instance;
 }
 
-ChargeBase::ChargeBase(Redis& redis) : redis(redis)
+ChargeBase::ChargeBase(Redis& redis) : mq_charge(open_or_create, "charge_fault_queue", 100, sizeof(TG_charge_data)), redis(redis)
 {
     // spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
     // spdlog::info("ChargeBase process starting");
@@ -37,6 +37,23 @@ void ChargeBase::Run()
         std::cout << "[Chargebase] TICK: " << tick_n << std::endl;
 
         // Work
+
+        // Check if TestGenerator sent a message to change the charge rate
+        if (auto size = mq_charge.get_num_msg(); size > 0)
+        {
+            // Iterate over the message queue and receive all the messages
+            for (int i = 0; i < size; i++)
+            {
+                message_queue::size_type recvd_size;
+                unsigned int priority;
+                TG_charge_data msg{};
+                mq_charge.receive(&msg, sizeof(msg), recvd_size, priority);
+
+                charging_drones[msg.drone_id].charge_rate_factor = msg.charge_rate_factor;
+                std::cout << "[ChargeBase] Drone " << msg.drone_id << " has charge rate factor of " << msg.charge_rate_factor << std::endl;
+            }
+        }
+
         // ChargeDrone(); // Normal charge rate
         ChargeDroneMegaSpeed(); // TESTING: Charge drones at 5x speed
         ReadChargeStream();
@@ -111,6 +128,9 @@ void ChargeBase::SetChargeData(const std::vector<std::pair<std::string, std::str
 
     // Update the drone unordered map
     charging_drones[drone_data.id] = drone_data;
+
+    // Add drone to set of charging drones on Redis
+    redis.sadd("charging_drones", std::to_string(drone_data.id));
 }
 
 void ChargeBase::ChargeDrone()
@@ -123,7 +143,7 @@ void ChargeBase::ChargeDrone()
         auto& drone_data = drone.second;
         if (drone_data.charge < 100)
         {
-            drone_data.charge += drone_data.charge_rate;
+            drone_data.charge += drone_data.charge_rate * drone_data.charge_rate_factor;
         } else if (drone_data.charge >= 100)
         {
             drone_data.state = drone_state_enum::CHARGING_COMPLETED;
@@ -151,7 +171,7 @@ void ChargeBase::ChargeDroneMegaSpeed()
         auto& drone_data = drone.second;
         if (drone_data.charge < 100)
         {
-            drone_data.charge += drone_data.charge_rate * 5;
+            drone_data.charge += drone_data.charge_rate * drone_data.charge_rate_factor * 5;
         } else if (drone_data.charge >= 100)
         {
             drone_data.state = drone_state_enum::CHARGING_COMPLETED;
@@ -175,6 +195,9 @@ void ChargeBase::ReleaseDrone(const ChargingDroneData& drone_data) const
 {
     // Add the drone to the list of charged drones for SM (to recycle drones)
     redis.sadd("charged_drones", std::to_string(drone_data.id));
+
+    // Remove the drone from the list of charging drones
+    redis.srem("charging_drones", std::to_string(drone_data.id));
 
     // Write on DC stream that the drone is charged
     DroneData data(tick_n, drone_data.id, utils::droneStateToString(drone_data.state), 100.0f, {0.0f, 0.0f}, drone_data.wave_id);

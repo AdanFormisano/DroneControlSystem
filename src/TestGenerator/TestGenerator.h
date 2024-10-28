@@ -10,8 +10,8 @@ using namespace sw::redis;
 using namespace boost::interprocess;
 
 struct DroneInfo {
-    int wave_id;
-    int drone_id;
+    int wave_id = -1;
+    int drone_id = -1;
 };
 
 class TestGenerator {
@@ -24,11 +24,12 @@ public:
 
 private:
     message_queue mq;
+    message_queue mq_charge;
     std::map<float, std::function<void()>> scenarios;
     std::random_device rd;
     std::mt19937 gen;
     std::uniform_real_distribution<> dis;
-    std::uniform_real_distribution<> dis_charge;
+    std::uniform_real_distribution<> dis_consumption;
     std::uniform_int_distribution<> dis_drone;
     std::uniform_int_distribution<> dis_tick;
 

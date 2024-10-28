@@ -34,6 +34,7 @@ public:
 
 private:
     std::unordered_map<int, std::pair<int, int>> drone_recharge_time;
+    std::unordered_set<int> drone_id_written;
 
     void checkDroneRechargeTime();
     void getChargingDrones(pqxx::work& W);

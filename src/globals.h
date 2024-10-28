@@ -148,11 +148,12 @@ struct DroneData {
 };
 
 struct ChargingDroneData {
-    int id;
-    int wave_id;
-    float charge;
+    int id{};
+    int wave_id{};
+    float charge{};
     drone_state_enum state;
-    float charge_rate;
+    float charge_rate{};
+    float charge_rate_factor = 1.0f;
 
     ChargingDroneData() = default;
     ChargingDroneData(int id, int wave_id, float charge, drone_state_enum state, float charge_rate)
@@ -188,6 +189,12 @@ struct TG_data {
     int reconnect_tick;         // Contains the number of ticks after the disconnection
     // when the drone reconnected (-1 if not reconnecting)
     float high_consumption_factor; // Multiplies the drone consumption value
+};
+
+struct TG_charge_data
+{
+    int drone_id;               // ID of the drone
+    float charge_rate_factor;   // Multiplies the drone charge rate
 };
 
 struct drone_fault {

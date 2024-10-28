@@ -53,6 +53,7 @@
  ☐ CoverageMonitor
      ☐ Set screen output
      ☐ Fix INSERT errors
+     ☐ Fix coords issue with ints and floats (for X and Y)
 
      ✔ Output should be the coords that the drone is not covering anymore (change also in monitor db) @done (24-10-28 02:17)
          For each tick a set of coords need to be covered. If the drone dies the coords
