@@ -47,18 +47,18 @@ public:
     void RunMonitor() override;
 
 private:
-    std::set<int> failed_ticks;
-    std::vector<std::array<int, 3>> failed_data;
 
     void checkCoverage();
-    void checkWaveVerification();
-    void checkAreaCoverage();
+    void checkCoverageVerification();
 
     struct WaveVerification
     {
         int wave_id;
         int tick_n;
         int drone_id;
+        std::string issue_type;
+        int X;
+        int Y;
     };
 
     std::vector<WaveVerification> getWaveVerification(); // wave_id, tick_n, drone_id
@@ -102,8 +102,8 @@ private:
     bool write_dead_drones = false;
     std::set<int> failed_drones;
     void checkDroneCharge();
-    void checkBasedDrones(const std::unordered_set<DroneData, DroneDataHash>& based_drones, pqxx::work& W);
-    void checkDeadDrones(const std::unordered_set<DroneData, DroneDataHash>& dead_drones, pqxx::work& W);
+    void checkBasedDrones(std::unordered_set<DroneData, DroneDataHash>& based_drones, pqxx::work& W);
+    void checkDeadDrones(std::unordered_set<DroneData, DroneDataHash>& dead_drones, pqxx::work& W);
     std::unordered_set<DroneData, DroneDataHash> getBasedDrones(pqxx::work& W);
     std::unordered_set<DroneData, DroneDataHash> getDeadDrones(pqxx::work& W);
 };

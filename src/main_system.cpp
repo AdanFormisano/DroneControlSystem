@@ -58,7 +58,7 @@ int main()
         TestGenerator tg(test_redis);
 
         // spdlog::info("TestGenerator started");
-        std::cout << "TestGenerator started" << std::endl;
+        std::cout << "[TestGenerator] Started" << std::endl;
 
         // Start test generation
         tg.Run();
@@ -79,18 +79,20 @@ int main()
             auto monitors_redis = Redis(connection_options);
 
             // Create the Monitors
-            // CoverageMonitor cm(monitors_redis);
+            CoverageMonitor cm(monitors_redis);
             DroneChargeMonitor dcm(monitors_redis);
-
+            RechargeTimeMonitor rtm(monitors_redis);
 
             // Run the Monitors' thread
-            // cm.RunMonitor();
+            cm.RunMonitor();
             dcm.RunMonitor();
+            rtm.RunMonitor();
 
 
             // Wait for the Monitors to finish
-            // cm.JoinThread();
+            cm.JoinThread();
             dcm.JoinThread();
+            rtm.JoinThread();
 
             std::cout << "[Monitor] Monitors mostly finished..." << std::endl;
             SystemPerformanceMonitor spm(monitors_redis);
