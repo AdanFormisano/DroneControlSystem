@@ -42,6 +42,11 @@ generate_dashes() {
     printf '%*s' "$name_length" '' | tr ' ' '-'
 }
 
+mkdir_log() {
+    mkdir -p log
+    mkdir -p log/mon
+}
+
 start_dcs() {
     cd build
     setsid ./DroneControlSystem >../log/dcs.log 2>&1 &

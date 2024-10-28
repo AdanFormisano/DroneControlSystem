@@ -19,13 +19,14 @@ std::ofstream recharge_log("../log/mon/recharge.log");
 std::ofstream system_log("../log/mon/system.log");
 std::ofstream charge_log("../log/mon/charge.log");
 
-const int SLOW_LOG_INTERVAL = 100;
-int slow_log_counter = 0;
-
 // std::map<int, std::vector<std::string>> log_buffer;
 std::map<int, std::vector<std::string>> dcs_log_buffer;
 std::map<int, std::vector<std::string>> dcsa_log_buffer;
 std::vector<std::string> dcs_log_messages;
+
+const int SLOW_LOG_INTERVAL = 100;
+int slow_log_counter = 0;
+static int last_synced_tick = 0; // Synca tick tra log lenti
 
 std::string generate_dashes(int length) {
     return std::string(length, '-');
@@ -47,17 +48,12 @@ std::string format_log_message(const std::string &process, const std::string &me
 void log_dcs(const std::string &process, const std::string &message) {
     std::ostringstream formatted_message;
 
-    // Inserisci il nome del processo tra `[]` come parte della stringa e imposta la larghezza per l'allineamento
     formatted_message << std::left << std::setw(18) << ("[" + process + "]")
                       << " " << message;
 
-    // Scrive il messaggio formattato su dcs_log e dcsa_log
     log_to_stream(dcs_log, formatted_message.str());
     log_to_stream(dcsa_log, formatted_message.str());
 }
-
-// Variabile globale per mantenere sincronizzato l'ultimo tick tra i log lenti
-static int last_synced_tick = 0;
 
 // Funzione per log lento DCS
 void log_dcs_slow(const std::string &process, const std::string &message) {
@@ -130,7 +126,7 @@ void flush_log_buffer(int tick, std::map<int, std::vector<std::string>> &log_buf
 
         for (size_t i = 0; i < log_buffer[tick].size(); ++i) {
             oss << log_buffer[tick][i] << "\n";
-            // Aggiungi il sotto-separatore tra i messaggi
+            // Sotto-separatore tra i messaggi
             if (i < log_buffer[tick].size() - 1) {
                 oss << sub_separator << "\n";
             }

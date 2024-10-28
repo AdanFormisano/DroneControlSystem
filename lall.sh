@@ -20,6 +20,9 @@ init_msg
 # Avvia Redis
 manage_redis
 
+# Crea cartelle log
+mkdir_log
+
 # Avvia DCS
 dcs_start_msg
 start_dcs

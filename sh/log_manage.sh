@@ -47,11 +47,6 @@ toggle_dcsa() {
     fi
 }
 
-
-
-
-
-
 toggle_dcsa_fast() {
     local name="DCSA Fast"
     local dashes=$(generate_dashes "$name")
@@ -156,7 +151,7 @@ toggle_hide() {
         unset MONITOR_PIDS[$index]
     done
     MONITOR_RUNNING=false
-    sleep 0.2 # Attesa per evitare sovrapposizioni di processi
+    # sleep 0.2 # Evita sovrapposizioni processi
     clear
     center_title_with_message "Hai premuto \"h\" e hai reso" "Output nascosto"
     echo "$instructions"
