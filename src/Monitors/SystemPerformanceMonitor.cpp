@@ -76,7 +76,7 @@ void SystemPerformanceMonitor::checkPerformance() {
 
             // Clear the processed data
             performance_data.clear();
-            log_system("Performance data processed and cleared. Waiting for new data...");
+            // log_system("Performance data processed and cleared. Waiting for new data...");
         } catch (const std::exception &e) {
             log_error("SystemPerformance", e.what());
         }

@@ -738,8 +738,8 @@ class Database
 			Create a new "dcs" DB
 		ConnectToDB
 		If connection to db is open then
-			Delete existing tables (drone_logs, monitor_logs, system_performance_logs, drone_charge_logs)
-			Create tables (drone_logs, monitor_logs, system_performance_logs, drone_charge_logs)
+			Delete existing tables (drone_logs, ~~monitor_logs~~, system_performance_logs, drone_charge_logs)
+			Create tables (drone_logs, ~~monitor_logs~~, system_performance_logs, drone_charge_logs)
 
 	[ExecuteQuery] Executes the indicated query
 		If connection to DB is open then
