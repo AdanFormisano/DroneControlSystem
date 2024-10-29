@@ -43,8 +43,6 @@ int main() {
     // Create the DroneControl process
     pid_t pid_drone_control = fork();
     if (pid_drone_control == -1) {
-        // spdlog::error("Fork for DroneControl failed");
-        // log_error("Fork for DroneControl failed");
         log_error("Main", "Fork for DroneControl failed");
         // std::cerr << "Fork for DroneControl failed" << std::endl;
         return 1;
@@ -59,7 +57,7 @@ int main() {
         DroneControl dc(drone_control_redis);
 
         // std::cout << "DroneControl process started" << std::endl;
-        // log_system("This monitor will start at the end of the simulation");
+        log_system("This monitor will start at the end of the simulation");
 
         // Start simulation
         dc.Run();
@@ -67,8 +65,6 @@ int main() {
         // In parent process create new child Drones process
         pid_t pid_drone = fork();
         if (pid_drone == -1) {
-            // spdlog::error("Fork for Drone failed");
-            // log_error("Fork for Drone failed");
             log_error("Main", "Fork for Drone failed");
             // std::cerr << "Fork for Drone failed" << std::endl;
             return 1;
@@ -93,8 +89,6 @@ int main() {
             // In parent process create new child ChargeBase process
             pid_t pid_charge_base = fork();
             if (pid_charge_base == -1) {
-                // spdlog::error("Fork for ChargeBase failed");
-                // log_error("Fork for ChargeBase failed");
                 log_error("Main", "Fork for ChargeBase failed");
                 // std::cerr << "Fork for ChargeBase failed" << std::endl;
                 return 1;
@@ -116,8 +110,6 @@ int main() {
                 // In parent process create new child TestGenerator process
                 pid_t pid_test_generator = fork();
                 if (pid_test_generator == -1) {
-                    // spdlog::error("Fork for TestGenerator failed");
-                    // log_error("Fork for TestGenerator failed");
                     log_error("Main", "Fork for TestGenerator failed");
                     // std::cerr << "Fork for TestGenerator failed" << std::endl;
                     return 1;
@@ -131,7 +123,6 @@ int main() {
                     // Create the TestGenerator object
                     TestGenerator tg(test_redis);
 
-                    // spdlog::info("TestGenerator started");
                     log_tg("TestGenerator started");
                     // std::cout << "TestGenerator started" << std::endl;
 
@@ -141,7 +132,6 @@ int main() {
                     pid_t pid_monitors = fork();
                     // In Main process
                     if (pid_monitors == -1) {
-                        // log_error("Fork for Monitors failed");
                         log_error("Main", "Fork for Monitors failed");
                         // std::cerr << "Fork for Monitors failed" << std::endl;
                     } else if (pid_monitors == 0) {
@@ -165,15 +155,15 @@ int main() {
                         rm.JoinThread();
                         dm.JoinThread();
 
-                        // SystemPerformanceMonitor sm(monitors_redis);
-                        // sm.RunMonitor();
-                        // sm.JoinThread();
+                        SystemPerformanceMonitor sm(monitors_redis);
+                        sm.RunMonitor();
+                        sm.JoinThread();
 
                     } else {
                         auto main_redis = Redis(connection_options);
 
-                        SystemPerformanceMonitor sm(main_redis);
-                        sm.RunMonitor();
+                        // SystemPerformanceMonitor sm(main_redis);
+                        // sm.RunMonitor();
 
                         // Create named semaphore for synchronization
                         sem_t *sem_sync_dc = utils_sync::create_or_open_semaphore("/sem_sync_dc", 0);
@@ -195,7 +185,6 @@ int main() {
 
                         // Simulation loop
                         while (tick_n < sim_duration_ticks) {
-                            // spdlog::info("TICK: {}", tick_n);
                             log_main("TICK: " + std::to_string(tick_n));
                             // std::cout << "[Main] TICK: " << tick_n << std::endl;
                             std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -210,7 +199,6 @@ int main() {
                             sem_wait(sem_cb);
 
                             ++tick_n;
-                            // spdlog::info("=====================================");
                             // log("=====================================");
                             log_dcsa("=====================================");
                             // std::cout << "=====================================" << std::endl;
@@ -228,7 +216,7 @@ int main() {
                         waitpid(pid_monitors, nullptr, 0);
                         waitpid(pid_charge_base, nullptr, 0);
 
-                        sm.JoinThread();
+                        // sm.JoinThread();
 
                         // Get shutoff time
                         auto shutoff_time = std::chrono::high_resolution_clock::now();

@@ -82,7 +82,7 @@ void DroneChargeMonitor::checkDeadDrones(std::unordered_set<DroneData, DroneData
         for (const auto& [drone_id, consumption_factor, arrived_at_base] : dead_drones)
         {
             // std::cout << "[Monitor-DC] DEAD Drone " << drone_id << " has wrong consumption " << consumption_factor << std::endl;
-            log_charge("DEAD Drone " + std::to_string(drone_id) + " has wrong consumption " + std::to_string(consumption_factor));
+            log_charge("DEAD Drone " + std::to_string(drone_id) + " had wrong consumption " + std::to_string(consumption_factor));
 
             query += "(" + std::to_string(drone_id) + ", " + std::to_string(consumption_factor) + ", " + std::to_string(consumption_factor / DRONE_CONSUMPTION_RATE) + ", FALSE), ";
         }

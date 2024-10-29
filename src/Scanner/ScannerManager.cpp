@@ -74,7 +74,7 @@ ScannerManager::ScannerManager(Redis& shared_redis) : pool(8), shared_redis(shar
     log_sm("ScannerManager created");
 }
 
-void signalHandler(int signal) {
+void scannerManagerSignalHandler(int signal) {
     std::cerr << "[ScannerManager] Error: Segmentation fault (signal " << signal << ")" << std::endl;
     // Perform any cleanup here if necessary
     exit(signal);
@@ -85,7 +85,7 @@ void ScannerManager::Run()
     try
     {
         std::cout << "[ScannerManager] Running" << std::endl;
-        // std::signal(SIGSEGV, signalHandler);
+        // std::signal(SIGSEGV, scannerManagerSignalHandler);
 
         // Create IPC message queue
         auto mq = message_queue(open_or_create, "drone_fault_queue", 100, sizeof(TG_data));
