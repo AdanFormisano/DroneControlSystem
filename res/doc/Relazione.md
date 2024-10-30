@@ -3,47 +3,55 @@
 - [Indice](#indice)
 - [DroneControlSystem](#dronecontrolsystem)
 - [Descrizione generale](#descrizione-generale)
-  - [Fini del sistema](#fini-del-sistema)
-  - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
-    - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
-    - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
-    - [Stati del sistema](#stati-del-sistema)
-    - [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
-    - [Visualizzare il sistema](#visualizzare-il-sistema)
-      - [Area da sorvegliare](#area-da-sorvegliare)
-      - [To starting line](#to-starting-line)
-      - [Working](#working)
-      - [To base](#to-base)
-- [User requirements](#user-requirements)
-  - [Use case utente](#use-case-utente)
-  - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
-- [System requirements](#system-requirements)
-  - [Architectural system diagram](#architectural-system-diagram)
-  - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
-  - [State diagram Drone](#state-diagram-drone)
-  - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
-- [Implementation](#implementation)
-  - [Implementazione software](#implementazione-software)
-  - [_Outsourcing_](#outsourcing)
-  - [Implementare il sistema](#implementare-il-sistema)
-  - [Componente Main](#componente-main)
-  - [Componente ChargeBase](#componente-chargebase)
-  - [Componente ScannerManager](#componente-scannermanager)
-  - [Componente DroneControl](#componente-dronecontrol)
-  - [Componente Drone](#componente-drone)
-  - [Componente Wave](#componente-wave)
-  - [Componente TestGenerator](#componente-testgenerator)
-  - [Componente Database](#componente-database)
-  - [Altre componenti](#altre-componenti)
-  - [Schema del Database](#schema-del-database)
-    - [Tab drone_logs](#tab-drone_logs)
-    - [Tab wave_coverage_logs](#tab-wave_coverage_logs)
-    - [Tab area_coverage_logs](#tab-area_coverage_logs)
-    - [Tab system_performance_logs](#tab-system_performance_logs)
-    - [Tab drone_charge_logs](#tab-drone_charge_logs)
-    - [Tab drone_recharge_logs](#tab-drone_recharge_logs)
-  - [Connessioni Redis](#connessioni-redis)
-- [Risultati Sperimentali](#risultati-sperimentali)
+	- [Fini del sistema](#fini-del-sistema)
+	- [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
+		- [Modello concettuale del sistema](#modello-concettuale-del-sistema)
+		- [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
+		- [Stati del sistema](#stati-del-sistema)
+		- [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
+		- [Visualizzare il sistema](#visualizzare-il-sistema)
+			- [Area da sorvegliare](#area-da-sorvegliare)
+			- [To starting line](#to-starting-line)
+			- [Working](#working)
+			- [To base](#to-base)
+			- [Contesto del sistema](#contesto-del-sistema)
+	- [User requirements](#user-requirements)
+	- [Use case utente](#use-case-utente)
+		- [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
+	- [System requirements](#system-requirements)
+	- [Monitors](#monitors)
+		- [Coverage](#coverage)
+			- [WaveCoverageMonitor](#wavecoveragemonitor)
+			- [AreaCoverageMonitor](#areacoveragemonitor)
+		- [Drone Charge](#drone-charge)
+		- [Drone Recharge](#drone-recharge)
+		- [System Performance](#system-performance)
+	- [Architectural system diagram](#architectural-system-diagram)
+	- [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
+	- [State diagram Drone](#state-diagram-drone)
+	- [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
+	- [Implementation](#implementation)
+	- [Implementazione software](#implementazione-software)
+	- [_Outsourcing_](#outsourcing)
+	- [Implementare il sistema](#implementare-il-sistema)
+		- [Componente Main](#componente-main)
+		- [Componente ChargeBase](#componente-chargebase)
+		- [Componente ScannerManager](#componente-scannermanager)
+		- [Componente DroneControl](#componente-dronecontrol)
+		- [Componente Drone](#componente-drone)
+		- [Componente Wave](#componente-wave)
+		- [Componente TestGenerator](#componente-testgenerator)
+		- [Componente Database](#componente-database)
+		- [Altre componenti](#altre-componenti)
+	- [Schema del Database](#schema-del-database)
+		- [Tab `drone_logs`](#tab-drone_logs)
+		- [Tab `wave_coverage_logs`](#tab-wave_coverage_logs)
+		- [Tab `area_coverage_logs`](#tab-area_coverage_logs)
+		- [Tab `system_performance_logs`](#tab-system_performance_logs)
+		- [Tab `drone_charge_logs`](#tab-drone_charge_logs)
+		- [Tab `drone_recharge_logs`](#tab-drone_recharge_logs)
+	- [Connessioni Redis](#connessioni-redis)
+	- [Risultati Sperimentali](#risultati-sperimentali)
 
 # DroneControlSystem
 
@@ -91,7 +99,7 @@ Partendo dalla richiesta della traccia abbiamo pensato di vedere questi quadrati
 Chiamiamo quindi `starting_line` la colonna di celle coincidenti col lato sinistro dell'area.
 
 Per rispettare il requisito di sorveglianza di ogni punto almeno ogni $5$ minuti, raggruppiamo i droni in gruppi di $300$ che chiamiamo onde. Una volta formata l'onda, questa parte dalla base verso la `starting_line`. I droni si muoveranno in diagonale.
-Quando ogni drone è arrivato alla starting_line, l'onda parte col sorvegliare l'area. Questo processo si ripete ogni cinque minuti. È importante notare come il momento in cui l'ultimo drone della nuova onda arriva alla `starting_line` coincide col momento in cui l'onda precedente avrà lavorato per esattamente cinque minuti.
+Quando ogni drone è arrivato alla `starting_line`, l'onda parte col sorvegliare l'area. Questo processo si ripete ogni cinque minuti. È importante notare come il momento in cui l'ultimo drone della nuova onda arriva alla `starting_line` coincide col momento in cui l'onda precedente avrà lavorato per esattamente cinque minuti.
 
 Con onde di droni partenti ogni cinque minuti dalla `starting_line`, ogni punto dell'area è verificato almeno ogni cinque minuti: quando un punto sulla linea di quadrati che il drone percorre sarà stato verificato, esso lo sarà di nuovo entro i prossimi cinque minuti grazie al drone della nuova onda che arriverà a sorvegliarlo trascorso il tempo detto.
 Questo sistema forma un meccanismo ad onde che è possibile vedere nelle immagini a seguire, in cui nel lifetime di una simulazione è possibile osservare il susseguirsi di diverse onde di droni, ciascuna delle quali copre naturalmente per intero l'area da sinistra a destra.
@@ -193,6 +201,24 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
 - **(2.2) Funzionalità del Centro di Controllo**: Il centro di controllo, situato al centro dell'area di sorveglianza, deve gestire tutte le operazioni dei droni, inclusa la pianificazione delle missioni, il monitoraggio in tempo reale e
   la gestione delle emergenze.
 - **(3.1) Controllo autonomia dei Droni**: Il sistema deve gestire autonomamente l'autonomia di volo di ciascun drone, coordinando i tempi di rientro per la ricarica basandosi sul livello di carica della batteria.
+
+## Monitors
+
+### Coverage
+Il CoverageMonitor che controlla se DroneControlSystem stia effettivamente verificando l'area $6\times6 \ km$ è suddiviso in [WaveCoverageMonitor](#wavecoveragemonitor) e [AreaCoverageMonitor](#areacoveragemonitor)
+
+#### WaveCoverageMonitor
+WaveCoverageMonitor si occupa di controllare ad ogni tick che ogni drone di un'onda che sta nello stato WORKING stia effettivamente verificando il proprio punto. In caso contrario riporterá le informazioni di quale drone abbia fallito la verifica e il suo motivo.
+
+#### AreaCoverageMonitor
+AreaCoverageMonitor si occupa di controllare che ad ogni tick tutti i punti dell'area vengano correttamente verificati dalle Onde. In caso contrario riporterá le informazioni di quale Onda (in particolare anche quale Drone) abbia fallito nella verifica aggiungendo anche le coordinate dei checkpoint che non sono stati raggiunti.
+
+### Drone Charge
+Il DroneChargeMonitor verifica che non ci sia alcun consumumo anomalo per i Droni del sistema. Nel caso in cui un drone inizi ad avere un consumo elevato, il monitor riporta il valore del consumo per singolo tick del drone e se è riuscito ad arrivare alla base o meno.
+
+### Drone Recharge
+
+### System Performance
 
 ## Architectural system diagram
 
@@ -848,3 +874,4 @@ Eccole qui elencate:
 ## Risultati Sperimentali
 
 Descrivere i risultati ottenuti dalla simulazione del sistema.
+
