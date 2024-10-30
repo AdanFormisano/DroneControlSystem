@@ -44,6 +44,8 @@ void SystemPerformanceMonitor::checkPerformance() {
                 double average_system_performance = total_performance / total_tick_count;
                 log_system("Average system performance: " + std::to_string(average_system_performance) + "%");
 
+                // return;
+
                 // Update the last processed tick
                 if (!performance_data.empty()) {
                     last_processed_tick = performance_data.back().tick_n;
@@ -72,6 +74,7 @@ void SystemPerformanceMonitor::checkPerformance() {
                 } catch (const std::exception &e) {
                     log_error("SystemPerformance", "Error while writing to the database: " + std::string(e.what()));
                 }
+                return;
             }
 
             // Clear the processed data

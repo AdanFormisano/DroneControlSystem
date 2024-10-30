@@ -56,7 +56,7 @@ while true; do
         toggle_single_mon $key
         ;;
     [Ii])
-        show_help
+        toggle_help
         ;;
     [Hh])
         toggle_hide

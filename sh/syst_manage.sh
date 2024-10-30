@@ -6,33 +6,33 @@ cleanup() {
     echo -e "\n☑️ Termino i processi..."
     
     # Chiude il processo Drone
-    if [ -n "$DRONE_PID" ]; then
+    if [ -n "$DRONE_PID" ] && kill -0 $DRONE_PID 2>/dev/null; then
         kill -- -$DRONE_PID
     fi
     
     # Chiude il processo DCS
-    if [ "$DCS_RUNNING" = true ] && [ -n "$DCS_PID" ]; then
+    if [ "$DCS_RUNNING" = true ] && [ -n "$DCS_PID" ] && kill -0 $DCS_PID 2>/dev/null; then
         kill $DCS_PID
     fi
     
     # Chiude il processo DCSA
-    if [ "$DCSA_RUNNING" = true ] && [ -n "$DCSA_PID" ]; then
+    if [ "$DCSA_RUNNING" = true ] && [ -n "$DCSA_PID" ] && kill -0 $DCSA_PID 2>/dev/null; then
         kill $DCSA_PID
     fi
 
     # Chiude il processo MONITOR
-    if [ "$MONITOR_RUNNING" = true ] && [ -n "$MONITOR_LOG_PID" ]; then
+    if [ "$MONITOR_RUNNING" = true ] && [ -n "$MONITOR_LOG_PID" ] && kill -0 $MONITOR_LOG_PID 2>/dev/null; then
         kill $MONITOR_LOG_PID
     fi
     
     # Chiude il processo DCSA Fast
-    if [ "$DCSAF_RUNNING" = true ] && [ -n "$DCSAF_PID" ]; then
+    if [ "$DCSAF_RUNNING" = true ] && [ -n "$DCSAF_PID" ] && kill -0 $DCSAF_PID 2>/dev/null; then
         kill $DCSAF_PID
     fi
     
     # Chiude i monitor specifici
     for pid in "${MONITOR_PIDS[@]}"; do
-        if [ -n "$pid" ]; then
+        if [ -n "$pid" ] && kill -0 $pid 2>/dev/null; then
             kill $pid
         fi
     done
@@ -55,8 +55,8 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-show_help() {
-    center_title_with_message "Hai premuto i e visualizzi..." "AIUTO"
-    echo "$help_message"
-    read -n 1 -r
-}
+# show_help() {
+#     center_title_with_message "Hai premuto i e visualizzi..." "AIUTO"
+#     echo "$help_message"
+#     read -n 1 -r
+# }
