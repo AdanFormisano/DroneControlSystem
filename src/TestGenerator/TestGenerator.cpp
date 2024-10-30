@@ -9,7 +9,8 @@ TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
                                              mq(open_or_create, "drone_fault_queue", 100, sizeof(TG_data)),
                                              mq_charge(open_or_create, "charge_fault_queue", 100, sizeof(TG_charge_data)),
                                              gen(rd()), dis(0, 1), dis_consumption(1.5, 2), dis_drone(0, 299),
-                                             dis_tick(1, 20)
+                                             dis_tick(1, 20),
+                                             dis_charge_rate(0.01, 2)
 {
     // std::cout << "[TestGenerator] TestGenerator created" << std::endl;
     log_tg("TestGenerator created");
@@ -30,7 +31,7 @@ TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
         if (drone_id != -1)
         {
             // Generate a random charge rate between 1.5 and 2 times faster than normal
-            float charge_rate_factor = dis_consumption(gen);
+            float charge_rate_factor = dis_charge_rate(gen);
 
             // Send a message to ChargeBase to set the drone's charge rate
             TG_charge_data msg = {
@@ -39,11 +40,13 @@ TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
             };
             mq_charge.send(&msg, sizeof(msg), 0);
 
-            std::cout << "[TestGenerator] Drone " << drone_id << " has charge rate factor of " << charge_rate_factor << std::endl;
+            // std::cout << "[TestGenerator] Drone " << drone_id << " has charge rate factor of " << charge_rate_factor << std::endl;
+            log_tg("Drone " + std::to_string(drone_id) + " has charge rate factor of " + std::to_string(charge_rate_factor));
         }
         else
         {
-            std::cout << "[TestGenerator] No drones found in the charging list" << std::endl;
+            // std::cout << "[TestGenerator] No drones found in the charging list" << std::endl;
+            log_tg("No drones found in the charging list");
         }
 
     };
@@ -159,7 +162,7 @@ DroneInfo TestGenerator::ChooseRandomDrone()
     if (wave_id == -1)
     {
         // throw std::runtime_error("Wave not found");
-        std::cout << "[TestGenerator] Wave not found" << std::endl;
+        // std::cout << "[TestGenerator] Wave not found" << std::endl;
         log_tg("Wave not found");
         return {};
     }
