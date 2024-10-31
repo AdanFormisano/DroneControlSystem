@@ -3,55 +3,55 @@
 - [Indice](#indice)
 - [DroneControlSystem](#dronecontrolsystem)
 - [Descrizione generale](#descrizione-generale)
-	- [Fini del sistema](#fini-del-sistema)
-	- [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
-		- [Modello concettuale del sistema](#modello-concettuale-del-sistema)
-		- [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
-		- [Stati del sistema](#stati-del-sistema)
-		- [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
-		- [Visualizzare il sistema](#visualizzare-il-sistema)
-			- [Area da sorvegliare](#area-da-sorvegliare)
-			- [To starting line](#to-starting-line)
-			- [Working](#working)
-			- [To base](#to-base)
-			- [Contesto del sistema](#contesto-del-sistema)
-	- [User requirements](#user-requirements)
-	- [Use case utente](#use-case-utente)
-		- [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
-	- [System requirements](#system-requirements)
-	- [Monitors](#monitors)
-		- [Coverage](#coverage)
-			- [WaveCoverageMonitor](#wavecoveragemonitor)
-			- [AreaCoverageMonitor](#areacoveragemonitor)
-		- [Drone Charge](#drone-charge)
-		- [Drone Recharge](#drone-recharge)
-		- [System Performance](#system-performance)
-	- [Architectural system diagram](#architectural-system-diagram)
-	- [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
-	- [State diagram Drone](#state-diagram-drone)
-	- [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
-	- [Implementation](#implementation)
-	- [Implementazione software](#implementazione-software)
-	- [_Outsourcing_](#outsourcing)
-	- [Implementare il sistema](#implementare-il-sistema)
-		- [Componente Main](#componente-main)
-		- [Componente ChargeBase](#componente-chargebase)
-		- [Componente ScannerManager](#componente-scannermanager)
-		- [Componente DroneControl](#componente-dronecontrol)
-		- [Componente Drone](#componente-drone)
-		- [Componente Wave](#componente-wave)
-		- [Componente TestGenerator](#componente-testgenerator)
-		- [Componente Database](#componente-database)
-		- [Altre componenti](#altre-componenti)
-	- [Schema del Database](#schema-del-database)
-		- [Tab `drone_logs`](#tab-drone_logs)
-		- [Tab `wave_coverage_logs`](#tab-wave_coverage_logs)
-		- [Tab `area_coverage_logs`](#tab-area_coverage_logs)
-		- [Tab `system_performance_logs`](#tab-system_performance_logs)
-		- [Tab `drone_charge_logs`](#tab-drone_charge_logs)
-		- [Tab `drone_recharge_logs`](#tab-drone_recharge_logs)
-	- [Connessioni Redis](#connessioni-redis)
-	- [Risultati Sperimentali](#risultati-sperimentali)
+  - [Fini del sistema](#fini-del-sistema)
+  - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
+    - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
+    - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
+    - [Stati del sistema](#stati-del-sistema)
+    - [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
+    - [Visualizzare il sistema](#visualizzare-il-sistema)
+      - [Area da sorvegliare](#area-da-sorvegliare)
+      - [To starting line](#to-starting-line)
+      - [Working](#working)
+      - [To base](#to-base)
+      - [Contesto del sistema](#contesto-del-sistema)
+  - [User requirements](#user-requirements)
+  - [Use case utente](#use-case-utente)
+    - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
+  - [System requirements](#system-requirements)
+  - [Monitors](#monitors)
+    - [Coverage](#coverage)
+      - [WaveCoverageMonitor](#wavecoveragemonitor)
+      - [AreaCoverageMonitor](#areacoveragemonitor)
+    - [Drone Charge](#drone-charge)
+    - [Drone Recharge](#drone-recharge)
+    - [System Performance](#system-performance)
+  - [Architectural system diagram](#architectural-system-diagram)
+  - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
+  - [State diagram Drone](#state-diagram-drone)
+  - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
+  - [Implementation](#implementation)
+  - [Implementazione software](#implementazione-software)
+  - [_Outsourcing_](#outsourcing)
+  - [Implementare il sistema](#implementare-il-sistema)
+    - [Componente Main](#componente-main)
+    - [Componente ChargeBase](#componente-chargebase)
+    - [Componente ScannerManager](#componente-scannermanager)
+    - [Componente DroneControl](#componente-dronecontrol)
+    - [Componente Drone](#componente-drone)
+    - [Componente Wave](#componente-wave)
+    - [Componente TestGenerator](#componente-testgenerator)
+    - [Componente Database](#componente-database)
+    - [Altre componenti](#altre-componenti)
+  - [Schema del Database](#schema-del-database)
+    - [Tab `drone_logs`](#tab-drone_logs)
+    - [Tab `wave_coverage_logs`](#tab-wave_coverage_logs)
+    - [Tab `area_coverage_logs`](#tab-area_coverage_logs)
+    - [Tab `system_performance_logs`](#tab-system_performance_logs)
+    - [Tab `drone_charge_logs`](#tab-drone_charge_logs)
+    - [Tab `drone_recharge_logs`](#tab-drone_recharge_logs)
+  - [Connessioni Redis](#connessioni-redis)
+  - [Risultati Sperimentali](#risultati-sperimentali)
 
 # DroneControlSystem
 
@@ -205,20 +205,28 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
 ## Monitors
 
 ### Coverage
+
 Il CoverageMonitor che controlla se DroneControlSystem stia effettivamente verificando l'area $6\times6 \ km$ è suddiviso in [WaveCoverageMonitor](#wavecoveragemonitor) e [AreaCoverageMonitor](#areacoveragemonitor)
 
 #### WaveCoverageMonitor
+
 WaveCoverageMonitor si occupa di controllare ad ogni tick che ogni drone di un'onda che sta nello stato WORKING stia effettivamente verificando il proprio punto. In caso contrario riporterá le informazioni di quale drone abbia fallito la verifica e il suo motivo.
 
 #### AreaCoverageMonitor
+
 AreaCoverageMonitor si occupa di controllare che ad ogni tick tutti i punti dell'area vengano correttamente verificati dalle Onde. In caso contrario riporterá le informazioni di quale Onda (in particolare anche quale Drone) abbia fallito nella verifica aggiungendo anche le coordinate dei checkpoint che non sono stati raggiunti.
 
 ### Drone Charge
+
 Il DroneChargeMonitor verifica che non ci sia alcun consumumo anomalo per i Droni del sistema. Nel caso in cui un drone inizi ad avere un consumo elevato, il monitor riporta il valore del consumo per singolo tick del drone e se è riuscito ad arrivare alla base o meno.
 
 ### Drone Recharge
 
+RechargeTimeMonitor controlla che la il tempo di carica del drone non sia fuori dal range di $[2,3]\mathrm{h}$. Se ciò accade il monitor inserisce nel DB il drone come uno di quelli che si è ricaricato in un tempo minore (o maggiore) del previsto. ~~In questa casistica rientrano anche i droni che si siano ricaricati prima delle $2$ ore beneficiando di un livello di carica superiore allo $0\%$ datogli da carica residua avanzata da perlustrazioni antecedenti a quando siano tornati a ricaricarsi.~~
+
 ### System Performance
+
+Il SystemPerformanceMonitor misure le prestazioni del sistema in termini di droni esplosi nel corso di una simulazione. Il livello di degrado è perciò dato dal numero di droni esplosi in relazione al numero di droni totali usati.
 
 ## Architectural system diagram
 
@@ -873,5 +881,8 @@ Eccole qui elencate:
 
 ## Risultati Sperimentali
 
-Descrivere i risultati ottenuti dalla simulazione del sistema.
+_Descrivere i risultati ottenuti dalla simulazione del sistema._
 
+Per verificare il corretto funzionamento del sistema, abbiamo tenuto conto di diversi parametri, e osservato i dati di diverse simulazioni. Prendendo in esame una delle simulazioni più rappresentative, ossia una di quelle in cui si verifichino tutti gli scenari del TestGenerator, abbiamo constatato, comparando l'output del sistema/monitor coi dati nel DB, in primis la correttezza delle informazioni visualizzate ambo i lati, e poi quanto e come il sistema performasse.
+
+Andando più sul concreto, iniziamo a snocciolare qualche dato, partendo dai monitor e dalla loro osservazione.
