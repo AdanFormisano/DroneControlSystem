@@ -19,3 +19,4 @@ profiler/
 
 # Logs
 log/
+redis-server.log

@@ -9,7 +9,7 @@ void SystemPerformanceMonitor::checkPerformance() {
     int last_processed_tick = 0;
     bool first_run = true;
 
-    while (true) {
+    while (last_processed_tick < sim_duration_ticks - 1) {
         try {
             log_system("Fetching performance data...");
             getPerformanceData(last_processed_tick);

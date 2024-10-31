@@ -3,6 +3,7 @@
 - [Indice](#indice)
 - [DroneControlSystem](#dronecontrolsystem)
 - [Descrizione generale](#descrizione-generale)
+
   - [Fini del sistema](#fini-del-sistema)
   - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
     - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
@@ -20,12 +21,14 @@
     - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
   - [System requirements](#system-requirements)
   - [Monitors](#monitors)
-    - [Coverage](#coverage)
-      - [WaveCoverageMonitor](#wavecoveragemonitor)
-      - [AreaCoverageMonitor](#areacoveragemonitor)
+
+    - [WaveCoverageMonitor](#wavecoveragemonitor)
+    - [AreaCoverageMonitor](#areacoveragemonitor)
+
     - [Drone Charge](#drone-charge)
     - [Drone Recharge](#drone-recharge)
     - [System Performance](#system-performance)
+
   - [Architectural system diagram](#architectural-system-diagram)
   - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
   - [State diagram Drone](#state-diagram-drone)
@@ -154,23 +157,23 @@ La seguente è una vista ad alto livello dell'area, delle componenti del sistema
 
 #### Area da sorvegliare
 
-![area](../med/area.png)
+![area](../med/descr/area.png)
 
 #### To starting line
 
-![to_strt](../med/01_to_strt_line.gif)
+![to_strt](../med/descr/01_to_strt_line.gif)
 
 #### Working
 
-![working](../med/02_working.gif)
+![working](../med/descr/02_working.gif)
 
 #### To base
 
-![to_base](../med/03_to_base.gif)
+![to_base](../med/descr/03_to_base.gif)
 
 #### Contesto del sistema
 
-![context](../med/ctx_view.png)
+![context](../med/descr/ctx_view.png)
 
 ## User requirements
 
@@ -187,7 +190,7 @@ Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli
 
 Questi diagrammi use-case contengono scenari d'uso del sistema da parte dei vari suoi attori
 
-![alt text](../med/ucase_diag.png)
+![alt text](../med/diag/ucase_diag.png)
 
 ## System requirements
 
@@ -204,15 +207,11 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
 
 ## Monitors
 
-### Coverage
-
-Il CoverageMonitor che controlla se DroneControlSystem stia effettivamente verificando l'area $6\times6 \ km$ è suddiviso in [WaveCoverageMonitor](#wavecoveragemonitor) e [AreaCoverageMonitor](#areacoveragemonitor)
-
-#### WaveCoverageMonitor
+### WaveCoverageMonitor
 
 WaveCoverageMonitor si occupa di controllare ad ogni tick che ogni drone di un'onda che sta nello stato WORKING stia effettivamente verificando il proprio punto. In caso contrario riporterá le informazioni di quale drone abbia fallito la verifica e il suo motivo.
 
-#### AreaCoverageMonitor
+### AreaCoverageMonitor
 
 AreaCoverageMonitor si occupa di controllare che ad ogni tick tutti i punti dell'area vengano correttamente verificati dalle Onde. In caso contrario riporterá le informazioni di quale Onda (in particolare anche quale Drone) abbia fallito nella verifica aggiungendo anche le coordinate dei checkpoint che non sono stati raggiunti.
 
@@ -222,27 +221,29 @@ Il DroneChargeMonitor verifica che non ci sia alcun consumumo anomalo per i Dron
 
 ### Drone Recharge
 
-RechargeTimeMonitor controlla che la il tempo di carica del drone non sia fuori dal range di $[2,3]\mathrm{h}$. Se ciò accade il monitor inserisce nel DB il drone come uno di quelli che si è ricaricato in un tempo minore (o maggiore) del previsto. ~~In questa casistica rientrano anche i droni che si siano ricaricati prima delle $2$ ore beneficiando di un livello di carica superiore allo $0\%$ datogli da carica residua avanzata da perlustrazioni antecedenti a quando siano tornati a ricaricarsi.~~
+RechargeTimeMonitor controlla che il tempo di carica del drone non sia fuori dal range di $[2,3]\mathrm{h}$. Se ciò accade il monitor inserisce nel DB il drone come uno di quelli che si è ricaricato in un tempo minore (o maggiore) del previsto.
 
 ### System Performance
 
-Il SystemPerformanceMonitor misure le prestazioni del sistema in termini di droni esplosi nel corso di una simulazione. Il livello di degrado è perciò dato dal numero di droni esplosi in relazione al numero di droni totali usati.
+Per ogni onda a lavoro in un tick, viene verificato se tutti i suoi droni siano effetivamente in uno stato `WORKING`. In caso contrario, contando il numero di droni effetivamente a lavoro se questi ultimi sono meno di quelli previsti (il numero di droni a lavoro è conosciuto per ogni onda, così come il numero di onde) le prestazioni degradano in percentuale.
+
+Il livello di degrado per un dato tick è perciò dato dal numero di droni non a lavoro (esplosi o disconnessi) in relazione al numero di droni totali che dovrebbero esserlo.
 
 ## Architectural system diagram
 
-![arch](../med/arch_diag.png)
+![arch](../med/diag/arch_diag.png)
 
 ## Activity diagram creazione Wave e droni
 
-![act](../med/act_diag.png)
+![act](../med/diag/act_diag.png)
 
 ## State diagram Drone
 
-![state](../med/state_diag.png)
+![state](../med/diag/state_diag.png)
 
 ## Message sequence chart diagram carica Drone
 
-![msc](../med/msc_diag.png)
+![msc](../med/diag/msc_diag.png)
 
 ## Implementation
 
@@ -884,5 +885,55 @@ Eccole qui elencate:
 _Descrivere i risultati ottenuti dalla simulazione del sistema._
 
 Per verificare il corretto funzionamento del sistema, abbiamo tenuto conto di diversi parametri, e osservato i dati di diverse simulazioni. Prendendo in esame una delle simulazioni più rappresentative, ossia una di quelle in cui si verifichino tutti gli scenari del TestGenerator, abbiamo constatato, comparando l'output del sistema/monitor coi dati nel DB, in primis la correttezza delle informazioni visualizzate ambo i lati, e poi quanto e come il sistema performasse.
+
+#### Vediamo come il sistema si avvia
+
+avvio e qualche tick
+
+<img src="../med/log/01_system_start.png" alt="alt text" style="zoom: 50%;" />
+
+#### Vita completa dei droni
+
+stati di vita dei droni
+
+#### TestGenerator comparato a DB
+
+##### Scenario _Everything is fine_
+
+Scenario di default in cui tutto funziona senza anomalie. Viene impostato come funzione vuota per il 20% del valore della mappa.
+
+##### Scenario _Drone failure_
+
+Viene selezionato un drone casuale che "esplode" (o cessa di funzionare). Il suo stato viene impostato su "DEAD" e viene inviato un messaggio a `ScannerManager` per aggiornare il suo stato.
+
+| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
+| --------------------------------------------------------------- | ---------------------------------------------------------------- |
+
+##### Scenario _High consumption_
+
+Viene scelto un drone casuale e viene aumentato il suo consumo di energia (tra 1.5 e 2 volte rispetto al normale). Un messaggio viene inviato a `ScannerManager` per impostare il fattore di consumo elevato del drone.
+
+| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
+| --------------------------------------------------------------- | ---------------------------------------------------------------- |
+
+##### Scenario _Charge rate mulfunction_
+
+Viene scelto un drone casuale dalla lista `charging_drones` in Redis e viene aumentato il suo rate di carica. Un messaggio viene inviato alla `ChargeBase` per impostare il fattore di carica.
+
+| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
+| --------------------------------------------------------------- | ---------------------------------------------------------------- |
+
+##### Scenario _Connection lost_
+
+Lo scenario **Connection_lost** comporta due sotto-scenari:
+
+1. **Drone non si riconnetterà**: se la probabilità di riconnessione calcolata è inferiore al 70%, il drone rimane disconnesso. Viene inviato un messaggio a `ScannerManager` che imposta il suo stato su "DISCONNECTED" in modo permanente, senza un tempo di riconnessione.
+
+2. **Drone si riconnetterà**: se la probabilità di riconnessione è del 70% o superiore, il drone verrà riconnesso dopo un certo numero di tick, calcolato casualmente (usando `reconnect_tick`). Anche in questo caso, un messaggio a `ScannerManager` aggiorna lo stato del drone su "DISCONNECTED" con il tempo di riconnessione impostato.
+
+| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
+| --------------------------------------------------------------- | ---------------------------------------------------------------- |
+
+#### Monitor
 
 Andando più sul concreto, iniziamo a snocciolare qualche dato, partendo dai monitor e dalla loro osservazione.
