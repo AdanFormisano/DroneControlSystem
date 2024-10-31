@@ -3,7 +3,6 @@
 - [Indice](#indice)
 - [DroneControlSystem](#dronecontrolsystem)
 - [Descrizione generale](#descrizione-generale)
-
   - [Fini del sistema](#fini-del-sistema)
   - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
     - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
@@ -16,24 +15,21 @@
       - [Working](#working)
       - [To base](#to-base)
       - [Contesto del sistema](#contesto-del-sistema)
-  - [User requirements](#user-requirements)
+- [User requirements](#user-requirements)
   - [Use case utente](#use-case-utente)
     - [Use case vista ampia del sistema](#use-case-vista-ampia-del-sistema)
-  - [System requirements](#system-requirements)
-  - [Monitors](#monitors)
-
-    - [WaveCoverageMonitor](#wavecoveragemonitor)
-    - [AreaCoverageMonitor](#areacoveragemonitor)
-
-    - [Drone Charge](#drone-charge)
-    - [Drone Recharge](#drone-recharge)
-    - [System Performance](#system-performance)
-
+- [System requirements](#system-requirements)
   - [Architectural system diagram](#architectural-system-diagram)
   - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
   - [State diagram Drone](#state-diagram-drone)
   - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
-  - [Implementation](#implementation)
+- [Monitors](#monitors)
+  - [WaveCoverageMonitor](#wavecoveragemonitor)
+  - [AreaCoverageMonitor](#areacoveragemonitor)
+  - [Drone Charge](#drone-charge)
+  - [Drone Recharge](#drone-recharge)
+  - [System Performance](#system-performance)
+- [Implementation](#implementation)
   - [Implementazione software](#implementazione-software)
   - [_Outsourcing_](#outsourcing)
   - [Implementare il sistema](#implementare-il-sistema)
@@ -54,7 +50,7 @@
     - [Tab `drone_charge_logs`](#tab-drone_charge_logs)
     - [Tab `drone_recharge_logs`](#tab-drone_recharge_logs)
   - [Connessioni Redis](#connessioni-redis)
-  - [Risultati Sperimentali](#risultati-sperimentali)
+- [Risultati Sperimentali](#risultati-sperimentali)
 
 # DroneControlSystem
 
@@ -175,7 +171,7 @@ La seguente è una vista ad alto livello dell'area, delle componenti del sistema
 
 ![context](../med/descr/ctx_view.png)
 
-## User requirements
+# User requirements
 
 Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli utenti del sistema:
 
@@ -186,13 +182,11 @@ Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli
 
 ## Use case utente
 
-### Use case vista ampia del sistema
-
 Questi diagrammi use-case contengono scenari d'uso del sistema da parte dei vari suoi attori
 
 ![alt text](../med/diag/ucase_diag.png)
 
-## System requirements
+# System requirements
 
 Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecniche e le funzionalità necessarie per implementare il sistema:
 
@@ -205,7 +199,23 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
   la gestione delle emergenze.
 - **(3.1) Controllo autonomia dei Droni**: Il sistema deve gestire autonomamente l'autonomia di volo di ciascun drone, coordinando i tempi di rientro per la ricarica basandosi sul livello di carica della batteria.
 
-## Monitors
+## Architectural system diagram
+
+![arch](../med/diag/arch_diag.png)
+
+## Activity diagram creazione Wave e droni
+
+![act](../med/diag/act_diag.png)
+
+## State diagram Drone
+
+![state](../med/diag/state_diag.png)
+
+## Message sequence chart diagram carica Drone
+
+![msc](../med/diag/msc_diag.png)
+
+# Monitors
 
 ### WaveCoverageMonitor
 
@@ -229,23 +239,7 @@ Per ogni onda a lavoro in un tick, viene verificato se tutti i suoi droni siano 
 
 Il livello di degrado per un dato tick è perciò dato dal numero di droni non a lavoro (esplosi o disconnessi) in relazione al numero di droni totali che dovrebbero esserlo.
 
-## Architectural system diagram
-
-![arch](../med/diag/arch_diag.png)
-
-## Activity diagram creazione Wave e droni
-
-![act](../med/diag/act_diag.png)
-
-## State diagram Drone
-
-![state](../med/diag/state_diag.png)
-
-## Message sequence chart diagram carica Drone
-
-![msc](../med/diag/msc_diag.png)
-
-## Implementation
+# Implementation
 
 ## Implementazione software
 
