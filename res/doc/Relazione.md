@@ -884,7 +884,7 @@ Per verificare il corretto funzionamento del sistema, abbiamo tenuto conto di di
 
 avvio e qualche tick
 
-<img src="../med/log/01_system_start.png" alt="alt text" style="zoom: 50%;" />
+<img src="../med/log/00_system_start.png" alt="alt text" style="zoom: 50%;" />
 
 #### Vita completa dei droni
 
@@ -892,13 +892,20 @@ stati di vita dei droni
 
 #### TestGenerator comparato a DB
 
+Di seguito osserviamo come nel DB siano stati inseriti i dati di interesse. Poniamo l'attenzione su ogni sequenza di avvenimenti in cui il `TestGenerator` ha generato uno scenario (che non fosse _Everything is fine_), l'output della shell lo ha stampato a video, e il sistema ha scritto nelle opportune tabelle del DB i giusti valori che rispecchiassero l'accaduto.
+
 ##### Scenario _Everything is fine_
 
 Scenario di default in cui tutto funziona senza anomalie. Viene impostato come funzione vuota per il 20% del valore della mappa.
+Per vedere che si sia verificato basta guardare l'output loggato di `drone_logs` in cui i tick si succedono normalmente.
+
+|<img src="../med/log/01_every_is_fine.png" style="zoom: 27%;">|<img src="../med/db/01_every_is_fine.png" style="zoom: 63%;">|
+|-|-|
 
 ##### Scenario _Drone failure_
 
 Viene selezionato un drone casuale che "esplode" (o cessa di funzionare). Il suo stato viene impostato su "DEAD" e viene inviato un messaggio a `ScannerManager` per aggiornare il suo stato.
+Confrontiamo l'output del terminale con le tabelle _tab1_ e _tab2_ nel DB
 
 | <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
 | --------------------------------------------------------------- | ---------------------------------------------------------------- |
