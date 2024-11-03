@@ -54,7 +54,7 @@
 
 # DroneControlSystem
 
-_DroneControlSystem_ è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area di $6×6\,\mathrm{Km}$.
+_DroneControlSystem_ è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area di $6×6\\mathrm{Km}$.
 
 Il sistema è sviluppato come progetto d'esame per [Ingegneria del software](https://corsidilaurea.uniroma1.it/it/view-course-details/2023/29923/20190322090929/1c0d2a0e-d989-463c-a09a-00b823557edd/8e637351-4a3a-47a1-ab11-dfe4ad47e446/4f7bd2b2-2f8e-4c38-b15f-7f3c310550b6/8bcc378c-9ff1-4263-87b7-04a394485a9f?guid_cv=8e637351-4a3a-47a1-ab11-dfe4ad47e446&current_erogata=1c0d2a0e-d989-463c-a09a-00b823557edd), corso tenuto dal prof [Enrico Tronci](https://corsidilaurea.uniroma1.it/it/users/enricotronciuniroma1it) a [La Sapienza](https://www.uniroma1.it/), ed è basato sul progetto gentilmente proposto dal prof nel `main.pdf` [qui](https://drive.google.com/drive/folders/15HrKGosqsuBBe8qWCm1qB_PvIbRLohqZ), al punto _4.2 Controllo formazione droni_.
 
@@ -92,12 +92,13 @@ La **`ChargeBase`** è l'unico punto dell'intera area in cui i droni si trovano 
 
 ### Struttura dell'area sorvegliata
 
-L'area da sorvegliare è un quadrato di $6\times6\mathrm{\,Km}$ $(36\ \mathrm{Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
+L'area da sorvegliare è un quadrato di $6\times6\mathrm{\ Km}$ $(36\ \mathrm{Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
 
 Partendo dalla richiesta della traccia abbiamo pensato di vedere questi quadrati come delle _celle_ con al proprio centro il punto da verificare per il drone. Quest'ultimo condivide infatti l'istante di tempo $t$ in cui è coperto con ogni altro punto nella cella, facendo sì che al passaggio del drone sul punto al $t$-esimo istante di tempo, l'intera area del quadrato della griglia risulti simultaneamente coperta - dove il tempo è rappresentato, nel nostro sistema, da un'unità di tempo chiamata `tick` (un tick equivale ad un numero preciso di secondi che vedremo dopo).
 Chiamiamo quindi `starting_line` la colonna di celle coincidenti col lato sinistro dell'area.
 
-Per rispettare il requisito di sorveglianza di ogni punto almeno ogni $5$ minuti, raggruppiamo i droni in gruppi di $300$ che chiamiamo onde. Una volta formata l'onda, questa parte dalla base verso la `starting_line`. I droni si muoveranno in diagonale.
+Per rispettare il requisito di sorveglianza di ogni punto almeno ogni $5$ minuti, raggruppiamo i droni in gruppi di $300$ che chiamiamo **onde**. Una volta formata l'onda, questa parte dalla base verso la `starting_line`, ovviamente i droni si muoveranno in diagonale e quindi non tutti arriveranno alla `starting_line` allo stesso istante.
+
 Quando ogni drone è arrivato alla `starting_line`, l'onda parte col sorvegliare l'area. Questo processo si ripete ogni cinque minuti. È importante notare come il momento in cui l'ultimo drone della nuova onda arriva alla `starting_line` coincide col momento in cui l'onda precedente avrà lavorato per esattamente cinque minuti.
 
 Con onde di droni partenti ogni cinque minuti dalla `starting_line`, ogni punto dell'area è verificato almeno ogni cinque minuti: quando un punto sulla linea di quadrati che il drone percorre sarà stato verificato, esso lo sarà di nuovo entro i prossimi cinque minuti grazie al drone della nuova onda che arriverà a sorvegliarlo trascorso il tempo detto.
@@ -105,27 +106,28 @@ Questo sistema forma un meccanismo ad onde che è possibile vedere nelle immagin
 
 ### Stati del sistema
 
-Facciamo ora ordine circa gli stati del sistema:
+Facciamo ora ordine circa i possibili stati di un drone:
 
-0. **Avvio simulazione**  
-   Avviata la simulazione, $300$ droni vengono generati al centro dell'area.
+[TODO: su github non riesco a separare la riga dal titolo]
+0. **Avvio simulazione**
+   Ovviamente questo stato viene eseguito una sola volta all'avvio della simulazione. I primi $300$ droni (con carica completa) vengono generati al centro dell'area.
 
-1. **Partenza droni (`TO_STARTING_LINE`)**  
+2. **Partenza droni (`TO_STARTING_LINE`)**  
    Carichi al $100\%$, i droni generati scelti da ScannerManager partono dalla `ChargeBase` verso il lato sinistro dell'area, per posizionarsi lungo la `starting_line`. Avremo perciò $300$ droni pronti a partire dal lato sinistro dell'area, uno per ogni quadrato.
 
-2. **Attesa degli altri droni (`READY`)**  
+3. **Attesa degli altri droni (`READY`)**  
    I droni giunti alla `starting_line` non passano subito a `WORKING`, ma entrano in uno stato di attesa chiamato `READY`, in cui rimangono fin quando ognuno dei $300$ droni non è arrivato alla `starting_line` ed è passato a sua volta a `READY`.
 
-3. **Copertura dell'area (`WORKING`)**  
-   Dopo che tutti i droni sono entrati in `READY`, essi entrano nello stato di `WORKING`. Iniziano quindi il loro volo a $30 \mathrm{\,Km}$ in linea retta (parallela alla base dell'area) verso il lato destro del perimetro dell'area, passando sopra ciascun checkpoint (punto) al centro dei 300 quadrati che separano la `starting_line` dal lato destro dell'area. Ogni volta che un drone sorvola un punto, lo verifica, verificando al contempo tutta l'area del quadrato di cui il punto è il centro.
+4. **Copertura dell'area (`WORKING`)**  
+   Dopo che tutti i droni sono entrati in `READY`, essi entrano nello stato di `WORKING`. Iniziano quindi il loro volo a $30 \mathrm{\ Km}$ in linea retta (parallela alla base dell'area) verso il lato destro del perimetro dell'area, passando sopra ciascun checkpoint (punto) al centro dei 300 quadrati che separano la `starting_line` dal lato destro dell'area. Ogni volta che un drone sorvola un punto, lo verifica, verificando al contempo tutta l'area del quadrato di cui il punto è il centro.
 
-4. **Ritorno alla base (`TO_BASE`)**  
+5. **Ritorno alla base (`TO_BASE`)**  
    Quando un drone/onda (possiamo usare i termini in maniera intercambiabile, perché il movimento di un drone è equivalente a quello di un'onda) raggiunge il lato destro dell'area, termina il suo lavoro di verifica dei punti copertura dell'area, e passa allo stato `TO_BASE`. In questo stato non fa altro che tornare verso il **centro** dell'area per ricaricarsi, ed essere riutilizzato in un nuovo viaggio di copertura.
 
-5. **Ricarica droni (`CHARGING`)**  
+6. **Ricarica droni (`CHARGING`)**  
    Giunti alla base, i droni vengono ricaricati da `ChargeBase`. In particolare, esso è composto da slot che accolgono i droni che vengono a ricaricarsi - uno slot per drone. Il tempo di ricarica, come richiesto dal requisito di progetto, ha una durata nell'intervallo di $[2,3]\ h$ (questo valore è rigenerato ad ogni nuova ricarica del drone).
 
-6. **Attesa in base (`IDLE`)**  
+7. **Attesa in base (`IDLE`)**  
    A carica completa (e non prima), i droni sono messi a disposizione di `ScannerManager` per essere riusati nel creare una nuova onda.
 
 ### Stati di guasto dei droni e TestGenerator
@@ -133,12 +135,12 @@ Facciamo ora ordine circa gli stati del sistema:
 Durante uno qualsiasi degli stati di volo (`TO_STARTING_LINE`, `READY`, `WORKING`, `TO_BASE`), i droni possono entrare in uno dei seguenti fault state:
 
 - **DEAD**: Il drone subisce un malfunzionamento critico e diventa irrecuperabile.
-- **DISCONNECTED**: Il drone perde la connessione e tenta di riconnettersi.
-- **HIGH_CONSUMPTION**: Il drone consuma più del previsto e continua a operare fino a quando la carica non si esaurisce.
+- **DISCONNECTED**: Il drone perde la connessione con la base e tenta di riconnettersi.
+- **HIGH_CONSUMPTION**: Il drone consuma più carica del previsto e continua a operare fino a quando la carica non si esaurisce.
 
-I droni con stato `DISCONNECTED` possono recuperare la connessione (`RECONNECTED`) tornando quindi allo stato precedente la disconnessione, oppure passare a `DEAD` se la connessione non viene ristabilita.
+I droni con stato `DISCONNECTED` possono recuperare la connessione (`RECONNECTED`) tornando quindi allo stato precedente la disconnessione, oppure passare a `DEAD` se la connessione non viene ristabilita (in questo caso è la base che prende la decisione di smettere di tentare la riconnessione col drone).
+
 I droni in `HIGH_CONSUMPTION` possono non riuscire ad arrivare alla base. In tal caso passano a `DEAD`.
-
 Si noti che `HIGH_CONSUMPTION` è un "meta-stato". Nel SUD non compare come uno stato vero e proprio (gli altri, ad esempio, sì, essendo definiti in classi apposite), ma è semplicemente una condizione del drone in uno stato di volo che vede il proprio consumo moltiplicato di un fattore casuale scelto in un range di valori plausibile per uno stato di alto consumo di energia. Lo stesso dicasi per lo stato `IDLE`, che è presente nel sistema in qualità di un insieme contenente i droni carichi e disponibili al riuso.
 
 Nel caso in cui il drone sia in `ChargeBase`, c'è un altro scenario che può colpirlo:
@@ -175,7 +177,7 @@ La seguente è una vista ad alto livello dell'area, delle componenti del sistema
 
 Questi sono i requisiti utente che riflettono le esigenze e le aspettative degli utenti del sistema:
 
-- **(1) Area di Sorveglianza**: L’area da monitorare misura $6\times6$ Km.
+- **(1) Area di Sorveglianza**: L’area da monitorare misura $6\times6$ Km e tutti i suoi punti devono essere verificati ogni $5$ minuti.
 - **(2) Centro di Controllo e Ricarica**: Il centro di controllo e ricarica si trova al centro dell’area da sorvegliare.
 - **(3) Autonomia e ricarica dei droni**: ogni drone ha $30$ minuti di autonomia e deve ricaricarsi in un tempo compreso
   tra le $[2, 3]$ ore
@@ -219,34 +221,33 @@ Questi requisiti sono i requisiti di sistema che dettagliano le specifiche tecni
 
 ### WaveCoverageMonitor
 
-WaveCoverageMonitor si occupa di controllare ad ogni tick che ogni drone di un'onda che sta nello stato WORKING stia effettivamente verificando il proprio punto. In caso contrario riporterá le informazioni di quale drone abbia fallito la verifica e il suo motivo.
+WaveCoverageMonitor si occupa di controllare che, ad ogni tick, ogni drone di un'onda che sta nello stato WORKING stia effettivamente verificando il proprio punto. In caso contrario riporterá le informazioni di quale drone abbia fallito la verifica e il suo motivo.
 
 ### AreaCoverageMonitor
 
-AreaCoverageMonitor si occupa di controllare che ad ogni tick tutti i punti dell'area vengano correttamente verificati dalle Onde. In caso contrario riporterá le informazioni di quale Onda (in particolare anche quale Drone) abbia fallito nella verifica aggiungendo anche le coordinate dei checkpoint che non sono stati raggiunti.
+AreaCoverageMonitor si occupa di controllare che, ad ogni tick, tutti i punti dell'area vengano correttamente verificati dalle onde. In caso contrario riporterá le informazioni di quale onda (in particolare anche quale drone) abbia fallito nella verifica aggiungendo anche le coordinate dei checkpoint che non sono stati raggiunti.
 
 ### Drone Charge
 
-Il DroneChargeMonitor verifica che non ci sia alcun consumumo anomalo per i Droni del sistema. Nel caso in cui un drone inizi ad avere un consumo elevato, il monitor riporta il valore del consumo per singolo tick del drone e se è riuscito ad arrivare alla base o meno.
+Il DroneChargeMonitor verifica che non ci sia alcun consumumo anomalo per i droni del sistema. Nel caso in cui un drone inizi ad avere un consumo elevato, il monitor riporta il valore del consumo per singolo tick del drone e se è riuscito ad arrivare alla base o meno.
 
 ### Drone Recharge
 
-RechargeTimeMonitor controlla che il tempo di carica del drone non sia fuori dal range di $[2,3]\mathrm{h}$. Se ciò accade il monitor inserisce nel DB il drone come uno di quelli che si è ricaricato in un tempo minore (o maggiore) del previsto.
+RechargeTimeMonitor controlla che il tempo di carica del drone sia fuori dal range di $[2,3]\mathrm{h}$. Se ciò accade, il monitor riporta in quanti tick (e anche in minuti) il drone si è ricaricato.
 
 ### System Performance
 
-Per ogni onda a lavoro in un tick, viene verificato se tutti i suoi droni siano effetivamente in uno stato `WORKING`. In caso contrario, contando il numero di droni effetivamente a lavoro se questi ultimi sono meno di quelli previsti (il numero di droni a lavoro è conosciuto per ogni onda, così come il numero di onde) le prestazioni degradano in percentuale.
+Per ogni onda a lavoro in un determinato tick, viene verificato se tutti i suoi droni siano effetivamente in uno stato `WORKING`. In caso contrario, contando il numero di droni effetivamente a lavoro se questi ultimi sono meno di quelli previsti (il numero di droni a lavoro è conosciuto per ogni onda, così come il numero di onde) le prestazioni degradano in percentuale.
 
-Il livello di degrado per un dato tick è perciò dato dal numero di droni non a lavoro (esplosi o disconnessi) in relazione al numero di droni totali che dovrebbero esserlo.
+Il livello di degrado per un dato tick è perciò dato dal numero di droni non a lavoro (`DEAD` o `DISCONNECTED`) in relazione al numero di droni totali che dovrebbero esserlo.
 
 # Implementation
 
 ## Implementazione software
 
-Il sistema è implementato in [C++](https://isocpp.org/), e fa uso di [Redis](https://redis.io/) e
-di [PostgreSQL](https://www.postgresql.org/).
-Redis è disponibile in C++ come client grazie a [redis-plus-plus](https://github.com/sewenew/redis-plus-plus), ed è quello che è stato usato.
-Redis è stato usato per gestire i flussi di dati dei thread, compresi quelli dei droni, e per la comunicazione col database PostgreSQL.
+Il sistema è implementato in [C++](https://isocpp.org/), e fa uso di [PostgreSQL](https://www.postgresql.org/) e [Redis](https://redis.io/) (in particolare è stata utilizzata la libreria [redis-plus-plus](https://github.com/sewenew/redis-plus-plus)).
+
+Redis è stato usato per permettere la comunicazione di dati tra le componenti del sistema.
 
 ## _Outsourcing_
 
@@ -260,55 +261,6 @@ Sebbene alcune di queste tecnologie e componenti siano usate nel sistema (come i
 ## Implementare il sistema
 
 Il sistema è strutturato secondo un'architettura modulare che comprende diverse componenti chiave, ciascuna realizzata attraverso file sorgente specifici.
-
-### Componente Main
-
-Il `Main` è il meta-componente che gestisce i processi e le attività di tutto `DroneControlSystem`, eseguendole al momento opportuno.
-
-_Pseudocodice di Main_
-
-```
-[main] Main executing function
-	Create Redis' connections options
-
-	Fork to create DroneControl process
-		Create Redis connection
-		Create DroneControl object
-		Run DroneControl
-
-	Fork to create ScannerManager process
-		Create Redis' connection pool options
-		Create Redis pool
-		Create ScannerManager object
-		Run ScannerManager
-
-	Fork to create ChargeBase process
-		Create Redis connection
-		Create ChargeBase
-		Create random_device used for creating charging rates
-		SetEngine in ChargeBase
-		Run ChargeBase
-
-	Fork to create TestGenerator process
-		Create Redis connection
-		Create TestGenerator object
-		Run TestGenerator
-
-	Fork to create Monitors process
-		# Create and run all monitors
-
-	End forks
-
-	Create Redis connection
-	Create semaphores (sem_sync_dc, sem_sync_sc, sem_sync_cb, sem_dc, sem_sc, sem_cb)
-	While simultion is running do
-		Post on semaphores (sem_sync_dc, sem_sync_sc, sem_sync_cb) to signal start of new tick
-		Wait on semaphores (sem_dc, sem_sc, sem_cb) that signal end of tick for simulating processes
-		Increase internal tick count
-	End loop
-	Wait for child processes to finish
-	Kill TestGenerator process
-```
 
 ### Componente ChargeBase
 
@@ -793,6 +745,55 @@ class Buffer
 
 _AGGIUNGERE QUI, EVENTUALMENTE, ALTRE COMPONENTI_
 
+#### Componente Main
+
+Il `Main` è il meta-componente che gestisce i processi e le attività di tutto `DroneControlSystem`, eseguendole al momento opportuno.
+
+_Pseudocodice di Main_
+
+```
+[main] Main executing function
+	Create Redis' connections options
+
+	Fork to create DroneControl process
+		Create Redis connection
+		Create DroneControl object
+		Run DroneControl
+
+	Fork to create ScannerManager process
+		Create Redis' connection pool options
+		Create Redis pool
+		Create ScannerManager object
+		Run ScannerManager
+
+	Fork to create ChargeBase process
+		Create Redis connection
+		Create ChargeBase
+		Create random_device used for creating charging rates
+		SetEngine in ChargeBase
+		Run ChargeBase
+
+	Fork to create TestGenerator process
+		Create Redis connection
+		Create TestGenerator object
+		Run TestGenerator
+
+	Fork to create Monitors process
+		# Create and run all monitors
+
+	End forks
+
+	Create Redis connection
+	Create semaphores (sem_sync_dc, sem_sync_sc, sem_sync_cb, sem_dc, sem_sc, sem_cb)
+	While simultion is running do
+		Post on semaphores (sem_sync_dc, sem_sync_sc, sem_sync_cb) to signal start of new tick
+		Wait on semaphores (sem_dc, sem_sc, sem_cb) that signal end of tick for simulating processes
+		Increase internal tick count
+	End loop
+	Wait for child processes to finish
+	Kill TestGenerator process
+```
+
 ## Schema del Database
 
 Di seguito gli schemi delle tabelle del database `dcs` usato
@@ -888,7 +889,7 @@ avvio e qualche tick
 
 #### Vita completa dei droni
 
-stati di vita dei droni
+Di seguito verifichiamo che il sistema faccia funzionare correttamente i droni, infatti per un determinato drone possiamo osservare la presenza di tutti i suoi stati a partire da `To_Starting_Line`, che indica una suo corretto "avviamento", fino a `Charging`, che indica come il drone sia riuscito o ritornare alla base ed a iniziare il processo di ricarica (e l'eventuale `Charging_Completed`).
 
 #### TestGenerator comparato a DB
 
@@ -935,6 +936,10 @@ Lo scenario **Connection_lost** comporta due sotto-scenari:
 | <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
 | --------------------------------------------------------------- | ---------------------------------------------------------------- |
 
-#### Monitor
+### Monitor
 
 Andando più sul concreto, iniziamo a snocciolare qualche dato, partendo dai monitor e dalla loro osservazione.
+
+#### Copertura dell'area
+Per quanto riguarda la verifica dei punti dell'area, i due monitor []()
+
