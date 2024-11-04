@@ -3,71 +3,66 @@
 - [Indice](#indice)
 - [DroneControlSystem](#dronecontrolsystem)
 - [Descrizione generale](#descrizione-generale)
-	- [Fini del sistema](#fini-del-sistema)
-	- [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
-		- [Modello concettuale del sistema](#modello-concettuale-del-sistema)
-		- [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
-		- [Stati del sistema](#stati-del-sistema)
-		- [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
-		- [Visualizzare il sistema](#visualizzare-il-sistema)
-			- [Area da sorvegliare](#area-da-sorvegliare)
-			- [To starting line](#to-starting-line)
-			- [Working](#working)
-			- [To base](#to-base)
-			- [Contesto del sistema](#contesto-del-sistema)
+  - [Fini del sistema](#fini-del-sistema)
+  - [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
+    - [Modello concettuale del sistema](#modello-concettuale-del-sistema)
+    - [Struttura dell'area sorvegliata](#struttura-dellarea-sorvegliata)
+    - [Stati del sistema](#stati-del-sistema)
+    - [Stati di guasto dei droni e TestGenerator](#stati-di-guasto-dei-droni-e-testgenerator)
+    - [Visualizzare il sistema](#visualizzare-il-sistema)
+      - [Area da sorvegliare](#area-da-sorvegliare)
+      - [To starting line](#to-starting-line)
+      - [Working](#working)
+      - [To base](#to-base)
+      - [Contesto del sistema](#contesto-del-sistema)
 - [User requirements](#user-requirements)
-	- [Use case utente](#use-case-utente)
+  - [Use case utente](#use-case-utente)
 - [System requirements](#system-requirements)
-	- [Architectural system diagram](#architectural-system-diagram)
-	- [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
-	- [State diagram Drone](#state-diagram-drone)
-	- [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
-- [Monitors](#monitors)
-		- [WaveCoverageMonitor](#wavecoveragemonitor)
-		- [AreaCoverageMonitor](#areacoveragemonitor)
-		- [Drone Charge](#drone-charge)
-		- [Drone Recharge](#drone-recharge)
-		- [System Performance](#system-performance)
+  - [Architectural system diagram](#architectural-system-diagram)
+  - [Activity diagram creazione Wave e droni](#activity-diagram-creazione-wave-e-droni)
+  - [State diagram Drone](#state-diagram-drone)
+  - [Message sequence chart diagram carica Drone](#message-sequence-chart-diagram-carica-drone)
+- [Monitors](#monitors) - [WaveCoverageMonitor](#wavecoveragemonitor) - [AreaCoverageMonitor](#areacoveragemonitor) - [Drone Charge](#drone-charge) - [Drone Recharge](#drone-recharge) - [System Performance](#system-performance)
 - [Implementation](#implementation)
-	- [Implementazione software](#implementazione-software)
-	- [_Outsourcing_](#outsourcing)
-	- [Implementare il sistema](#implementare-il-sistema)
-		- [Componente ChargeBase](#componente-chargebase)
-		- [Componente ScannerManager](#componente-scannermanager)
-		- [Componente DroneControl](#componente-dronecontrol)
-		- [Componente Drone](#componente-drone)
-		- [Componente Wave](#componente-wave)
-		- [Componente TestGenerator](#componente-testgenerator)
-		- [Componente Database](#componente-database)
-		- [Altre componenti](#altre-componenti)
-			- [Componente Main](#componente-main)
-	- [Schema del Database](#schema-del-database)
-		- [Tab `drone_logs`](#tab-drone_logs)
-		- [Tab `wave_coverage_logs`](#tab-wave_coverage_logs)
-		- [Tab `area_coverage_logs`](#tab-area_coverage_logs)
-		- [Tab `system_performance_logs`](#tab-system_performance_logs)
-		- [Tab `drone_charge_logs`](#tab-drone_charge_logs)
-		- [Tab `drone_recharge_logs`](#tab-drone_recharge_logs)
-	- [Connessioni Redis](#connessioni-redis)
+  - [Implementazione software](#implementazione-software)
+  - [_Outsourcing_](#outsourcing)
+  - [Implementare il sistema](#implementare-il-sistema)
+    - [Componente ChargeBase](#componente-chargebase)
+    - [Componente ScannerManager](#componente-scannermanager)
+    - [Componente DroneControl](#componente-dronecontrol)
+    - [Componente Drone](#componente-drone)
+    - [Componente Wave](#componente-wave)
+    - [Componente TestGenerator](#componente-testgenerator)
+    - [Componente Database](#componente-database)
+    - [Altre componenti](#altre-componenti)
+      - [Componente Main](#componente-main)
+  - [Schema del Database](#schema-del-database)
+    - [Tab `drone_logs`](#tab-drone_logs)
+    - [Tab `wave_coverage_logs`](#tab-wave_coverage_logs)
+    - [Tab `area_coverage_logs`](#tab-area_coverage_logs)
+    - [Tab `system_performance_logs`](#tab-system_performance_logs)
+    - [Tab `drone_charge_logs`](#tab-drone_charge_logs)
+    - [Tab `drone_recharge_logs`](#tab-drone_recharge_logs)
+  - [Connessioni Redis](#connessioni-redis)
 - [Risultati Sperimentali](#risultati-sperimentali)
-	- [Correttezza del sistema \[?\]](#correttezza-del-sistema-)
-		- [Avvio del sistema](#avvio-del-sistema)
-		- [Vita completa dei droni](#vita-completa-dei-droni)
-	- [TestGenerator comparato a DB](#testgenerator-comparato-a-db)
-		- [Scenario _Everything is fine_](#scenario-everything-is-fine)
-		- [Scenario _Drone failure_](#scenario-drone-failure)
-		- [Scenario _High consumption_](#scenario-high-consumption)
-		- [Scenario _Charge rate mulfunction_](#scenario-charge-rate-mulfunction)
-		- [Scenario _Connection lost_](#scenario-connection-lost)
-	- [Monitor](#monitor)
-		- [Copertura dell'area](#copertura-dellarea)
-		- [Consumo anomalo](#consumo-anomalo)
-		- [Ricarica anomala](#ricarica-anomala)
-		- [Performance del sistema](#performance-del-sistema)
+  - [Correttezza del sistema \[?\]](#correttezza-del-sistema-)
+    - [Avvio del sistema](#avvio-del-sistema)
+    - [Vita completa dei droni](#vita-completa-dei-droni)
+  - [TestGenerator comparato a DB](#testgenerator-comparato-a-db)
+    - [Scenario _Everything is fine_](#scenario-everything-is-fine)
+    - [Scenario _Drone failure_](#scenario-drone-failure)
+    - [Scenario _High consumption_](#scenario-high-consumption)
+    - [Scenario _Charge rate mulfunction_](#scenario-charge-rate-mulfunction)
+    - [Scenario _Connection lost_](#scenario-connection-lost)
+  - [Monitor](#monitor)
+    - [Copertura dell'area](#copertura-dellarea)
+    - [Consumo anomalo](#consumo-anomalo)
+    - [Ricarica anomala](#ricarica-anomala)
+    - [Performance del sistema](#performance-del-sistema)
 
 # DroneControlSystem
 
-_DroneControlSystem_ è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area di $6×6\\mathrm{Km}$.
+_DroneControlSystem_ è un progetto simulante un sistema di sorveglianza basato su droni volanti che monitorano un'area di $6×6\ \mathrm{Km}$.
 
 Il sistema è sviluppato come progetto d'esame per [Ingegneria del software](https://corsidilaurea.uniroma1.it/it/view-course-details/2023/29923/20190322090929/1c0d2a0e-d989-463c-a09a-00b823557edd/8e637351-4a3a-47a1-ab11-dfe4ad47e446/4f7bd2b2-2f8e-4c38-b15f-7f3c310550b6/8bcc378c-9ff1-4263-87b7-04a394485a9f?guid_cv=8e637351-4a3a-47a1-ab11-dfe4ad47e446&current_erogata=1c0d2a0e-d989-463c-a09a-00b823557edd), corso tenuto dal prof [Enrico Tronci](https://corsidilaurea.uniroma1.it/it/users/enricotronciuniroma1it) a [La Sapienza](https://www.uniroma1.it/), ed è basato sul progetto gentilmente proposto dal prof nel `main.pdf` [qui](https://drive.google.com/drive/folders/15HrKGosqsuBBe8qWCm1qB_PvIbRLohqZ), al punto _4.2 Controllo formazione droni_.
 
@@ -107,10 +102,12 @@ La **`ChargeBase`** è l'unico punto dell'intera area in cui i droni si trovano 
 
 L'area da sorvegliare è un quadrato di $6\times6\mathrm{\ Km}$ $(36\ \mathrm{Km^2})$, suddiviso in una griglia regolare composta da quadrati di lato $20\mathrm{m}$ ciascuno. La griglia ha quindi $300$ righe e $300$ colonne, ed un totale di $90.000$ quadrati.
 
-Partendo dalla richiesta della traccia abbiamo pensato di vedere questi quadrati come delle _celle_ con al proprio centro il punto da verificare per il drone. Quest'ultimo condivide infatti l'istante di tempo $t$ in cui è coperto con ogni altro punto nella cella, facendo sì che al passaggio del drone sul punto al $t$-esimo istante di tempo, l'intera area del quadrato della griglia risulti simultaneamente coperta - dove il tempo è rappresentato, nel nostro sistema, da un'unità di tempo chiamata `tick` (un tick equivale ad un numero preciso di secondi che vedremo dopo).
+Partendo dalla richiesta della traccia abbiamo pensato di vedere questi quadrati come delle _celle_ con al proprio centro il punto da verificare per il drone. Quest'ultimo condivide infatti l'istante di tempo $t$ in cui è coperto con ogni altro punto nella cella, facendo sì che al passaggio del drone sul punto al $t$-esimo istante di tempo, l'intera area del quadrato della griglia risulti simultaneamente coperta - dove il tempo è rappresentato, nel nostro sistema, da un'unità di tempo chiamata `tick` (un tick equivale a $2.4\ \mathrm{s}$).
 Chiamiamo quindi `starting_line` la colonna di celle coincidenti col lato sinistro dell'area.
 
 Per rispettare il requisito di sorveglianza di ogni punto almeno ogni $5$ minuti, raggruppiamo i droni in gruppi di $300$ che chiamiamo **onde**. Una volta formata l'onda, questa parte dalla base verso la `starting_line`, ovviamente i droni si muoveranno in diagonale e quindi non tutti arriveranno alla `starting_line` allo stesso istante.
+
+È importante considerare che i primi $212$ sono quelli in cui i droni raggiungono la `starting_line`, e non sono dedicati alla verifica dei punti.
 
 Quando ogni drone è arrivato alla `starting_line`, l'onda parte col sorvegliare l'area. Questo processo si ripete ogni cinque minuti. È importante notare come il momento in cui l'ultimo drone della nuova onda arriva alla `starting_line` coincide col momento in cui l'onda precedente avrà lavorato per esattamente cinque minuti.
 
@@ -137,7 +134,7 @@ Facciamo ora ordine circa i possibili stati di un drone:
    Quando un drone/onda (possiamo usare i termini in maniera intercambiabile, perché il movimento di un drone è equivalente a quello di un'onda) raggiunge il lato destro dell'area, termina il suo lavoro di verifica dei punti copertura dell'area, e passa allo stato `TO_BASE`. In questo stato non fa altro che tornare verso il **centro** dell'area per ricaricarsi, ed essere riutilizzato in un nuovo viaggio di copertura.
 
 5. **Ricarica droni (`CHARGING`)**  
-   Giunti alla base, i droni vengono ricaricati da `ChargeBase`. In particolare, esso è composto da slot che accolgono i droni che vengono a ricaricarsi - uno slot per drone. Il tempo di ricarica, come richiesto dal requisito di progetto, ha una durata nell'intervallo di $[2,3]\ h$ (questo valore è rigenerato ad ogni nuova ricarica del drone).
+   Giunti alla base, i droni vengono ricaricati da `ChargeBase`. In particolare, esso è composto da slot che accolgono i droni che vengono a ricaricarsi - uno slot per drone. Il tempo di ricarica, come richiesto dal requisito di progetto, ha una durata nell'intervallo di $[2,3]\ h$ (questo valore è rigenerato ad ogni nuova ricarica del drone), che corrispondono rispettivamente a $3000$ e $4500$ tick.
 
 6. **Attesa in base (`IDLE`)**  
    A carica completa (e non prima), i droni sono messi a disposizione di `ScannerManager` per essere riusati nel creare una nuova onda.
@@ -892,51 +889,61 @@ Eccole qui elencate:
 
 Per verificare il corretto funzionamento del sistema, abbiamo tenuto conto di diversi parametri, e osservato i dati di diverse simulazioni. Prendendo in esame una delle simulazioni più rappresentative, ossia una di quelle in cui si verifichino tutti gli scenari del TestGenerator, abbiamo constatato, comparando l'output del sistema/monitor coi dati nel DB, in primis la correttezza delle informazioni visualizzate ambo i lati, e poi quanto e come il sistema performasse.
 
-## Correttezza del sistema [?]
+## Correttezza del sistema
 
 ### Avvio del sistema
 
-avvio e qualche tick
+Quando avviamo il sistema i componenti princiapli vengono creati e sincronizzati tra loro per poter avviare la simulazione. Successivamente, dopo la connessione al Database e alla creazione dell'onda, ci troviamo di fronte alla vista dei tick che scorrono ad indicare l'avvenuto avvio della simulazione.
 
-<img src="../med/log/00_system_start.png" alt="alt text" style="zoom: 50%;" />
+<img src="../med/log/00_system_start.png" alt="syst_start" style="zoom: 50%;" />
 
 ### Vita completa dei droni
 
 Di seguito verifichiamo che il sistema faccia funzionare correttamente i droni, infatti per un determinato drone possiamo osservare la presenza di tutti i suoi stati a partire da `To_Starting_Line`, che indica una suo corretto "avviamento", fino a `Charging`, che indica come il drone sia riuscito o ritornare alla base ed a iniziare il processo di ricarica (e l'eventuale `Charging_Completed`).
 
+<img src="../med/db/drone_to_line.png" alt="drone_to_line"/>
+
+<img src="../med/db/drone_ready-wrk.png" alt="drone_to_line"/>
+
+<img src="../med/db/drone_to_base.png" alt="drone_to_line"/>
+
+<img src="../med/db/drone_chrg.png" alt="drone_to_line"/>
+
 ## TestGenerator comparato a DB
 
-Di seguito osserviamo come nel DB siano stati inseriti i dati di interesse. Poniamo l'attenzione su ogni sequenza di avvenimenti in cui il `TestGenerator` ha generato uno scenario (che non fosse _Everything is fine_), l'output della shell lo ha stampato a video, e il sistema ha scritto nelle opportune tabelle del DB i giusti valori che rispecchiassero l'accaduto.
+Osserviamo adesso come nel DB siano stati inseriti i dati di interesse. Poniamo l'attenzione su ogni sequenza di avvenimenti in cui il `TestGenerator` ha generato uno scenario (che non fosse _Everything is fine_), l'output della shell lo ha stampato a video, e il sistema ha scritto nelle opportune tabelle del DB i giusti valori che rispecchiassero l'accaduto.
 
 ### Scenario _Everything is fine_
 
 Scenario di default in cui tutto funziona senza anomalie. Viene impostato come funzione vuota per il 20% del valore della mappa.
 Per vedere che si sia verificato basta guardare l'output loggato di `drone_logs` in cui i tick si succedono normalmente.
 
-|<img src="../med/log/01_every_is_fine.png" style="zoom: 27%;">|<img src="../med/db/01_every_is_fine.png" style="zoom: 63%;">|
-|-|-|
+| <img src="../med/log/01_every_is_fine.png" style="zoom: 27%;"> | <img src="../med/db/every_is_fine.png" style="zoom: 63%;"> |
+| -------------------------------------------------------------- | ------------------------------------------------------------- |
 
 ### Scenario _Drone failure_
 
-Viene selezionato un drone casuale che "esplode" (o cessa di funzionare). Il suo stato viene impostato su "DEAD" e viene inviato un messaggio a `ScannerManager` per aggiornare il suo stato.
-Confrontiamo l'output del terminale con le tabelle _tab1_ e _tab2_ nel DB
+Viene selezionato un drone casuale che "esplode" (o cessa di funzionare). Il suo stato viene impostato su `DEAD` da `ScannerManager`.
 
-| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
+| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/drone_exploded.png" style="zoom : 103%;"> |
 | --------------------------------------------------------------- | ---------------------------------------------------------------- |
+
 
 ### Scenario _High consumption_
 
-Viene scelto un drone casuale e viene aumentato il suo consumo di energia (tra 1.5 e 2 volte rispetto al normale). Un messaggio viene inviato a `ScannerManager` per impostare il fattore di consumo elevato del drone.
+Viene scelto un drone casuale e viene aumentato il suo consumo di energia (tra 1.5 e 2 volte rispetto al normale). `ScannerManager` imposta perciò il fattore di consumo elevato del drone.
 
-| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
-| --------------------------------------------------------------- | ---------------------------------------------------------------- |
+| <img src="../med/log/03_drone_high_cons.png"> | <img src="../med/db/drone_exploded.png"> |
+| --------------------------------------------- | ---------------------------------------- |
 
-### Scenario _Charge rate mulfunction_
+<img src="../med/db/drone_charge_mon.png">
+
+### Scenario _Charge rate malfunction_
 
 Viene scelto un drone casuale dalla lista `charging_drones` in Redis e viene aumentato il suo rate di carica. Un messaggio viene inviato alla `ChargeBase` per impostare il fattore di carica.
 
-| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
-| --------------------------------------------------------------- | ---------------------------------------------------------------- |
+<img src="../med/log/07_drone_recharge_mon.png"> 
+<img src="../med/db/drone_recharge_mon.png">
 
 ### Scenario _Connection lost_
 
@@ -946,25 +953,31 @@ Lo scenario **Connection_lost** comporta due sotto-scenari:
 
 2. **Drone si riconnetterà**: se la probabilità di riconnessione è del 70% o superiore, il drone verrà riconnesso dopo un certo numero di tick, calcolato casualmente (usando `reconnect_tick`). Anche in questo caso, un messaggio a `ScannerManager` aggiorna lo stato del drone su "DISCONNECTED" con il tempo di riconnessione impostato.
 
-| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/02_drone_exploded.png" style="zoom : 103%;"> |
-| --------------------------------------------------------------- | ---------------------------------------------------------------- |
+<img src="../med/log/05_drone_reconn.png">
+<img src="../med/db/drone_reconn_mon.png">
 
 ## Monitor
+
 Andando più sul concreto, iniziamo a snocciolare qualche dato, partendo dai monitor e dalla loro osservazione.
 
 ### Copertura dell'area
-Per quanto riguarda la verifica dei punti dell'area, i due monitor [WaveCoverageMonitor](#wavecoveragemonitor) e [AreaCoverageMonitor](#areacoveragemonitor) ci permettono di verificare la corretta copertura dell'area.
 
-È importante considerare che i primi _[inserire numero di tick]_  tick l'area non può essere verificata, questo perché inizialmente i droni devono partire dalla base e raggiungere la `starting_line` per poter poi effettivamente iniziare il processo di verifica, e quindi i primi _[inserire numero di tick]_ tick non saranno mai riportati dal monitor.  
+Per quanto riguarda la verifica dei punti dell'area, i due monitor [WaveCoverageMonitor](#wavecoveragemonitor) e [AreaCoverageMonitor](#areacoveragemonitor) ci permettono di verificare la corretta copertura dell'area.
 
 Inoltre, fino a quando la prima onda non avrà terminato di lavorare, [AreaCoverageMonitor](#areacoveragemonitor) riporterà la mancata copertura su quei punti non acora verificati da questa prima ondo.
 
-Per questa esecuzione del sistema che abbiamo deciso di analizzare, possiamo osservare come, a causa dell'input ricevuto da TestGenerator, il drone _[Inserire drone id]_ abbia smesso di funzionare correttamente; quindi il monitor [WaveCoverageMonitor](#wavecoveragemonitor) giustamente riporta che dal tick _[inserire tick]_ al tick _[inserire tick]_ l'onda _[inserire wave id]_ abbia avuto un drone che ha mancato la verifica dei propri punti.
+Per questa esecuzione del sistema che abbiamo deciso di analizzare, possiamo osservare come, a causa dell'input ricevuto da TestGenerator, il drone $1102$ abbia smesso di funzionare correttamente; quindi il monitor [WaveCoverageMonitor](#wavecoveragemonitor) giustamente riporta che dal tick $387$ al tick $636$ l'onda $1$ abbia avuto un drone che ha mancato la verifica dei propri punti.
+
+<img src="../med/log/02_drone_exploded.png">
+<img src="../med/db/drone_exploded1102.png">
+<img src="../med/db/drone_expl_mon_start.png">
+<img src="../med/db/drone_expl_mon_end.png">
 
 _[TODO trovare un caso in cui il drone stava WORKING e poi va in DISCONNECTED e poi RECONNECTED...altrimenti ciccia]_  
 In particolare possiamo analizziamo cosa è successo al drone _[inserire drone id]_, in questo caso specifico il drone si è disconnesso e poi riconnesso mentre era nello stato WORKING. Infatti, vengono riportati dal monitor come tick con mancata verifica del punto solo i tick _[inserire range di tick]_ dove il drone effettivamente non ha riportato la copertura dei sui punti.
 
 ### Consumo anomalo
+
 Come già esposto precedentemente, il TestGenerator può scegliere non solo quale drone avrà un consumo elevato, ma anche di quanto sarà più alto.
 
 Nel nostro caso il _[drone id]_ è stato scelto e come riportato dal monitor [ChargeDroneMonitor](#drone-charge) il drone ha avuto un consumo medio a tick di _[consumption per tick]_ con un fattore di _[consumptio factor]_, rispetto ad un consumo normale. Ovviamente il fattore scelto dal TestGenerator risulta più alto rispetto a quello riportato dal monitor, questo perchè il drone ha avuto un numero significato di tick per cui il suo consumo non è stato anomalo, andando quindi ad abbassare il valore medio del suo fattore di consumo.
@@ -972,6 +985,15 @@ Nel nostro caso il _[drone id]_ è stato scelto e come riportato dal monitor [Ch
 Ci potrebbero essere casi in cui il drone nonostante il suo consumo anomale riesce a tornare alla base. Questo è il caso del drone _[drone id]_, infatti il monitor riporta il suo consumo elevato ma anche il fatto che è riuscito a tornare alla base.
 
 ### Ricarica anomala
+Nel caso in cui un drone abbia un malfunzionamento durante la fase di ricarica, il monitor [RechargeTimeMonitor](#drone-recharge) riporterà un'anomalia nel tempo di ricarica. Ad esempio, il drone $4107$ ha avuto un tempo di ricarica fuori dal range prestabilito di $[2,3]\ h$ (la sua ricarica è durata $4669$ tick), il monitor registra il numero di tick e i minuti effettivi impiegati per la ricarica. Questo permette di identificare eventuali problemi nel processo di ricarica.
+
+<img src="../med/log/07_drone_recharge_mon.png">
+<img src="../med/db/drone_recharge_mon.png">
 
 ### Performance del sistema
-Come riportato dai monitor della copertura, alcuni droni (e quindi onde) non hanno correttamente verificato alcuni punti dell'area. Per questo [SystemPerformanceMonitor](#system-performance) ha riportato che per alcuni tick, come il _[tick]_, un valore percentuale delle performace sotto il 100%, indicando che per quel tick non tutti i droni "a lavoro" hanno effettuato il loro compito di copertura.
+
+Come riportato dai monitor della copertura, alcuni droni (e quindi onde) non hanno correttamente verificato alcuni punti dell'area. Per questo [SystemPerformanceMonitor](#system-performance) ha riportato che per alcuni tick, come il $460$, un valore percentuale delle performace sotto il 100%, indicando che per quel tick non tutti i droni "a lavoro" hanno effettuato il loro compito di copertura.
+
+<img src="../med/log/02_drone_exploded.png">
+<img src="../med/db/drone_perf_mon.png">
+<img src="../med/db/drone_wv_perf_mon.png">
