@@ -60,7 +60,7 @@ void Ready::run(Drone *drone) {
         return;
     }
 
-    if (drone->ctx->getReadyDrones() < 300) {
+    if (drone->ctx->getReadyDrones() - drone->ctx->getDronesNotWaiting() < 300) {
         // Wait for all drones to be ready
         drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
         // spdlog::info("TICK {} Drone {} is waiting for all drones to be ready", drone->tick_drone, drone->id);
@@ -309,6 +309,7 @@ DroneState &Dead::getInstance() {
 }
 
 void Dead::enter(Drone *drone) {
+    drone->ctx->incrDronesNotWaiting();
     drone->ctx->drones_to_delete.push_back(drone->id);
 }
 
