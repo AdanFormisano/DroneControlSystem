@@ -3,14 +3,13 @@ project(DroneControlSystem)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Optimization flags used for profiling
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+# Enable debug flags
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -g3 -fvar-tracking-assignments -fsanitize=address")
 
 add_executable(DroneBaseSystem
         src/main_system.cpp
         src/globals.h
-        src/Database/Database.cpp
+        src/Database/Database .cpp
         src/Database/Database.h
         src/TestGenerator/TestGenerator.cpp
         src/TestGenerator/TestGenerator.h
@@ -20,9 +19,13 @@ add_executable(DroneBaseSystem
         utils/RedisUtils.h
         utils/utils.cpp
         utils/utils.h
-        src/Monitors/SystemPerformanceMonitor.cpp
+        src/Monitors/Monitor.cpp
+        src/Monitors/Monitor.h
+        src/Monitors/CoverageMonitor.cpp
         src/Monitors/DroneChargeMonitor.cpp
+        src/Monitors/RechargeTimeMonitor.cpp
         src/Monitors/SystemPerformanceMonitor.cpp
+        src/Monitors/AreaCoverage.cpp
 )
 
 add_executable(DroneControl
@@ -37,7 +40,9 @@ add_executable(DroneControl
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
-        utils/utils.h)
+        utils/utils.h
+        utils/LogUtils.cpp
+        utils/LogUtils.h)
 
 add_executable(Scanner
         src/Scanner/main_scanner.cpp
@@ -55,7 +60,9 @@ add_executable(Scanner
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
-        utils/utils.h)
+        utils/utils.h
+        utils/LogUtils.cpp
+        utils/LogUtils.h)
 
 add_executable(ChargeBase
         src/ChargeBase/main_chargebase.cpp
@@ -65,27 +72,14 @@ add_executable(ChargeBase
         utils/RedisUtils.cpp
         utils/RedisUtils.h
         utils/utils.cpp
-        utils/utils.h)
-
-option(DEBUG "Enable debug mode" OFF)
-
-if (DEBUG)
-    target_compile_definitions(DroneBaseSystem PRIVATE DEBUG)
-endif ()
+        utils/utils.h
+        utils/LogUtils.cpp
+        utils/LogUtils.h)
 
 target_compile_definitions(DroneBaseSystem PRIVATE BOOST_DATE_TIME_NO_LIB)
 target_compile_definitions(DroneControl PRIVATE BOOST_DATE_TIME_NO_LIB)
 target_compile_definitions(Scanner PRIVATE BOOST_DATE_TIME_NO_LIB)
 target_compile_definitions(ChargeBase PRIVATE BOOST_DATE_TIME_NO_LIB)
-
-# Add spdlog dependency
-include(FetchContent)
-FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v1.13.0
-)
-FetchContent_MakeAvailable(spdlog)
 
 include_directories(${CMAKE_SOURCE_DIR}/libs)
 
@@ -115,11 +109,6 @@ target_link_libraries(DroneBaseSystem ${REDIS_PLUS_PLUS_LIB})
 target_link_libraries(DroneControl ${REDIS_PLUS_PLUS_LIB})
 target_link_libraries(Scanner ${REDIS_PLUS_PLUS_LIB})
 target_link_libraries(ChargeBase ${REDIS_PLUS_PLUS_LIB})
-
-target_link_libraries(DroneBaseSystem spdlog::spdlog)
-target_link_libraries(DroneControl spdlog::spdlog)
-target_link_libraries(Scanner spdlog::spdlog)
-target_link_libraries(ChargeBase spdlog::spdlog)
 
 # <------------ libpqxx dependency -------------->
 find_path(LIBPQXX_HEADER pqxx)

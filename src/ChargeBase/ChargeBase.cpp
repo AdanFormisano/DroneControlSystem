@@ -18,8 +18,6 @@ ChargeBase* ChargeBase::getInstance(Redis& redis)
 
 ChargeBase::ChargeBase(Redis& redis) : mq_charge(open_or_create, "charge_fault_queue", 100, sizeof(TG_charge_data)), redis(redis)
 {
-    // spdlog::set_pattern("[%T.%e][%^%l%$][ChargeBase] %v");
-    // spdlog::info("ChargeBase process starting");
     log_cb("ChargeBase created");
     // std::cout << "[ChargeBase] ChargeBase created" << std::endl;
 }
@@ -98,7 +96,6 @@ void ChargeBase::ReadChargeStream()
             // There is only one pair: stream_key and stream_data
             // item.first is the key of the stream. In this case it is "drone_stream"
 
-            // spdlog::info("-----------------Tick {}-----------------", tick_n);
             for (const auto& stream_drone : item.second)
             {
                 // stream_drone.first is the id of the message in the stream
@@ -111,7 +108,6 @@ void ChargeBase::ReadChargeStream()
             current_stream_id = item.second.back().first;
         }
         // Trim the stream
-        // spdlog::info("{} entries read from charge_stream. Trimming the stream.", number_items_stream);
         redis.command<long long>("XTRIM", "charge_stream", "MINID", current_stream_id);
     }
     catch (const Error &e)

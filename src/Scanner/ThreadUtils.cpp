@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "spdlog/spdlog.h"
 
 ThreadPool::ThreadPool(size_t n_threads) : stop(false)
 {

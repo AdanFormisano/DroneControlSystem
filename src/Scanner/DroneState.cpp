@@ -16,7 +16,6 @@ DroneState &ToStartingLine::getInstance() {
 }
 
 void ToStartingLine::enter(Drone *drone) {
-    // spdlog::info("Drone {} is moving to the starting line", drone->id);
 }
 
 void ToStartingLine::run(Drone *drone) {
@@ -36,12 +35,10 @@ void ToStartingLine::run(Drone *drone) {
         drone->position.x += drone->dir.x * DRONE_STEP_SIZE;
         drone->position.y += drone->dir.y * DRONE_STEP_SIZE;
         drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-        // spdlog::info("TICK {} Drone {} ({}, {})", drone->tick_drone, drone->id, drone->position.x, drone->position.y);
     }
 }
 
 void ToStartingLine::exit(Drone *drone) {
-    // spdlog::info("TICK {} Drone {} has reached the starting line", drone->tick_drone, drone->id);
 }
 
 DroneState &Ready::getInstance() {
@@ -50,7 +47,6 @@ DroneState &Ready::getInstance() {
 }
 
 void Ready::enter(Drone *drone) {
-    // spdlog::info("TICK {} Drone {} is ready to start working", drone->tick_drone, drone->id);
     drone->ctx->incrReadyDrones();
 }
 
@@ -63,7 +59,6 @@ void Ready::run(Drone *drone) {
     if (drone->ctx->getReadyDrones() - drone->ctx->getDronesNotWaiting() < 300) {
         // Wait for all drones to be ready
         drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-        // spdlog::info("TICK {} Drone {} is waiting for all drones to be ready", drone->tick_drone, drone->id);
     } else {
         // Change the state to WORKING
         drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
@@ -78,7 +73,6 @@ DroneState &Working::getInstance() {
 }
 
 void Working::enter(Drone *drone) {
-    // spdlog::info("TICK {} Drone {} is starting work", drone->tick_drone, drone->id);
 }
 
 void Working::run(Drone *drone) {
@@ -95,7 +89,6 @@ void Working::run(Drone *drone) {
     } else {
         drone->position.x += DRONE_STEP_SIZE;
         drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-        // spdlog::info("Drone {} ({}, {})", drone->id, drone->position.x, drone->position.y);
     }
 }
 

@@ -1,6 +1,5 @@
 #include "ScannerManager.h"
 #include "../../utils/LogUtils.h"
-#include "spdlog/spdlog.h"
 #include <thread>
 
 bool ScannerManager::CheckSpawnWave() const
@@ -27,11 +26,9 @@ bool ScannerManager::CheckSpawnWave() const
             {
                 if (spawn_wave == -1)
                 {
-                    // spdlog::error("[ScannerManager] Error getting spawn_wave");
                     log_sm("Error getting spawn_wave");
                     return false;
                 }
-                // spdlog::error("[ScannerManager] Timeout waiting for spawn_wave");
                 log_sm("Timeout waiting for spawn_wave");
                 return false;
             }
@@ -40,19 +37,15 @@ bool ScannerManager::CheckSpawnWave() const
     } catch (const TimeoutError &e)
     {
         log_sm("Timeout spawning wave: " + std::string(e.what()));
-        // spdlog::error("Timeout spawning wave: {}", e.what());
     } catch (const IoError &e)
     {
         log_sm("IoError spawning wave: " + std::string(e.what()));
-        // spdlog::error("IoError spawning wave: {}", e.what());
     } catch (const std::exception &e)
     {
         log_sm("Exception in CheckSpawnWave: " + std::string(e.what()));
-        // spdlog::error("Error spawning wave: {}", e.what());
     } catch (...)
     {
         log_sm("Unknown error spawning wave");
-        // spdlog::error("Unknown error spawning wave");
     }
     return false;
 }
@@ -132,7 +125,6 @@ void ScannerManager::Run()
 
                 // Get size of the message queue
                 auto size = mq.get_num_msg();
-                // spdlog::info("Messages in the queue: {}", size);
 
                 if (size > 0)
                 {
