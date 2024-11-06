@@ -11,8 +11,6 @@ Wave::Wave(int tick_n, int wave_id, Redis& shared_redis, ThreadSemaphore* tick_s
     // but this doesn't meter because we are creating every new drone, hiding the fact that we are recycling some of them
     RecycleDrones();
 
-    // spdlog::info("Wave {} recycled {} drones", wave_id, n_recycled_drones);
-
     id = wave_id;
     starting_tick = tick_n;
 
@@ -45,7 +43,6 @@ Wave::Wave(int tick_n, int wave_id, Redis& shared_redis, ThreadSemaphore* tick_s
     // Self add alive wave on Redis
     redis.sadd("waves_alive", std::to_string(id));
 
-    // spdlog::info("Wave {} created all drones", id);
     std::cout << "Wave " << id << " created all drones" << std::endl;
 }
 
@@ -70,7 +67,6 @@ void Wave::UploadData() const
 
             // Add the command to the pipeline
             pipe.xadd("scanner_stream", "*", v.begin(), v.end());
-            // spdlog::info("Drone {} data uploaded to Redis", drone.id);
         }
 
         // Redis connection is returned to the pool after the pipeline is executed
@@ -113,8 +109,6 @@ void Wave::setDroneFault(int wave_drone_id, drone_state_enum state, int reconnec
 
     drones[drone_id]->reconnect_tick = reconnect_tick;
     drones[drone_id]->high_consumption_factor = high_consumption_factor;
-
-    // spdlog::info("[TestGenerator] TICK {} Drone {} state set to {}", tick, wave_drone_id, utils::droneStateToString(state));
 }
 
 void Wave::RecycleDrones() const
@@ -188,7 +182,7 @@ void Wave::Run()
         // Create a pipeline from the group of redis co nnections
         auto pipe = redis.pipeline(false);
 
-        while (!AllDronesAreDead())
+        while (!AllDronesAreDead() && tick < sim_duration_ticks)
         {
             // std::cout << "[" << std::this_thread::get_id() << "] Wave " << id << " - TICK " << tick << " just started" << std::endl;
             // std::cout << "Wave " << id << " tick " << tick << " drones are all dead: "<< AreDroneDead << std::endl;

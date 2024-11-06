@@ -2,8 +2,6 @@
 
 #include <boost/thread/detail/move.hpp>
 
-#include "spdlog/spdlog.h"
-
 std::default_random_engine generator;
 std::uniform_real_distribution<float> float_distribution_mten_to_ten(-10.0f, 10.0f);
 

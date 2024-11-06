@@ -2,7 +2,6 @@
 #define DRONESTATE_H
 
 #include "Drone.h"
-#include "spdlog/spdlog.h"
 
 class Drone;
 

@@ -2,18 +2,17 @@
 #include "../src/globals.h"
 #include <filesystem>
 #include <iostream>
-#include <spdlog/spdlog.h>
 
 namespace utils {
 // TODO: Check if it's used
 int RedisConnectionCheck(Redis &redis, std::string clientName) {
     try {
-        spdlog::info("Waiting Redis-server response to {}", clientName);
+        std::cout << "Waiting Redis-server responce to " << clientName << std::endl;
         redis.ping();
         auto clientID = redis.command<long long>("CLIENT", "ID");
-        spdlog::info("{}'s connection successful (Client ID: {})", clientName, clientID);
+        std::cout << clientName << "'s connection successful (Client ID: " << clientID << ")" << std::endl;
     } catch (const sw::redis::IoError &e) {
-        spdlog::error("{}'s connection failed: {}", clientName, e.what());
+        std::cout << R"({}'s connection failed: {}), clientName, e.what()";
         return 1;
     }
     return 0;
@@ -24,21 +23,21 @@ long long RedisGetClientID(Redis &redis) {
         auto clientID = redis.command<long long>("CLIENT", "ID");
         return clientID;
     } catch (const sw::redis::IoError &e) {
-        spdlog::error("Couldn't get ID: {}", e.what());
+        //spdlog::error("Couldn't get ID: {}", e.what());
         return -1;
     }
 }
 
 // Utility function to get the simulation status from Redis
 bool getSimStatus(Redis &redis) {
-    spdlog::info("Getting sim status from Redis");
+    //spdlog::info("Getting sim status from Redis");
     auto r = redis.get("sim_running");
 
     if (r.has_value()) {
-        spdlog::info("Sim status: {}", r.value());
+        //spdlog::info("Sim status: {}", r.value());
         return r.value() == "true";
     } else {
-        spdlog::error("Couldn't get sim status");
+        //spdlog::error("Couldn't get sim status");
         return false;
     }
 }
@@ -59,7 +58,7 @@ int NamedSyncWait(Redis &redis, const std::string &process_name) {
         auto cmd = redis.command<OptionalLongLong>("sismember", sync_counter_key, process_name);
         int is_member = static_cast<int>(cmd.value_or(0));
         if (!is_member) {
-            spdlog::error("Process {} not in the set", process_name);
+           // spdlog::error("Process {} not in the set", process_name);
             return 1;
         }
         redis.srem(sync_counter_key, process_name);
@@ -71,11 +70,11 @@ int NamedSyncWait(Redis &redis, const std::string &process_name) {
         if (count == 0) {
             // Start the simulation
             redis.set("sim_running", "true");
-            spdlog::info("----SIMULATION STARTED----");
+            // spdlog::info("----SIMULATION STARTED----");
 
             // Notify all processes that they can continue and sync is done
             redis.publish(sync_channel, "SYNC_DONE");
-            spdlog::info("SYNC IS DONE!");
+            // spdlog::info("SYNC IS DONE!");
 
         } else {
             // If the counter is not 0, there are still processes working, wait for the SYNC_DONE message
@@ -90,7 +89,7 @@ int NamedSyncWait(Redis &redis, const std::string &process_name) {
                     sync_done = true;
                     sub.unsubscribe(sync_channel);
                 } else {
-                    spdlog::error("Unknown message: {}", msg);
+                    // spdlog::error("Unknown message: {}", msg);
                 }
             });
 
@@ -99,19 +98,19 @@ int NamedSyncWait(Redis &redis, const std::string &process_name) {
                     // This will block the process until a message is received
                     sub.consume();
                 } catch (const Error &err) {
-                    spdlog::error("Error consuming messages");
+                    // spdlog::error("Error consuming messages");
                 }
             }
         }
         return 0;
     } catch (const std::invalid_argument &e) {
-        spdlog::error("Invalid argument: {}", e.what());
+        // spdlog::error("Invalid argument: {}", e.what());
         return 1;
     } catch (const std::out_of_range &e) {
-        spdlog::error("Out of range: {}", e.what());
+        // spdlog::error("Out of range: {}", e.what());
         return 1;
     } catch (const Error &e) {
-        spdlog::error("Error: {}", e.what());
+        // spdlog::error("Error: {}", e.what());
         return 1;
     }
 }

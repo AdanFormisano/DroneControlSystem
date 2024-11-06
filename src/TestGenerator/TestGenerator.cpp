@@ -3,7 +3,6 @@
 #include "../globals.h"
 #include <csignal>
 #include <iostream>
-#include <spdlog/spdlog.h>
 
 TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
                                              mq(open_or_create, "drone_fault_queue", 100, sizeof(TG_data)),
@@ -19,7 +18,6 @@ TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
     // Everything_is_fine scenario [80%]
     scenarios[0.2f] = []()
     {
-        // spdlog::info("Everything is fine");
     };
 
     // Charge_rate malfunction scenario
@@ -57,19 +55,26 @@ TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
         // Choose a random drone to increase its consumption rate
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
-        // Generate a random high consumption factor between 1.5 and 2c
-        float high_consumption_factor = dis_consumption(gen);
+        if (drone_id != -1)
+        {
+            // Generate a random high consumption factor between 1.5 and 2c
+            float high_consumption_factor = dis_consumption(gen);
 
-        // Send a message to ScannerManager to set the drone's high consumption factor
-        TG_data msg = {
-            drone_id, wave_id,
-            drone_state_enum::NONE, -1, high_consumption_factor
-        };
-        mq.send(&msg, sizeof(msg), 0);
+            // Send a message to ScannerManager to set the drone's high consumption factor
+            TG_data msg = {
+                drone_id, wave_id,
+                drone_state_enum::NONE, -1, high_consumption_factor
+            };
+            mq.send(&msg, sizeof(msg), 0);
 
-        // std::cout << "[TestGenerator] Drone " << drone_id << " has high consumption factor of " <<
-        //    high_consumption_factor << std::endl;
-        log_tg("Drone " + std::to_string(drone_id) + " has high consumption factor of " + std::to_string(high_consumption_factor));
+            // std::cout << "[TestGenerator] Drone " << drone_id << " has high consumption factor of " <<
+            //    high_consumption_factor << std::endl;
+            log_tg("Drone " + std::to_string(drone_id) + " has high consumption factor of " + std::to_string(high_consumption_factor));
+        }
+        else
+        {
+            log_tg("No drones found in the wave");
+        }
     };
 
     // Drone_failure scenario (drone stops working) [5%]
@@ -78,12 +83,19 @@ TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
         // Choose a random drone to explode
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
-        // Send a message to ScannerManager to set the drone's status to "DEAD"
-        TG_data msg = {drone_id, wave_id, drone_state_enum::DEAD, -1, 1};
-        mq.send(&msg, sizeof(msg), 0);
+        if (drone_id != -1)
+        {
+            // Send a message to ScannerManager to set the drone's status to "DEAD"
+            TG_data msg = {drone_id, wave_id, drone_state_enum::DEAD, -1, 1};
+            mq.send(&msg, sizeof(msg), 0);
 
-        // std::cout << "[TestGenerator] Drone " << drone_id << " exploded" << std::endl;
-        log_tg("Drone " + std::to_string(drone_id) + " exploded");
+            // std::cout << "[TestGenerator] Drone " << drone_id << " exploded" << std::endl;
+            log_tg("Drone " + std::to_string(drone_id) + " exploded");
+        }
+        else
+        {
+            log_tg("No drones found in the wave");
+        }
     };
 
     // Connection_lost scenario (drone loses connection to the DroneControl system) [10%]
@@ -91,29 +103,34 @@ TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
     {
         auto [wave_id, drone_id] = ChooseRandomDrone();
 
-        // Probability of reconnecting (70%) [for testing purposes 50%]
-        float reconnect = generateRandomFloat();
-
-        if (reconnect < 0.7f)
+        if (drone_id != -1)
         {
-            // Calculate when the drone will reconnect
-            // Send a message to ScannerManager to set the drone's status to "RECONECTED"
-            auto reconnect_tick = ChooseRandomTick();
-            TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, reconnect_tick, 1};
-            mq.send(&msg, sizeof(msg), 0);
+            // Probability of reconnecting (70%) [for testing purposes 50%]
+            float reconnect = generateRandomFloat();
 
-            // std::cout << "[TestGenerator] Drone " << drone_id << " disconnected and will reconnect after " <<
-            //    reconnect_tick << " tick" << std::endl;
-            log_tg("Drone " + std::to_string(drone_id) + " disconnected and will reconnect after " + std::to_string(reconnect_tick) + " tick");
-        }
-        else
-        {
-            // Send a message to ScannerManager to set the drone's status to "DISCONNECTED"
-            TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1, 1};
-            mq.send(&msg, sizeof(msg), 0);
+            if (reconnect < 0.7f)
+            {
+                // Calculate when the drone will reconnect
+                // Send a message to ScannerManager to set the drone's status to "RECONECTED"
+                auto reconnect_tick = ChooseRandomTick();
+                TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, reconnect_tick, 1};
+                mq.send(&msg, sizeof(msg), 0);
 
-            // std::cout << "[TestGenerator] Drone " << drone_id << " disconnected and will NOT reconnect" << std::endl;
-            log_tg("Drone " + std::to_string(drone_id) + " disconnected and will NOT reconnect");
+                // std::cout << "[TestGenerator] Drone " << drone_id << " disconnected and will reconnect after " <<
+                //    reconnect_tick << " tick" << std::endl;
+                log_tg("Drone " + std::to_string(drone_id) + " disconnected and will reconnect after " + std::to_string(reconnect_tick) + " tick");
+            }
+            else
+            {
+                // Send a message to ScannerManager to set the drone's status to "DISCONNECTED"
+                TG_data msg = {drone_id, wave_id, drone_state_enum::DISCONNECTED, -1, 1};
+                mq.send(&msg, sizeof(msg), 0);
+
+                // std::cout << "[TestGenerator] Drone " << drone_id << " disconnected and will NOT reconnect" << std::endl;
+                log_tg("Drone " + std::to_string(drone_id) + " disconnected and will NOT reconnect");
+            }
+        } else {
+            log_tg("No drones found in the wave");
         }
     };
 
@@ -136,21 +153,27 @@ void TestGenerator::Run()
     log_tg("Running");
     signal(SIGTERM, signalHandler);
 
-    while (true)
+    try
     {
-        // Generate a random float between 0 and 1 to decide the scenario
-        float randomValue = generateRandomFloat();
-
-        // Find the first key in the map that is greater than the random float
-        auto it = scenarios.upper_bound(randomValue);
-
-        // If such a key exists, execute the corresponding function
-        if (it != scenarios.end())
+        while (true)
         {
-            it->second();
-        }
+            // Generate a random float between 0 and 1 to decide the scenario
+            float randomValue = generateRandomFloat();
 
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+            // Find the first key in the map that is greater than the random float
+            auto it = scenarios.upper_bound(randomValue);
+
+            // If such a key exists, execute the corresponding function
+            if (it != scenarios.end())
+            {
+                it->second();
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+        }
+    }
+    catch (const interprocess_exception &e)
+    {
+        std::cerr << "Error in TestGenerator: " << e.what() << std::endl;
     }
 }
 
