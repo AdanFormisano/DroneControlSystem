@@ -60,9 +60,6 @@ private:
         int X;
         int Y;
     };
-
-    std::unordered_set<std::pair<int, int>> read_failed_tick_drone;
-
     std::vector<WaveVerification> getWaveVerification(); // wave_id, tick_n, drone_id
 };
 
