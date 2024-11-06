@@ -48,7 +48,6 @@ public:
     void RunMonitor() override;
 
 private:
-
     void checkCoverage();
     void checkCoverageVerification();
 
@@ -61,6 +60,8 @@ private:
         int X;
         int Y;
     };
+
+    std::unordered_set<std::pair<int, int>> read_failed_tick_drone;
 
     std::vector<WaveVerification> getWaveVerification(); // wave_id, tick_n, drone_id
 };
@@ -128,8 +129,8 @@ private:
 
     void checkPerformance();
     void getPerformanceData();
-    // void getPerformanceData(int last_processed_tick);
-    // void simulateQueryExecution(size_t num_rows);
+    void getPerformanceData(int last_processed_tick);
+    void simulateQueryExecution(size_t num_rows);
 };
 
 #endif  // MONITOR_H

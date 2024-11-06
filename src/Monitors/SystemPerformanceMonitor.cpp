@@ -1,158 +1,119 @@
 #include "../../utils/LogUtils.h"
 #include "Monitor.h"
+#include <chrono>
 #include <iostream>
+#include <pqxx/pqxx>
+#include <thread>
 
 void SystemPerformanceMonitor::checkPerformance() {
-    bool first_run = true;
-    bool continue_monitoring = true;
     int last_processed_tick = 0;
+    bool first_run = true;
 
-    while (continue_monitoring) {
-        if (first_run) {
-            log_system("Initiated...");
-            first_run = false;
-        }
-
+    while (last_processed_tick < sim_duration_ticks - 1) {
         try {
             log_system("Fetching performance data...");
             getPerformanceData(last_processed_tick);
 
-            if (performance_data.size() >= 100) {
-                log_system("Writing performance data to the database...");
-                std::string query =
-                    "INSERT INTO system_performance_logs (tick_n, working_drones_count, waves_count, performance) VALUES ";
-
-                for (const auto &[tick_n, working_drones_count, waves_count, performance] : performance_data) {
-                    query += "(" + std::to_string(tick_n) + ", " + std::to_string(working_drones_count) + ", " + std::to_string(waves_count) + ", " + std::to_string(performance) + "), ";
-                }
-                query = query.substr(0, query.size() - 2);
-                query += " ON CONFLICT (tick_n) DO NOTHING;"; // Gestione dei duplicati
-
-                // simulateQueryExecution(performance_data.size());
-                log_system("Executing query...");
-                WriteToDB(query);
-
-                // Calculate the average performance of the last 25 ticks
-                if (performance_data.size() >= 25) {
-                    double total_performance = 0.0;
-                    size_t start_index = 0;
-                    size_t end_index = 25;
-                    for (size_t i = start_index; i < end_index; ++i) {
-                        total_performance += performance_data[i].performance;
-                    }
-                    double average_performance = total_performance / 25;
-                    log_system("Average performance of the last 25 ticks from Tick " + std::to_string(performance_data[start_index].tick_n) + " to Tick " + std::to_string(performance_data[end_index - 1].tick_n) + ": " + std::to_string(average_performance) + "%");
-
-                    // Update the last processed tick
-                    last_processed_tick = performance_data[end_index - 1].tick_n;
-
-                    // Remove the processed data
-                    performance_data.erase(performance_data.begin(), performance_data.begin() + 25);
-                }
-
-                log_system("Performance data written and cleared.");
-                log_system("Waiting to process new data...");
+            if (performance_data.empty()) {
+                log_system("No performance data available to process.");
             } else {
-                log_system("Not enough data to start processing. Waiting...");
-            }
-        } catch (const std::exception &e) {
-            log_error("SystemPerformance", e.what());
-        }
-
-        // Check if the simulation is still running
-        auto sim_running = shared_redis.get("sim_running");
-        if (sim_running && *sim_running == "false") {
-            log_system("Simulation ended. Continuing to monitor until all data is processed.");
-            continue_monitoring = false;
-        }
-
-        std::this_thread::sleep_for(std::chrono::seconds(10)); // Wait for 10 seconds before the next check
-    }
-
-    // Continue monitoring until all data is processed
-    while (true) {
-        try {
-            log_system("Fetching performance data...");
-            getPerformanceData(last_processed_tick);
-
-            if (performance_data.size() >= 25) {
-                log_system("Writing performance data to the database...");
-                std::string query =
-                    "INSERT INTO system_performance_logs (tick_n, working_drones_count, waves_count, performance) VALUES ";
+                double total_degraded_performance = 0.0;
+                int degraded_tick_count = 0;
+                int total_tick_count = performance_data.size();
 
                 for (const auto &[tick_n, working_drones_count, waves_count, performance] : performance_data) {
-                    query += "(" + std::to_string(tick_n) + ", " + std::to_string(working_drones_count) + ", " + std::to_string(waves_count) + ", " + std::to_string(performance) + "), ";
+                    if (performance < 100.0) {
+                        log_system("Degraded Tick " + std::to_string(tick_n) +
+                                   " - Performance: " + std::to_string(performance) + "%");
+                        total_degraded_performance += performance;
+                        ++degraded_tick_count;
+                    }
                 }
-                query = query.substr(0, query.size() - 2);
-                query += " ON CONFLICT (tick_n) DO NOTHING;"; // Gestione dei duplicati
 
-                // simulateQueryExecution(performance_data.size());
-                log_system("Executing query...");
-                WriteToDB(query);
-
-                // Calculate the average performance of the last 25 ticks
-                double total_performance = 0.0;
-                size_t start_index = 0;
-                size_t end_index = 25;
-                for (size_t i = start_index; i < end_index; ++i) {
-                    total_performance += performance_data[i].performance;
+                // Calculate the average performance of degraded ticks
+                if (degraded_tick_count > 0) {
+                    double average_degraded_performance = total_degraded_performance / degraded_tick_count;
+                    log_system("Average performance of degraded ticks: " +
+                               std::to_string(average_degraded_performance) + "%");
+                } else {
+                    log_system("No degraded ticks detected. All performance values are 100%.");
                 }
-                double average_performance = total_performance / 25;
-                log_system("Average performance of the last 25 ticks from Tick " + std::to_string(performance_data[start_index].tick_n) + " to Tick " + std::to_string(performance_data[end_index - 1].tick_n) + ": " + std::to_string(average_performance) + "%");
+
+                // Calculate the overall average performance of the system
+                double total_performance = total_degraded_performance + (100.0 * (total_tick_count - degraded_tick_count));
+                double average_system_performance = total_performance / total_tick_count;
+                log_system("Average system performance: " + std::to_string(average_system_performance) + "%");
+
+                // return;
 
                 // Update the last processed tick
-                last_processed_tick = performance_data[end_index - 1].tick_n;
+                if (!performance_data.empty()) {
+                    last_processed_tick = performance_data.back().tick_n;
+                }
 
-                // Remove the processed data
-                performance_data.erase(performance_data.begin(), performance_data.begin() + 25);
+                // Write performance data to the database
+                log_system("Writing performance data to the database...");
+                try {
+                    std::string query = "INSERT INTO system_performance_logs (tick_n, working_drones_count, waves_count, performance) VALUES ";
+                    for (const auto &[tick_n, working_drones_count, waves_count, performance] : performance_data) {
+                        query += "(" +
+                                 std::to_string(tick_n) + ", " +
+                                 std::to_string(working_drones_count) + ", " +
+                                 std::to_string(waves_count) + ", " +
+                                 std::to_string(performance) + "), ";
+                    }
+                    query = query.substr(0, query.size() - 2);    // Remove the last comma and space
+                    query += " ON CONFLICT (tick_n) DO NOTHING;"; // Handle duplicates
 
-                log_system("Performance data written and cleared.");
-                log_system("Waiting to process new data...");
-            } else {
-                log_system("Not enough data to process. Waiting...");
+                    log_system("Executing query...");
+                    pqxx::work W(db.getConnection());
+                    W.exec(query);
+                    W.commit();
+
+                    log_system("Performance data written to the database.");
+                } catch (const std::exception &e) {
+                    log_error("SystemPerformance", "Error while writing to the database: " + std::string(e.what()));
+                }
+                return;
             }
+
+            // Clear the processed data
+            performance_data.clear();
+            // log_system("Performance data processed and cleared. Waiting for new data...");
         } catch (const std::exception &e) {
             log_error("SystemPerformance", e.what());
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(10)); // Wait for 10 seconds before the next check
+        std::this_thread::sleep_for(std::chrono::seconds(10)); // Wait for 10 seconds before the next iteration
     }
 }
 
 void SystemPerformanceMonitor::getPerformanceData(int last_processed_tick) {
     log_system("Getting performance data...");
-    pqxx::work W(db.getConnection());
+    try {
+        pqxx::work W(db.getConnection());
 
-    // Get the number of working drones and their respective waves
-    const std::string q =
-        "SELECT tick_n, COUNT(drone_id) AS working_drones_count, COUNT(DISTINCT wave_id) AS waves_count "
-        "FROM drone_logs "
-        "WHERE status = 'WORKING' AND tick_n > " +
-        std::to_string(last_processed_tick) + " "
-                                              "GROUP BY tick_n "
-                                              "ORDER BY tick_n;";
+        const std::string q = "SELECT tick_n, COUNT(drone_id) AS working_drones_count, COUNT(DISTINCT wave_id) AS waves_count FROM drone_logs WHERE status = 'WORKING' AND tick_n > " + std::to_string(last_processed_tick) + " GROUP BY tick_n ORDER BY tick_n;";
+        log_system("Executing query...");
+        auto R = W.exec(q);
 
-    // simulateQueryExecution(q.size());
-    log_system("Executing query...");
-    auto R = W.exec(q);
+        for (const auto &row : R) {
+            const int tick_n = row["tick_n"].as<int>();
+            const int working_drones_count = row["working_drones_count"].as<int>();
+            const int waves_count = row["waves_count"].as<int>();
 
-    for (const auto &row : R) {
-        const int tick_n = row["tick_n"].as<int>();
-        const int working_drones_count = row["working_drones_count"].as<int>();
-        const int waves_count = row["waves_count"].as<int>();
-        const double performance = (working_drones_count / static_cast<double>(waves_count * 300)) * 100;
+            if (waves_count == 0) {
+                log_system("Waves count is zero for Tick " + std::to_string(tick_n) +
+                           ". Skipping this record to avoid division by zero.");
+                continue;
+            }
 
-        performance_data.push_back({tick_n, working_drones_count, waves_count, performance});
-    }
+            const double performance = (working_drones_count / static_cast<double>(waves_count * 300)) * 100.0;
+            performance_data.push_back({tick_n, working_drones_count, waves_count, performance});
+        }
 
-    log_system("Finished getting performance data.");
-}
-
-void SystemPerformanceMonitor::simulateQueryExecution(size_t num_rows) {
-    size_t total_steps = 4; // 100% / 25% = 4 steps
-    size_t step_size = num_rows / total_steps;
-    for (size_t i = 1; i <= total_steps; ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate time taken for query execution
-        log_system("Executing query: " + std::to_string(i * 25) + "% complete");
+        log_system("Finished getting performance data. Retrieved " + std::to_string(R.size()) + " rows.");
+    } catch (const std::exception &e) {
+        log_error("SystemPerformance", "Error while fetching performance data: " + std::string(e.what()));
     }
 }

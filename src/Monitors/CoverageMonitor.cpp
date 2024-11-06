@@ -10,9 +10,9 @@
 #include <iostream>
 #include <sstream>
 
-#include "Monitor.h"
 #include "../../utils/LogUtils.h"
 #include "../../utils/utils.h"
+#include "Monitor.h"
 
 /**
  * \brief Main function to monitor zone and area coverage.
@@ -35,24 +35,25 @@ void CoverageMonitor::checkCoverage()
 
             std::this_thread::sleep_for(std::chrono::seconds(15));
         }
-    } catch (const std::exception &e)
+    }
+    catch (const std::exception& e)
     {
         // std::cerr << "[Monitor-CV] " << e.what() << std::endl;
         log_coverage(e.what());
     }
 }
 
-void CoverageMonitor::checkWaveVerification()
+void CoverageMonitor::checkCoverageVerification()
 {
-    // std::cout << "[Monitor-CV] Checking wave verification..." << std::endl;
     log_coverage("Checking wave verification...");
     auto failed_data = getWaveVerification();
 
     if (failed_data.empty())
     {
-        // std::cout << "[Monitor-CV] All waves were verified until tick " << tick_last_read << std::endl;
         log_coverage("All waves were verified until tick " + std::to_string(tick_last_read));
-    } else {
+    }
+    else
+    {
         struct area_data
         {
             int drone_id;
@@ -64,8 +65,6 @@ void CoverageMonitor::checkWaveVerification()
         std::unordered_map<int, std::vector<area_data>> failed_ticks;
 
         std::string q_wave = "INSERT INTO wave_coverage_logs (tick_n, wave_id, drone_id, issue_type) VALUES ";
-        std::string q_area = "INSERT INTO area_coverage_logs (tick_n, wave_ids, drone_ids, X, Y) VALUES ";
-
         std::ostringstream wave_stream;
 
         // Parse failed data and construct the query
@@ -81,7 +80,9 @@ void CoverageMonitor::checkWaveVerification()
             // Enqueue failed checks
             failed_ticks[tick_n].push_back({drone_id, wave_id, x, y});
 
-            log_coverage("Wave " + std::to_string(wave_id) + " was not verified by drone " + std::to_string(drone_id) + " at tick " + std::to_string(tick_n));
+            log_coverage(
+                "Wave " + std::to_string(wave_id) + " was not verified by drone " + std::to_string(drone_id) +
+                " at tick " + std::to_string(tick_n));
 
             // Append the values to the wave query stream
             wave_stream << "(" << tick_n << ", " << wave_id << ", " << drone_id << ", '" << issue_type << "'), ";
@@ -91,17 +92,17 @@ void CoverageMonitor::checkWaveVerification()
         std::string wave_values = wave_stream.str();
         if (!wave_values.empty())
         {
-            // Remove the trailing comma and space, then add the semicolon
-            wave_values = wave_values.substr(0, wave_values.size() - 2) + ";";
-            q_wave += wave_values;
+            // Remove the trailing comma and space, then add the conflict clause
+            wave_values = wave_values.substr(0, wave_values.size() - 2);
+            q_wave += wave_values + " ON CONFLICT (tick_n, drone_id) DO UPDATE SET issue_type = EXCLUDED.issue_type;";
 
             // Write to the database
             WriteToDB(q_wave);
+            log_coverage("Wave coverage data written to DB");
         }
-        // std::cout << "[Monitor-CV] Wave coverage data written to DB" << std::endl;
-        log_coverage("Wave coverage data written to DB");
 
         // Parse Area Coverage data
+        std::string q_area = "";
         for (const auto& failed_tick : failed_ticks)
         {
             std::ostringstream wave_id_stream, drone_stream, x_stream, y_stream;
@@ -137,29 +138,26 @@ void CoverageMonitor::checkWaveVerification()
         }
 
         // End the query correctly by removing the last ", " and adding a semicolon
-        if (!failed_ticks.empty())
+        if (!q_area.empty())
         {
-            q_area.resize(q_area.size() - 2);
-            q_area += R"(
-ON CONFLICT (tick_n)
-DO UPDATE SET
-    drone_ids = area_coverage_monitor.drone_ids || EXCLUDED.drone_ids,
-    x = area_coverage_monitor.x + EXCLUDED.x,
-    y = area_coverage_monitor.y + EXCLUDED.y;)";
+            q_area.resize(q_area.size() - 2); // Rimuovi l'ultima virgola e spazio
+            q_area = "WITH new_data (tick_n, wave_ids, drone_ids, X, Y) AS (\n    VALUES " + q_area +
+                "\n)\nINSERT INTO area_coverage_logs (tick_n, wave_ids, drone_ids, X, Y)\nSELECT tick_n, wave_ids, drone_ids, X, Y FROM new_data\nON CONFLICT (tick_n)\nDO UPDATE SET\n    drone_ids = area_coverage_logs.drone_ids || EXCLUDED.drone_ids,\n    X = area_coverage_logs.X || EXCLUDED.X,\n    Y = area_coverage_logs.Y || EXCLUDED.Y;";
 
             WriteToDB(q_area);
+            log_coverage("Area coverage data written to DB");
         }
-
-        // std::cout << "[Monitor-CV] Area coverage data written to DB" << std::endl;
-        log_coverage("Area coverage data written to DB");
+        else
+        {
+            log_coverage("No failed ticks to write to area_coverage_logs");
+        }
     }
 }
-
 
 std::vector<CoverageMonitor::WaveVerification> CoverageMonitor::getWaveVerification()
 {
     pqxx::work txn(db.getConnection()); // Begin a transaction
-    //std::cout << "[Monitor-CV] Getting wave verification" << std::endl;
+    // std::cout << "[Monitor-CV] Getting wave verification" << std::endl;
     log_coverage("Getting wave verification");
 
     std::string new_q = R"(
@@ -257,8 +255,11 @@ FROM disconnected_drones_in_working_waves;
             const int x = row["x"].as<int>();
             const int y = row["y"].as<int>();
 
-            WaveVerification wv = {wave_id, tick_n, drone_id, issue_type, x, y};
-            wave_not_verified.push_back(wv);
+            if (!read_failed_tick_drone.contains({tick_n, drone_id}))
+            {
+                WaveVerification wv = {wave_id, tick_n, drone_id, issue_type, x, y};
+                wave_not_verified.push_back(wv);
+            }
         }
     }
 

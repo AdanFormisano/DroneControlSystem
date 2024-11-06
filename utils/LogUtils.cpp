@@ -40,19 +40,24 @@ void log_to_stream(std::ofstream &stream, const std::string &message, bool to_co
 }
 
 // Formattazione uniforme del messaggio
-std::string format_log_message(const std::string &process, const std::string &message) {
-    return "[" + process + "] " + message;
+std::string format_log_msg(const std::string &process, const std::string &message) {
+    if (process == "Monitors" && message.find("[") == 0) {
+        // Se il messaggio inizia con un'altra etichetta tra parentesi quadre
+        return "[" + process + "]" + message;
+    } else {
+        return "[" + process + "] " + message;
+    }
 }
 
 // Funzione principale di log DCS
 void log_dcs(const std::string &process, const std::string &message) {
-    std::ostringstream formatted_message;
+    std::ostringstream formatted_msg;
 
-    formatted_message << std::left << std::setw(18) << ("[" + process + "]")
-                      << " " << message;
+    formatted_msg << std::left << std::setw(18) << ("[" + process + "]")
+                  << " " << message;
 
-    log_to_stream(dcs_log, formatted_message.str());
-    log_to_stream(dcsa_log, formatted_message.str());
+    log_to_stream(dcs_log, formatted_msg.str());
+    log_to_stream(dcsa_log, formatted_msg.str());
 }
 
 // Funzione per log lento DCS
@@ -69,14 +74,14 @@ void log_dcs_slow(const std::string &process, const std::string &message) {
             last_synced_tick = tick;
         }
 
-        std::ostringstream formatted_message;
-        formatted_message << std::left << std::setw(20) << "[" + process + "]" << " " << message;
+        std::ostringstream formatted_msg;
+        formatted_msg << std::left << std::setw(20) << "[" + process + "]" << " " << message;
 
-        if (std::find(dcs_log_buffer[tick].begin(), dcs_log_buffer[tick].end(), formatted_message.str()) == dcs_log_buffer[tick].end()) {
-            dcs_log_buffer[tick].push_back(formatted_message.str());
+        if (std::find(dcs_log_buffer[tick].begin(), dcs_log_buffer[tick].end(), formatted_msg.str()) == dcs_log_buffer[tick].end()) {
+            dcs_log_buffer[tick].push_back(formatted_msg.str());
         }
     } else {
-        log_to_stream(dcs_slow_log, format_log_message(process, message));
+        log_to_stream(dcs_slow_log, format_log_msg(process, message));
     }
 }
 
@@ -94,14 +99,14 @@ void log_dcsa_slow(const std::string &process, const std::string &message) {
             last_synced_tick = tick;
         }
 
-        std::ostringstream formatted_message;
-        formatted_message << std::left << std::setw(20) << "[" + process + "]" << " " << message;
+        std::ostringstream formatted_msg;
+        formatted_msg << std::left << std::setw(20) << "[" + process + "]" << " " << message;
 
-        if (std::find(dcsa_log_buffer[tick].begin(), dcsa_log_buffer[tick].end(), formatted_message.str()) == dcsa_log_buffer[tick].end()) {
-            dcsa_log_buffer[tick].push_back(formatted_message.str());
+        if (std::find(dcsa_log_buffer[tick].begin(), dcsa_log_buffer[tick].end(), formatted_msg.str()) == dcsa_log_buffer[tick].end()) {
+            dcsa_log_buffer[tick].push_back(formatted_msg.str());
         }
     } else {
-        log_to_stream(dcsa_slow_log, format_log_message(process, message));
+        log_to_stream(dcsa_slow_log, format_log_msg(process, message));
     }
 }
 
@@ -157,7 +162,7 @@ void close_logs() {
 
 // Funzione di log per gli errori
 void log_error(const std::string &process, const std::string &message) {
-    log_to_stream(dcs_log, format_log_message("ERROR", format_log_message(process, message)), true);
+    log_to_stream(dcs_log, format_log_msg("ERROR", format_log_msg(process, message)), true);
 }
 
 // Funzioni specifiche di log con messaggi preformattati
@@ -165,28 +170,38 @@ void log_dcsa(const std::string &message) {
     log_to_stream(dcsa_log, message);
 }
 
+// Funzione per log DCSA
+void log_dcsa(const std::string &process, const std::string &message) {
+    std::ostringstream formatted_msg;
+
+    formatted_msg << std::left << std::setw(18) << ("[" + process + "]")
+                  << " " << message;
+
+    log_to_stream(dcsa_log, formatted_msg.str());
+}
+
 void log_monitor(const std::string &message) {
-    log_to_stream(mon_log, format_log_message("Monitors", message));
+    log_to_stream(mon_log, format_log_msg("Monitors", message));
 }
 
 void log_charge(const std::string &message) {
-    log_to_stream(charge_log, format_log_message("ChargeMonitor", message));
-    log_monitor(message);
+    log_to_stream(charge_log, format_log_msg("ChargeMonitor", message));
+    log_monitor("[ChargeMonitor] " + message);
 }
 
 void log_coverage(const std::string &message) {
-    log_to_stream(coverage_log, format_log_message("CoverageMonitor", message));
-    log_monitor(message);
+    log_to_stream(coverage_log, format_log_msg("CoverageMonitor", message));
+    log_monitor("[CoverageMonitor] " + message);
 }
 
 void log_recharge(const std::string &message) {
-    log_to_stream(recharge_log, format_log_message("RechargeMonitor", message));
-    log_monitor(message);
+    log_to_stream(recharge_log, format_log_msg("RechargeMonitor", message));
+    log_monitor("[RechargeMonitor] " + message);
 }
 
 void log_system(const std::string &message) {
-    log_to_stream(system_log, format_log_message("SystemMonitor", message));
-    log_monitor(message);
+    log_to_stream(system_log, format_log_msg("SystemMonitor", message));
+    log_monitor("[SystemMonitor] " + message);
 }
 
 // Funzioni di log con processi specifici
@@ -202,7 +217,7 @@ void log_d(const std::string &message) {
 }
 
 void log_db(const std::string &message) {
-    log_dcs("Database", message);
+    log_dcsa("Database", message);
     log_dcsa_slow("Database", message);
 }
 
@@ -213,7 +228,7 @@ void log_dc(const std::string &message) {
 }
 
 void log_ds(const std::string &message) {
-    log_dcs("DroneState", message);
+    log_dcsa("DroneState", message);
     log_dcsa_slow("DroneState", message);
 }
 
@@ -236,6 +251,6 @@ void log_tg(const std::string &message) {
 }
 
 void log_wv(const std::string &message) {
-    log_dcs("Wave", message);
+    log_dcsa("Wave", message);
     log_dcsa_slow("Wave", message);
 }

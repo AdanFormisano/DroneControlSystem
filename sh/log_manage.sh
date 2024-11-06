@@ -126,6 +126,18 @@ toggle_single_mon() {
     fi
 }
 
+toggle_help() {
+    local name="AIUTO"
+    local dashes=$(generate_dashes "$name")
+
+    center_title_with_message "Hai premuto \"i\" e visualizzi" "$name"
+    echo "$help_message"
+    read -n 1 -r -s input
+    if [ "$input" = "h" ]; then
+        toggle_hide
+    fi
+}
+
 toggle_hide() {
     if [ "$DCS_RUNNING" = true ]; then
         toggle_dcs

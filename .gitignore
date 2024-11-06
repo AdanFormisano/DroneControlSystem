@@ -18,4 +18,5 @@ profiler/
 *.collapsed
 
 # Logs
-log/
+/log/
+redis-server.log

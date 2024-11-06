@@ -43,37 +43,39 @@ instructions="
 "
 
 help_message="
-DroneControlSystem:
-  - Mostra i log del sistema di controllo dei droni.
 
-Vista generale:
-  - Mostra una vista generale del sistema.
+Ecco cosa accade alla pressione di ogni tasto:
 
-Monitor:
-  - Mostra i log dei monitor specifici.
+[a] per mostrare tutto
+  Mostra DCSA (DroneControlSystemAll) ossia DCS più monitor e componenti secondari (come Wave, Database, ecc...)
 
-  • [1] Coverage Area: Mostra i log dell'area di copertura.
-  • [2] Recharge Time: Mostra i log del tempo di ricarica.
-  • [3] System Performance: Mostra i log delle prestazioni del sistema.
-  • [4] Drone Charge: Mostra i log della carica dei droni.
+[c] per chiudere tutto
+  Chiude DroneControlSystem terminando la simulazione
+
+[d] per mostrare DroneControlSystem
+  Mostra i componenti principali di DroneControlSystem: DroneControl, ScannerManager, TestGenerator, ChargeBase
+
+[D] per mostrare DCSA Fast
+  Una versione più veloce di DCSA (mostra tutti i tick dei processi di DCSA)
+
+[h] per nascondere tutto
+  Nasconde tutto. Utile per pulire lo schermo - nascondendo l'output visualizzato - e rivedere i comandi disponibili
+
+[m] per mostrare i Monitor
+  Mostra i log dei monitor tutti assieme
+  
+  Premendo un numero, si può vedere il log di un monitor specifico
+  • [1] Coverage Area: Mostra i log dell'area di copertura
+  • [2] Recharge Time: Mostra i log del tempo di ricarica
+  • [3] System Performance: Mostra i log delle prestazioni del sistema
+  • [4] Drone Charge: Mostra i log della carica dei droni
 
 ----------------------
 
  PREMI
 
-  • [a] per mostrare tutto
-  • [c] per chiudere tutto
-  • [d] per mostrare DroneControlSystem
-  • [h] per nascondere tutto
-  • [m] per mostrare i Monitor
-       [1] Coverage Area
-       [2] Recharge Time
-       [3] System Performance
-       [4] Drone Charge
+  • [h] per tornare indietro
 
-  -------------------------------
-   Puoi premerli anche
-   mentre vedi l'output
 "
 
 closing_message="

@@ -58,8 +58,8 @@ void ChargeBase::Run()
             }
         }
 
-        // ChargeDrone(); // Normal charge rate
-        ChargeDroneMegaSpeed(); // TESTING: Charge drones at 5x speed
+        ChargeDrone(); // Normal charge rate
+        // ChargeDroneMegaSpeed(); // TESTING: Charge drones at 5x speed
         ReadChargeStream();
 
         // Release the semaphore to signal the end of the tick
@@ -148,7 +148,14 @@ void ChargeBase::ChargeDrone()
         auto &drone_data = drone.second;
         if (drone_data.charge < 100)
         {
-            drone_data.charge += drone_data.charge_rate * drone_data.charge_rate_factor;
+            if (drone_data.charge_rate_factor < 1.0f)
+            {
+                drone_data.charge += drone_data.charge_rate * (1 - drone_data.charge_rate_factor);
+            }
+            else
+            {
+                drone_data.charge += drone_data.charge_rate * drone_data.charge_rate_factor;
+            }
         } else if (drone_data.charge >= 100)
         {
             drone_data.state = drone_state_enum::CHARGING_COMPLETED;

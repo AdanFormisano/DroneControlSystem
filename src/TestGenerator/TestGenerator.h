@@ -32,6 +32,7 @@ private:
     std::uniform_real_distribution<> dis_consumption;
     std::uniform_int_distribution<> dis_drone;
     std::uniform_int_distribution<> dis_tick;
+    std::uniform_real_distribution<> dis_charge_rate;
 
     float generateRandomFloat() {
         return static_cast<float>(dis(gen));
