@@ -1,0 +1,45 @@
+Database schemas used
+
+drone_logs
+	tick_n INT
+	drone_id INT NOT NULL
+	status VARCHAR(255)
+	charge FLOAT
+	wave INT
+	x FLOAT
+	y FLOAT
+	checked BOOLEAN
+	CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id)
+
+wave_coverage_logs
+	tick_n IN
+	wave_id INT
+	drone_id INT
+	issue_type VARCHAR(255)
+	CONSTRAINT PK_wave_coverage_logs PRIMARY KEY (tick_n, drone_id))
+
+area_coverage_logs
+	tick_n INT PRIMARY KEY
+	wave_ids INT[]
+	drone_ids INT[]
+	X INT[]
+	Y INT[]
+
+system_performance_logs
+	tick_n INT PRIMARY KEY
+	working_drones_count INT
+	waves_count INT
+	performance FLOAT
+
+drone_charge_logs
+	drone_id INT PRIMARY KEY
+	consumption FLOAT
+	consumption_factor FLOAT
+	arrived_at_base BOOLEAN
+
+drone_recharge_logs
+	drone_id INT PRIMARY KEY
+	recharge_duration_ticks INT
+	recharge_duration_min FLOAT
+	start_tick INT
+	end_tick INT

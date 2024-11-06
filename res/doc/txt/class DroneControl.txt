@@ -1,0 +1,41 @@
+class DroneControl
+	[ConsumerThreadRun] ConsumerThread main execution function
+		While simulation running loop
+			Read data from "scanner_stream"
+			Parse data from stream
+			Write data to DB-Buffer
+		End loop
+
+	[WriteDroneDataToDB] DB-Writer thread main execution function
+		While max_tick read from DB-Buffer < duration in ticks of simulation
+			Read from DB-Buffer the data to write into DB
+			Create query string containing the batch of data to write (batch_size = 15000)
+				Execute query
+			If there are remaining queries
+				Execute remaining queries
+			Sleep for 1s
+		End loop
+
+	[SendWaveSpawnCommand] Send command to ScannerManager to spawn new wave
+		Send command to ScannerManager to spawn a new wave (do it by increasing "spawn_wave" value on Redis)
+		Wait for the ACK from ScannerManager ("spawn_wave" value = 0)
+
+	[GetDronePaths] Calculate Drone's paths
+		Calculate for each of the 300 drones in a wave the set of "working" coords that it will have
+
+	[Run] DroneControl's main execution function
+		Create or open 2 semaphores used for sync (sem_sync_dc: recieves GO command, sem_dc: sends tick completed status)
+		Calculate paths for working drones
+		Create Consumers
+			Create Redis consumer group
+			Create threads running ConsumerThread main function
+			Detach Consumer-Threads
+		Create DB-Writer thread
+		While simulation is running loop
+			Wait for sem_sync semaphore for GO command
+			Every 150 ticks SendWaveSpawnCommand
+			Release sem_dc semaphore to comunicate tick completed
+			Increase internal tick counter
+		End loop
+		Join DB-Thread if possible
+		Close sem_sync and sem_dc semaphores

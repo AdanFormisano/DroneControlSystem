@@ -1,0 +1,167 @@
+class Drone
+	[Drone] Drone's constructor
+		Set current state to ToStartingLine
+
+	[setState] Change current state to the given state
+		If currentState != nullptr then
+			Execute the exit function of the currentState
+		End if
+		Set currentState to the given new State
+
+	[Run] Drone's main execution function
+		Execute currentState's main run function
+		Increase internal tick counter
+
+class DroneState
+	class ToStartingLine
+		[Run]
+			If charge value in the next step is <= 0 then
+				setState(Dead)
+			End if
+			If Drone has reached the starting line then
+				setState(Ready)
+			Else
+				If Drone's next step does reach starting line then
+					Set X to -2990
+					Set Y to Drone's starting_line.y
+					Decrease Drone's charge
+				Else
+					Move Drone towards the starting line following the direction previously calculated
+					Decrease Drone's charge
+				End if
+			End if
+
+	class Ready
+		[Enter]
+			Increase Wave's number of ready Drones (# of Drones that reached the starting line)
+
+		[Run]
+			If charge value in the next step is <= 0 then
+				setState(Dead)
+			End if
+			If # of ready Drones < 300 then
+				Decrease Drone's charge (Wait for all drones to reach the starting line)
+			Else
+				setState(Working)
+			End if
+
+	class Working
+		[Run]
+			If charge value in the next step is <= 0 then
+				setState(Dead)
+			End if
+			If Drone has reached the right border then
+				setState(ToBase)
+			Else
+				Move Drone to the right by 20m
+				Decrease Drone's charge
+			End if
+
+	class ToBase
+		[Run]
+			If charge value in the next step is <= 0 then
+				setState(Dead)
+			End if
+			If Drone has reached Base then
+				setState(Charging)
+			Else
+				If Drone's next step dose reach the Base then
+					Set Drone's coords to (0, 0)
+					Decrease Drone's charge
+				Else
+					Move Drone towards the base following the direction previously calculated (inverted on the Y-axis)
+					Decrease Drone's charge
+				End if
+			End if
+
+	class Charging
+		[Enter]
+			Upload to Redis stream ("charge_stream") Drone's data needed by ChargeBase
+			Add DroneID to the vector drones_to_delete
+
+	class Disconnected
+		[Enter]
+			Create a "hidden" version of coords and charge value
+			Save in disconnected_tick the current tick value
+
+		[Run]
+		If reconnect_tick != -1 then
+			If charge value in the next step is <= 0 then
+				setState(Dead)
+			End if
+			Switch on Drone's previous state
+				case ToStartingLine
+					Hidden_to_starting_line
+				case Ready
+					Hidden_ready
+				case Working
+					Hidden_working
+				case ToBase
+					Hidden_to_base
+			End switch
+			If current internal tick >= reconnect_tick + disconnected_tick then
+				setState(Reconnected)
+			End if
+		End if
+
+		[Hidden_to_starting_line]
+			If hidden_charge value in the next step is <= 0 then
+				setState(Dead)
+			End if
+			If Drone has reached the starting line then
+				Drone's prevous state = Ready
+				Increase # of ready drones
+			Else
+				If Drone's next step does reach starting line then
+					Set X to -2990
+					Set Y to Drone's starting_line.y
+					Decrease Drone's charge
+				Else
+					Move Drone towards the starting line following the direction previously calculated, using hidden_coords
+					Decrease Drone's charge
+				End if
+			End if
+
+		[Hidden_ready]
+			Decrease Drone's charge
+			If # of ready Drones < 300 then
+				Drone's previous state = Working
+			End if
+
+		[Hidden_working]
+			Decrease Drone's charge
+			Move Drone to the right by 20m using hidden_coords
+			If Drone reaches the right border (using hidden_coords) then
+				Drone's prevous state = ToBase
+			End if
+
+		[Hidden_to_base]
+			Decrease Drone's charge
+			Move Drone towards the base following the direction previously calculated, using hidden_coords
+			If Drone reaches the base then
+				setState(Charging)
+			End if
+
+	class Reconnected
+		[Enter]
+			Drone coords = hidden_coords
+			Drone charge = hidden_charge
+
+		[Run]
+			Switch on Drone's previous state
+				case None
+					setState(Dead)	#If state is None there was an issue with the drone's execution
+				case ToStartingLine
+					setState(ToStartingLine)
+				case Ready
+					setState(Ready)
+				case Working
+					setState(Working)
+				case ToBase
+					setState(ToBase)
+				case Charging
+					setState(Charging)
+
+	class Dead
+		[Enter]
+			Add DroneID to vector of Drones that need to be deleted

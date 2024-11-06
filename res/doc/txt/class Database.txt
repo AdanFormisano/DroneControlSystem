@@ -1,0 +1,30 @@
+class Database
+	[ConnectToDB] Creates a connection to "dcs" database
+		Make unique connection to "dcs"
+
+	[get_DB] Creates or connects to the "dcs" database
+		If "dcs" doesn't exist then
+			Create a new "dcs" DB
+		ConnectToDB
+		If connection to db is open then
+			Delete existing tables (drone_logs, monitor_logs, system_performance_logs, drone_charge_logs)
+			Create tables (drone_logs, monitor_logs, system_performance_logs, drone_charge_logs)
+
+	[ExecuteQuery] Executes the indicated query
+		If connection to DB is open then
+			Execute query
+
+
+class Buffer
+	[WriteToBuffer] Writes the indicated vector into the buffer
+		Get the lock for thread safety
+		Bulk insert the data vector into the buffer
+
+	[ReadFromBuffer] Reads the entire buffer
+		Get the lock for thread safety
+		Bulk read the entire buffer by saving the data into a vector
+		Clear the buffer
+
+	[getSize] Return the size of the buffer
+		return Buffer's size
+

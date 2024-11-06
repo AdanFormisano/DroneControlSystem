@@ -1,0 +1,22 @@
+# VScode settings
+.vscode/
+
+# CLion settings
+.idea/
+/src/Database/.idea/
+
+# For now remove build directory
+build/
+release/
+cmake-build-debug/
+cmake-build-debug_light/
+cmake-build-debug-lite/
+cmake-build-release/
+.idea/misc.xml
+.idea/vcs.xml
+profiler/
+*.collapsed
+
+# Logs
+/log/
+redis-server.log

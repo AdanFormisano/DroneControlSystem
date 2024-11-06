@@ -1,0 +1,46 @@
+class ScannerManager
+	[CheckSpawnWave] Checks whether the DroneControl has sent a command to spawn a new Wave
+		Save current time
+		While loop
+			Get "spawn_wave" value from Redis
+			If "spawn_wave" == 1 then
+				Decrease the value of "spawn_wave" on Redis
+				return True
+			End if
+			Save elapsed_time since start
+			If elapsed_time > timeout value then
+				If "spawn_wave" == -1 then
+					return False
+				return False
+			End if
+		End loop
+
+	[SpawnWave] Create a new Wave
+		Set the wave ID
+		Create and add a new Wave to the vector containing all the other Waves
+		Enque the Wave's main run function to the pool of threads
+		Increase the Wave ID counter
+
+	[Run] ScannerManager's main execution function
+		Create the IPC message queue
+		Create or open 2 semaphores used for sync (sem_sync_sc: recieves GO command, sem_sc: sends tick completed status)
+		Signal the synchronizer to add a new thread to the synch process
+		While simulation is running loop
+			Wait for sem_sync semaphore for GO command
+			If current tick is a multiple of 150 and CheckSpawnWave is true then
+				SpawnWave
+			End if
+			If the number of msg in the IPC queue is > 0 then
+				For loop on queue size
+					Get the message
+					Append the message to the right/indicated Wave
+
+				End loop
+			End if
+			Signal the synchronizer that current tick is completed
+			Release sem_sc semaphore to comunicate tick completed
+			Increase internal tick counter
+		End loop
+		Signal synchronizer to remove a thread from the synch process
+		Close sem_sync and sem_dc semaphores
+		Close the IPC message queue
