@@ -9,21 +9,17 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(DroneControlSystem
         src/main.cpp
+        src/globals.h
         src/ChargeBase/ChargeBase.cpp
         src/ChargeBase/ChargeBase.h
         src/DroneControl/DroneControl.cpp
         src/DroneControl/DroneControl.h
-        src/globals.h
+        src/Database/NewBuffer.cpp
+        src/Database/NewBuffer.h
         src/Database/Database.cpp
         src/Database/Database.h
         src/TestGenerator/TestGenerator.cpp
         src/TestGenerator/TestGenerator.h
-        utils/LogUtils.cpp
-        utils/LogUtils.h
-        utils/RedisUtils.cpp
-        utils/RedisUtils.h
-        utils/utils.cpp
-        utils/utils.h
         src/Monitors/Monitor.cpp
         src/Monitors/Monitor.h
         src/Monitors/RechargeTimeMonitor.cpp
@@ -40,26 +36,15 @@ add_executable(DroneControlSystem
         src/Scanner/DroneState.cpp
         src/Scanner/Wave.cpp
         src/Scanner/Wave.h
-        src/Database/NewBuffer.cpp
-        src/Database/NewBuffer.h
+        utils/LogUtils.cpp
+        utils/LogUtils.h
+        utils/RedisUtils.cpp
+        utils/RedisUtils.h
+        utils/utils.cpp
+        utils/utils.h
 )
-
-option(DEBUG "Enable debug mode" OFF)
-
-if (DEBUG)
-    target_compile_definitions(DroneControlSystem PRIVATE DEBUG)
-endif ()
 
 target_compile_definitions(DroneControlSystem PRIVATE BOOST_DATE_TIME_NO_LIB)
-
-# Add spdlog dependency
-include(FetchContent)
-FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v1.13.0
-)
-FetchContent_MakeAvailable(spdlog)
 
 include_directories(${CMAKE_SOURCE_DIR}/libs)
 
@@ -77,8 +62,6 @@ target_include_directories(DroneControlSystem PUBLIC ${REDIS_PLUS_PLUS_HEADER})
 
 find_library(REDIS_PLUS_PLUS_LIB redis++)
 target_link_libraries(DroneControlSystem ${REDIS_PLUS_PLUS_LIB})
-
-target_link_libraries(DroneControlSystem spdlog::spdlog)
 
 # <------------ libpqxx dependency -------------->
 find_path(LIBPQXX_HEADER pqxx)

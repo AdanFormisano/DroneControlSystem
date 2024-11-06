@@ -10,7 +10,6 @@
 
 #include "../../utils/LogUtils.h"
 #include "Monitor.h"
-#include "spdlog/spdlog.h"
 #include "sw/redis++/redis++.h"
 #include <chrono>
 #include <fstream>

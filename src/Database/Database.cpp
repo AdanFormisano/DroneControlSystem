@@ -23,9 +23,9 @@ std::tuple<std::string, std::string,
            std::string>
 
 Database::ReadCredentialsFromConfig() {
-    std::ifstream configFile("../res/doc/config.json");
+    std::ifstream configFile("../src/db_config.json");
     if (!configFile.is_open()) {
-        throw std::runtime_error("Could not open config.json. Check file or path.");
+        throw std::runtime_error("Could not open db_config.json. Check file or path.");
     }
 
     // Parso JSON
@@ -156,7 +156,7 @@ void Database::get_DB() {
 
     while (retry_count < max_retries) {
         try {
-            // Legge le credenziali dal config.json
+            // Legge le credenziali dal db_config.json
             auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
             CreateDB(dbname, user, password, hostaddr, port);
             ConnectToDB_();

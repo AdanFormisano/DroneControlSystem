@@ -340,7 +340,6 @@ void DroneControl::Run()
     {
         // Wait for the semaphore to be released
         sem_wait(sem_sync);
-        // spdlog::info("TICK: {}", tick_n);
         // std::cout << "[DroneControl] TICK: " << tick_n << std::endl;
         log_dc("TICK: " + std::to_string(tick_n));
 
@@ -374,7 +373,6 @@ void DroneControl::Run()
     sem_close(sem_sync);
     sem_close(sem_dc);
 
-    // spdlog::info("DroneControl finished");
     // std::cout << "[DroneControl] finished" << std::endl;
     log_dc("finished");
 }

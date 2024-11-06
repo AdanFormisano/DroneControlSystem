@@ -23,7 +23,6 @@ The non-functional monitors are:
 #include <iostream>
 
 Monitor::Monitor(Redis &redis) : shared_redis(redis) {
-    // spdlog::info("Monitor object created");
 
     // Create db connection
     db.ConnectToDB("dcs", "postgres", "admin@123", "127.0.0.1", "5432");

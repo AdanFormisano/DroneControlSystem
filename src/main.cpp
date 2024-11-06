@@ -25,7 +25,6 @@
 #include "TestGenerator/TestGenerator.h"
 #include "globals.h"
 #include <iostream>
-#include <spdlog/spdlog.h>
 #include <sw/redis++/redis++.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -33,7 +32,6 @@
 using namespace sw::redis;
 
 int main() {
-    spdlog::set_pattern("[%T.%e][%^%l%$][Main] %v");
 
     ConnectionOptions connection_options;
     connection_options.host = "127.0.0.1";
@@ -48,7 +46,7 @@ int main() {
         return 1;
     } else if (pid_drone_control == 0) {
         // In child DroneControl process
-        spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
+        // spdlog::set_pattern("[%T.%e][%^%l%$][DroneControl] %v");
 
         // Create the Redis object for DroneControl
         auto drone_control_redis = Redis(connection_options);
@@ -115,7 +113,7 @@ int main() {
                     return 1;
                 } else if (pid_test_generator == 0) {
                     // In child TestGenerator process
-                    spdlog::set_pattern("[%T.%e][%^%l%$][TestGenerator] %v");
+                    // spdlog::set_pattern("[%T.%e][%^%l%$][TestGenerator] %v");
 
                     // Create the Redis object for TestGenerator
                     auto test_redis = Redis(connection_options);

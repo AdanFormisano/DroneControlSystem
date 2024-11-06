@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <boost/interprocess/ipc/message_queue.hpp>
-#include <spdlog/spdlog.h>
 #include "../globals.h"
 #include "sw/redis++/redis++.h"
 
