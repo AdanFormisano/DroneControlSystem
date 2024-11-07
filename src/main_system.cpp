@@ -79,17 +79,20 @@ int main()
 
             // Create the Monitors
             CoverageMonitor cm(monitors_redis);
+            AreaCoverageMonitor acm(monitors_redis);
             DroneChargeMonitor dcm(monitors_redis);
             RechargeTimeMonitor rtm(monitors_redis);
 
             // Run the Monitors' thread
             cm.RunMonitor();
+            acm.RunMonitor();
             dcm.RunMonitor();
             rtm.RunMonitor();
 
 
             // Wait for the Monitors to finish
             cm.JoinThread();
+            acm.JoinThread();
             dcm.JoinThread();
             rtm.JoinThread();
 

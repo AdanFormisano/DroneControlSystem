@@ -194,6 +194,11 @@ void log_coverage(const std::string &message) {
     log_monitor("[CoverageMonitor] " + message);
 }
 
+void log_area_coverage(const std::string &message) {
+    log_to_stream(coverage_log, format_log_msg("AreaCoverageMonitor", message));
+    log_monitor("[AreaCoverageMonitor] " + message);
+}
+
 void log_recharge(const std::string &message) {
     log_to_stream(recharge_log, format_log_msg("RechargeMonitor", message));
     log_monitor("[RechargeMonitor] " + message);

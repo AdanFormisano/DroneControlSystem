@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -g3 -fvar-tracking-as
 add_executable(DroneBaseSystem
         src/main_system.cpp
         src/globals.h
-        src/Database/Database .cpp
+        src/Database/Database.cpp
         src/Database/Database.h
         src/TestGenerator/TestGenerator.cpp
         src/TestGenerator/TestGenerator.h
@@ -74,7 +74,8 @@ add_executable(ChargeBase
         utils/utils.cpp
         utils/utils.h
         utils/LogUtils.cpp
-        utils/LogUtils.h)
+        utils/LogUtils.h
+        src/Monitors/AreaCoverage.cpp)
 
 target_compile_definitions(DroneBaseSystem PRIVATE BOOST_DATE_TIME_NO_LIB)
 target_compile_definitions(DroneControl PRIVATE BOOST_DATE_TIME_NO_LIB)

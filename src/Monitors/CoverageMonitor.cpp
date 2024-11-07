@@ -254,12 +254,6 @@ FROM disconnected_drones_in_working_waves;
             const auto issue_type = row["issue_type"].as<std::string>();
             const int x = row["x"].as<int>();
             const int y = row["y"].as<int>();
-
-            if (!read_failed_tick_drone.contains({tick_n, drone_id}))
-            {
-                WaveVerification wv = {wave_id, tick_n, drone_id, issue_type, x, y};
-                wave_not_verified.push_back(wv);
-            }
         }
     }
 

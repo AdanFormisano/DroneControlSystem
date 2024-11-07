@@ -114,7 +114,6 @@ void ScannerManager::Run()
                     // Syncing with the DC
                     if ((tick % WAVE_DISTANCE_TICKS) == 0 && CheckSpawnWave())
                     {
-
                         SpawnWave();
                     };
                 }
@@ -151,6 +150,7 @@ void ScannerManager::Run()
                 tick++;
         }
         synchronizer.remove_thread();
+        pool.shutdown();
 
         // Close the semaphore
         sem_close(sem_sync);

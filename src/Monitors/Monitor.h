@@ -61,9 +61,29 @@ private:
         int Y;
     };
 
-    std::unordered_set<std::pair<int, int>> read_failed_tick_drone;
-
     std::vector<WaveVerification> getWaveVerification(); // wave_id, tick_n, drone_id
+};
+
+class AreaCoverageMonitor final : public Monitor
+{
+public:
+    explicit AreaCoverageMonitor(Redis& redis) : Monitor(redis) {};
+    void RunMonitor() override;
+
+private:
+    int tick_n = 0;
+
+    struct AreaData
+    {
+        int tick_n = -1;
+        int wave_id = -1;
+        int drone_id = -1;
+    };
+
+    std::unordered_map<int, std::array<AreaData, 300>> area_coverage_data; // X, (tick, drone_id) index of array is Y
+
+    void checkAreaCoverage(); // Reads area coverage data
+    void readAreaCoverageData(const AreaData& area_data, int X, int Y); // Reads area coverage data
 };
 
 class DroneChargeMonitor final : public Monitor
@@ -88,8 +108,10 @@ private:
         }
     };
 
-    struct DroneDataHash {
-        std::size_t operator()(const DroneData& drone) const {
+    struct DroneDataHash
+    {
+        std::size_t operator()(const DroneData& drone) const
+        {
             // Combine the hash of all fields
             std::size_t hash1 = std::hash<int>()(drone.drone_id);
             std::size_t hash2 = std::hash<float>()(drone.consumption_factor);

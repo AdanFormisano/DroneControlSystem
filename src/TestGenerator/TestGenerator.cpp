@@ -7,7 +7,7 @@
 TestGenerator::TestGenerator(Redis& redis) : test_redis(redis),
                                              mq(open_or_create, "drone_fault_queue", 100, sizeof(TG_data)),
                                              mq_charge(open_or_create, "charge_fault_queue", 100, sizeof(TG_charge_data)),
-                                             gen(rd()), dis(0, 1), dis_consumption(1.5, 2), dis_drone(0, 299),
+                                             gen(rd()), dis(0, 1), dis_consumption(1.5, 2), dis_drone(0, 300),
                                              dis_tick(1, 20),
                                              dis_charge_rate(0.01, 2)
 {
