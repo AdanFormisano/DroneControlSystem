@@ -260,15 +260,15 @@ void DroneControl::SendWaveSpawnCommand() const
         std::cout << "\rDEBUG: Current spawn_wave value: " << wave_value << "       " << std::flush;
 
         // Aggiungi puntini incrementali
-        std::cout << "\r" << base_msg; // Torna all'inizio della riga
-        for (int i = 0; i < dot_count; i++) {
-            std::cout << "." << std::flush;
-        }
-
-        // Forza il flush del buffer per aggiornare immediatamente il terminale
-        std::cout << std::flush;
-
-        dot_count = (dot_count + 1) % (max_dots + 1);
+        // std::cout << "\r" << base_msg; // Torna all'inizio della riga
+        // for (int i = 0; i < dot_count; i++) {
+        //     std::cout << "." << std::flush;
+        // }
+        //
+        // // Forza il flush del buffer per aggiornare immediatamente il terminale
+        // std::cout << std::flush;
+        //
+        // dot_count = (dot_count + 1) % (max_dots + 1);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Tempo di attesa più lungo per il debug
     }

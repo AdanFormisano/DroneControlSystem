@@ -26,6 +26,7 @@ add_executable(DroneControlSystem
         src/Monitors/CoverageMonitor.cpp
         src/Monitors/DroneChargeMonitor.cpp
         src/Monitors/SystemPerformanceMonitor.cpp
+        src/Monitors/AreaCoverage.cpp
         src/Scanner/ScannerManager.cpp
         src/Scanner/ScannerManager.h
         src/Scanner/ThreadUtils.h

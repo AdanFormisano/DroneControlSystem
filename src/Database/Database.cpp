@@ -22,9 +22,11 @@ std::tuple<std::string, std::string,
            std::string, std::string,
            std::string>
 
-Database::ReadCredentialsFromConfig() {
+Database::ReadCredentialsFromConfig()
+{
     std::ifstream configFile("../src/db_config.json");
-    if (!configFile.is_open()) {
+    if (!configFile.is_open())
+    {
         throw std::runtime_error("Could not open db_config.json. Check file or path.");
     }
 
@@ -114,11 +116,8 @@ void Database::CreateTables() {
 
         W.exec(
             "CREATE TABLE area_coverage_logs ("
-            "tick_n INT PRIMARY KEY, "
-            "wave_ids INT[], "
-            "drone_ids INT[], "
-            "X INT[], "
-            "Y INT[]);");
+            "checkpoint VARCHAR(20) PRIMARY KEY, "
+            "unverified_ticks INT[]);");
 
         W.exec(
             "CREATE TABLE system_performance_logs ("
@@ -135,15 +134,17 @@ void Database::CreateTables() {
             "arrived_at_base BOOLEAN);");
 
         W.exec(
-                "CREATE TABLE drone_recharge_logs ("
-                "drone_id INT PRIMARY KEY, "
-                "recharge_duration_ticks INT, "
-                "recharge_duration_min FLOAT,"
-                "start_tick INT, "
-                "end_tick INT);");
+            "CREATE TABLE drone_recharge_logs ("
+            "drone_id INT PRIMARY KEY, "
+            "recharge_duration_ticks INT, "
+            "recharge_duration_min FLOAT,"
+            "start_tick INT, "
+            "end_tick INT);");
 
         W.commit();
-    } else {
+    }
+    else
+    {
         log_error("Database", "Failed to connect to DB");
     }
 }
@@ -154,8 +155,10 @@ void Database::get_DB() {
     const int retry_delay_ms = 1000; // Ritardo tra i tentativi (in millisecondi)
     int retry_count = 0;
 
-    while (retry_count < max_retries) {
-        try {
+    while (retry_count < max_retries)
+    {
+        try
+        {
             // Legge le credenziali dal db_config.json
             auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
             CreateDB(dbname, user, password, hostaddr, port);

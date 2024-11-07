@@ -25,7 +25,8 @@ The non-functional monitors are:
 Monitor::Monitor(Redis &redis) : shared_redis(redis) {
 
     // Create db connection
-    db.ConnectToDB("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
+    // db.ConnectToDB("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
+    db.get_DB();
 }
 
 int Monitor::JoinThread() {
@@ -57,6 +58,11 @@ void RechargeTimeMonitor::RunMonitor() {
 void CoverageMonitor::RunMonitor() {
     // Create a thread to run the monitor
     t = std::thread(&CoverageMonitor::checkCoverage, this);
+}
+
+void AreaCoverageMonitor::RunMonitor() {
+    // Create a thread to run the monitor
+    t = std::thread(&AreaCoverageMonitor::checkAreaCoverage, this);
 }
 
 void SystemPerformanceMonitor::RunMonitor() {

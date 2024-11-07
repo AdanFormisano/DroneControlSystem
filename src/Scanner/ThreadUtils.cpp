@@ -13,8 +13,37 @@ ThreadPool::ThreadPool(size_t n_threads) : stop(false)
 
 ThreadPool::~ThreadPool()
 {
+    // {
+    //     std::lock_guard<std::mutex> lock(tasks_mutex);
+    //     stop = true;
+    // }
+    // condition.notify_all();
+    //
+    // for (std::thread& worker : workers)
+    // {
+    //     if (worker.joinable())
+    //     {
+    //         worker.join();
+    //     }
+    // }
+
+    shutdown();
+}
+
+void ThreadPool::enqueue_task(std::function<void()> task)
+{
     {
-        std::lock_guard<std::mutex> lock(tasks_mutex);
+        std::lock_guard lock(tasks_mutex);
+        tasks.push(task);
+    }
+    condition.notify_one();
+}
+
+
+void ThreadPool::shutdown()
+{
+    {
+        std::lock_guard lock(tasks_mutex);
         stop = true;
     }
     condition.notify_all();
@@ -26,15 +55,7 @@ ThreadPool::~ThreadPool()
             worker.join();
         }
     }
-}
-
-void ThreadPool::enqueue_task(std::function<void()> task)
-{
-    {
-        std::lock_guard lock(tasks_mutex);
-        tasks.push(task);
-    }
-    condition.notify_one();
+    workers.clear();  // Clear the worker threads after joining
 }
 
 void ThreadPool::worker_function()

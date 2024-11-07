@@ -45,6 +45,7 @@ void log_db(const std::string &message);   // Log per Database
 // Funzioni di logging specifiche per monitor
 void log_monitor(const std::string &message);
 void log_coverage(const std::string &message);
+void log_area_coverage(const std::string &message);
 void log_recharge(const std::string &message);
 void log_system(const std::string &message);
 void log_charge(const std::string &message);
