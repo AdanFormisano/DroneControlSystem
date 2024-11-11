@@ -95,7 +95,7 @@ get_DB() {
     fi
 
     # Funzione per verificare se un database esiste
-    db_exists=$(psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
+    db_exists=$(sudo -u postgres psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
 
     # Creazione del database solo se non esiste già
     if [ "$db_exists" == "1" ]; then
@@ -106,7 +106,7 @@ get_DB() {
         sudo -u postgres psql -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
 
         # Concessione dei permessi per tutte le tabelle (opzionale)
-        psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;"
+        sudo -u postgres psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;"
 
         echo "Setup completato: Database creato con permessi assegnati."
     fi
