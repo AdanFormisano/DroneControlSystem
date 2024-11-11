@@ -16,8 +16,8 @@
  ☐ Implement pseudo-random scenario selector for TestGenerator
      TestGenerator dynamically changes the probability of a scenario if it hasn´t been selected in a while
  ☐ Implement CORRECTLY timeout features throughout the project to signal a "blocked" state
- ☐ Implement scenario for wrong recharge rate
- 
+
+ ✔ Implement scenario for wrong recharge rate
  ✔ Fixed "extra" waiting in READY tick and extra step for reaching base @done (24-10-27 23:25)
  ✔ Fix tick duration for simulation @done (24-10-27 23:15)
  ✔ When a wave is READY but a drone died before readying up, the entire wave will block in READY state @done (24-10-27 23:09)
@@ -39,22 +39,20 @@
     ✔ With named_semaphores implemented Redis' use for sync (in process init) is not needed @done (24-09-23 18:33)
 
 =============================================
- ☐ BIG ISSUE: Because DB's writing is async and not ordered saving max_tick does´t make sense because the completeness of a tick is not checked anywhere
  ☐ Remove comments from query strings...thx chatgpt :D
 
- ☐ DroneChargeMonitor
-     ☐ [?] Change the unordered_set<DroneData> back to a vector
+ ✔ BIG ISSUE: Because DB's writing is async and not ordered saving max_tick does´t make sense because the completeness of a tick is not checked anywhere
 
+ ✔ DroneChargeMonitor
+     ✔ [?] Change the unordered_set<DroneData> back to a vector
      ✔ Show how many times the consumption higher then 1 (eg. x1.34) @done (24-10-28 11:18)
      ✔ Fix monitor not writing on DB table (probably corraleted to the caught error) @done (24-10-28 10:54)
      ✔ Fix query for drones that arrived at base @done (24-10-07 20:27)
      ✔ Fix query for exploded drones @done (24-10-07 20:27)
-
- ☐ CoverageMonitor
-     ☐ Set screen output
-     ☐ Fix INSERT errors
-     ☐ Fix coords issue with ints and floats (for X and Y)
-
+ ✔ CoverageMonitor
+     ✔ Set screen output
+     ✔ Fix INSERT errors
+     ✔ Fix coords issue with ints and floats (for X and Y)
      ✔ Output should be the coords that the drone is not covering anymore (change also in monitor db) @done (24-10-28 02:17)
          For each tick a set of coords need to be covered. If the drone dies the coords
      ✔ Extreme cases (eg. DISCONNECTED -> WORKING) @done (24-10-28 02:17)
@@ -63,9 +61,7 @@
      ✔ AreaCoverageMonitor @done (24-10-01 14:09)
      ✔ Change DEAD state to "Empty" Drone => DB will have entries for dead drones that the monitors can analyze (for the duration of the wave life) @done (24-10-01 14:09)
      ✔ When a drone is WORKING and then disconnects the monitor should detected it as an issue @done (24-10-01 14:09)
-
  ✔ SystemPerformance @done (24-10-27 22:59)
      Performance degradation %-base. More drone explodes less performance the system has
      ✔ Move to the end of system simulation @done (24-10-27 22:59)
-
  ✔ RechargeTimeMonitor @done (24-09-23 21:18)
