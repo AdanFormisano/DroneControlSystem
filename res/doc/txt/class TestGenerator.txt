@@ -2,6 +2,11 @@ class TestGenerator
 	[Constructor] Define scenarios with their percentages
 		[All_fine] 40% (Testing)
 
+		[Charge_rate_malfunction] 20%
+            ChooseRandomDrone
+            Generate charge_rate_factor (between 0.5 and 0.8)
+            Send IPC message to ScannerManager
+
 		[High_consumption] 20%
 			ChooseRandomDrone
 			Generate high_consumption_factor (between 1.5 and 2)

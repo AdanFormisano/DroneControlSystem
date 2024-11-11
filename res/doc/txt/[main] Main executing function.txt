@@ -25,7 +25,8 @@
 		Run TestGenerator
 
 	Fork to create Monitors process
-		# Create and run all monitors
+		Create and run Monitors (AreaCoverage, WaveCoverage, DroneCharge, RechargeTime)
+		When simulation ends run SystemPerformanceMonitor
 
 	End forks
 
