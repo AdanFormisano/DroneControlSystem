@@ -20,17 +20,17 @@
  * This function runs in a loop, periodically calling checkZoneVerification() and checkAreaCoverage().
  * It sleeps for 20 seconds between each iteration.
  */
-void WaveCoverageMonitor::checkCoverage()
+void WaveCoverageMonitor::checkWaveCoverage()
 {
     // std::cout << "[Monitor-CV] Initiated..." << std::endl;
     log_wave_coverage("Initiated...");
-
-    std::this_thread::sleep_for(std::chrono::seconds(10));
 
     try
     {
         while (sim_running)
         {
+            std::this_thread::sleep_for(std::chrono::seconds(10));
+
             checkCoverageVerification();
             log_wave_coverage("Latest processed time: " + latest_processed_time + " - Old processed time: " + old_processed_time);
 
@@ -41,7 +41,6 @@ void WaveCoverageMonitor::checkCoverage()
                 old_processed_time = latest_processed_time;
             }
 
-            std::this_thread::sleep_for(std::chrono::seconds(15));
         }
         log_wave_coverage("Finished");
     }

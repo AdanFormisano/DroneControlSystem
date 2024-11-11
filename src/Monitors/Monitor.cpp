@@ -64,7 +64,7 @@ void RechargeTimeMonitor::RunMonitor() {
 // Currently implemented by checking every log entry if the checked field is false
 void WaveCoverageMonitor::RunMonitor() {
     // Create a thread to run the monitor
-    t = std::thread(&WaveCoverageMonitor::checkCoverage, this);
+    t = std::thread(&WaveCoverageMonitor::checkWaveCoverage, this);
 }
 
 void AreaCoverageMonitor::RunMonitor() {

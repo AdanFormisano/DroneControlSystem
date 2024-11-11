@@ -64,7 +64,7 @@ private:
     };
 
     std::vector<WaveVerification> getWaveVerification(); // wave_id, tick_n, drone_id
-    void checkCoverage();
+    void checkWaveCoverage();
     void checkCoverageVerification();
 };
 

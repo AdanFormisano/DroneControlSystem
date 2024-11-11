@@ -22,7 +22,6 @@ void AreaCoverageMonitor::checkAreaCoverage()
 
         log_area_coverage("Getting area coverage data...");
 
-
         // Start a transaction for read and write operations
         pqxx::nontransaction W(db.getConnection());
         std::string query = R"(
