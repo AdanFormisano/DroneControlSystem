@@ -44,6 +44,8 @@ add_executable(DroneControlSystem
         utils/utils.cpp
         utils/utils.h
         src/GUI/UI.cpp
+        src/GUI/UI.h
+        src/GUI/DroneDraw.cpp
 )
 
 target_compile_definitions(DroneControlSystem PRIVATE BOOST_DATE_TIME_NO_LIB)

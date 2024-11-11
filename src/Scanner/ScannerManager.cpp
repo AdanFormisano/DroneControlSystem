@@ -1,5 +1,6 @@
 #include "ScannerManager.h"
 #include "../../utils/LogUtils.h"
+#include "../GUI/UI.h"
 #include <thread>
 
 bool ScannerManager::CheckSpawnWave() const
@@ -95,6 +96,9 @@ void ScannerManager::Run()
             return;
         }
         std::cout << "[ScannerManager] Semaphores initialized successfully" << std::endl;
+
+        // Create GUI thread
+        std::thread gui_thread(UI::RunUI);
 
         // synchronizer.thread_started();
         synchronizer.add_thread();
