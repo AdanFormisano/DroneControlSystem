@@ -9,21 +9,19 @@ drone_logs
 	x FLOAT
 	y FLOAT
 	checked BOOLEAN
+	created_at TIMESTAMP
 	CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id)
 
 wave_coverage_logs
 	tick_n IN
 	wave_id INT
 	drone_id INT
-	issue_type VARCHAR(255)
+	fault_type VARCHAR(255)
 	CONSTRAINT PK_wave_coverage_logs PRIMARY KEY (tick_n, drone_id))
 
 area_coverage_logs
-	tick_n INT PRIMARY KEY
-	wave_ids INT[]
-	drone_ids INT[]
-	X INT[]
-	Y INT[]
+	checkpoint VARCHAR(20) PRIMARY KEY
+	unverified_ticks INT[]
 
 system_performance_logs
 	tick_n INT PRIMARY KEY

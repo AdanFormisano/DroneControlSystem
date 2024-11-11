@@ -25,8 +25,7 @@ The non-functional monitors are:
 Monitor::Monitor(Redis &redis) : shared_redis(redis) {
 
     // Create db connection
-    // db.ConnectToDB("dcs", "postgres", "admin@123", "127.0.0.1", "5432");
-    db.get_DB();
+    db.ConnectToDB();
 }
 
 int Monitor::JoinThread() {
@@ -49,15 +48,23 @@ void Monitor::WriteToDB(const std::string &query) {
     }
 }
 
+void Monitor::CheckSimulationEnd() {
+    // Check if the timestamp is the same as the last processed time
+    if (old_processed_time == latest_processed_time) {
+        log_monitor("Simulation ended");
+        sim_running = false;
+    }
+}
+
 void RechargeTimeMonitor::RunMonitor() {
     // Create a thread to run the monitor
     t = std::thread(&RechargeTimeMonitor::checkDroneRechargeTime, this);
 }
 
 // Currently implemented by checking every log entry if the checked field is false
-void CoverageMonitor::RunMonitor() {
+void WaveCoverageMonitor::RunMonitor() {
     // Create a thread to run the monitor
-    t = std::thread(&CoverageMonitor::checkCoverage, this);
+    t = std::thread(&WaveCoverageMonitor::checkWaveCoverage, this);
 }
 
 void AreaCoverageMonitor::RunMonitor() {
