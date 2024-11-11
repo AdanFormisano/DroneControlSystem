@@ -14,8 +14,10 @@ source sh/syst_manage.sh
 source sh/conf.sh
 source sh/strings.sh
 
-# Cleanup IPC
+# Cleanup IPC processes
 cleanup_ipc
+
+get_DB
 
 # Prompt DCS iniziale
 init_msg
