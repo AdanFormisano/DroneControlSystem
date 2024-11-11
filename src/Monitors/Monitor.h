@@ -27,7 +27,7 @@ protected:
     bool sim_running = true;
 
     void WriteToDB(const std::string& query);
-    void CheckSimulationEnd();      // TODO: Implement it in all monitors (using tick_n doesn't make sure that the simulation has ended)
+    void CheckSimulationEnd();
 };
 
 class RechargeTimeMonitor final : public Monitor
@@ -39,6 +39,7 @@ public:
 private:
     std::unordered_map<int, std::pair<int, int>> drone_recharge_time;
     std::unordered_set<int> drone_id_written;
+    std::string temp_time = "00:00:00";
 
     void checkDroneRechargeTime();
     void getChargingDrones(pqxx::work& W);

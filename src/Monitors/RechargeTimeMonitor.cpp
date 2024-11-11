@@ -27,15 +27,12 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
 
     try
     {
-        while (tick_last_read < sim_duration_ticks - 1)
+        while (sim_running)
         {
             std::this_thread::sleep_for(std::chrono::seconds(10));
             // std::cout << "[Monitor-RC] Checking drones recharge time..." << std::endl;
             log_recharge("Checking drone recharge time...");
             pqxx::work W(db.getConnection());
-
-            auto max_tick_result = W.exec("SELECT MAX(tick_n) AS max_tick_in_db FROM drone_logs;");
-            tick_last_read = max_tick_result[0]["max_tick_in_db"].as<int>();
 
             // Get drones that are charging
             getChargingDrones(W);
@@ -78,6 +75,16 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
                 }
             }
             W.commit();
+
+            latest_processed_time = temp_time;
+            log_recharge("Latest processed time: " + latest_processed_time + " - Old processed time: " + old_processed_time);
+
+            // Update old_processed_time after the first successful data read
+            if (latest_processed_time != "00:00:00")
+            {
+                CheckSimulationEnd();
+                old_processed_time = latest_processed_time;
+            }
         }
         // std::cout << "[Monitor-RC] Finished" << std::endl;
         log_recharge("Finished");
@@ -93,10 +100,10 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
 void RechargeTimeMonitor::getChargingDrones(pqxx::work& W)
 {
     std::string q = R"(
-    SELECT drone_id, tick_n FROM drone_logs
-    WHERE status = 'CHARGING';)";
+    SELECT drone_id, tick_n, created_at FROM drone_logs
+    WHERE status = 'CHARGING' AND created_at > $1;)";
 
-    auto r = W.exec(q);
+    auto r = W.exec_params(q, latest_processed_time);
 
     if (!r.empty())
     {
@@ -104,9 +111,15 @@ void RechargeTimeMonitor::getChargingDrones(pqxx::work& W)
         {
             int drone_id = row["drone_id"].as<int>();
             int tick_n = row["tick_n"].as<int>();
+            auto read_time = row["created_at"].as<std::string>();
             if (!drone_recharge_time.contains(drone_id))
             {
                 drone_recharge_time[drone_id] = std::make_pair(tick_n, -1);
+            }
+
+            if (temp_time < read_time)
+            {
+                temp_time = read_time;
             }
         }
     }
@@ -119,10 +132,10 @@ void RechargeTimeMonitor::getChargingDrones(pqxx::work& W)
 void RechargeTimeMonitor::getChargedDrones(pqxx::work& W)
 {
     std::string q = R"(
-    SELECT drone_id, tick_n FROM drone_logs
-    WHERE status = 'CHARGING_COMPLETED';)";
+    SELECT drone_id, tick_n, created_at FROM drone_logs
+    WHERE status = 'CHARGING_COMPLETED' AND created_at > $1;)";
 
-    auto r = W.exec(q);
+    auto r = W.exec_params(q, latest_processed_time);
 
     if (!r.empty())
     {
@@ -130,6 +143,7 @@ void RechargeTimeMonitor::getChargedDrones(pqxx::work& W)
         {
             int drone_id = row["drone_id"].as<int>();
             int tick_n = row["tick_n"].as<int>();
+            auto read_time = row["created_at"].as<std::string>();
 
             if (drone_recharge_time.contains(drone_id))
             {
@@ -139,6 +153,11 @@ void RechargeTimeMonitor::getChargedDrones(pqxx::work& W)
             {
                 // std::cout << "[Monitor-RC] Drone " << drone_id << " is not charging" << std::endl;
                 log_recharge("Drone " + std::to_string(drone_id) + " is not charging");
+            }
+
+            if (temp_time < read_time)
+            {
+                temp_time = read_time;
             }
         }
     }

@@ -87,13 +87,14 @@ void Database::CreateTables() {
             "x FLOAT, "
             "y FLOAT, "
             "checked BOOLEAN, "
-            "is_read BOOLEAN DEFAULT FALSE, "
             "created_at TIME DEFAULT CURRENT_TIME, "
             "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
 
-        W.exec("CREATE INDEX working_only ON drone_logs (status) WHERE status = 'WORKING';");
+        W.exec("CREATE INDEX working_only ON drone_logs (drone_id, wave_id, tick_n) WHERE status = 'WORKING';");
         W.exec("CREATE INDEX idx_dead_unread ON drone_logs (drone_id, wave_id, tick_n) WHERE status = 'DEAD';");
         W.exec("CREATE INDEX idx_disconnected_unread ON drone_logs (tick_n, wave_id, drone_id) WHERE status = 'DISCONNECTED';");
+        W.exec("CREATE INDEX idx_charging_unread ON drone_logs (tick_n, wave_id, drone_id) WHERE status = 'CHARGING';");
+        W.exec("CREATE INDEX idx_charging_completed_unread ON drone_logs (tick_n, wave_id, drone_id) WHERE status = 'CHARGING_COMPLETED';");
 
 
 
