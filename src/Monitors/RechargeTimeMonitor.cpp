@@ -52,6 +52,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
                     const float duration_minutes = (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60;
                     if (delta_time < 3000 || delta_time > 4500)
                     {
+                        log_recharge("Drone " + std::to_string(drone_id) + " has recharged for " + std::to_string(duration_minutes) + " minutes");
                         std::string q =
                             "INSERT INTO drone_recharge_logs (drone_id, recharge_duration_ticks, recharge_duration_min, start_tick, end_tick) VALUES ("
                             + std::to_string(drone_id) + ", "
@@ -62,22 +63,22 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
 
                         W.exec(q);
                     }
-
+                    drone_id_written.insert(drone_id);
                 }
-                drone_id_written.insert(drone_id);
             }
             W.commit();
+
+            latest_processed_time = temp_time;
+            log_recharge("Latest processed time: " + latest_processed_time + " - Old processed time: " + old_processed_time);
+
+            // Update old_processed_time after the first successful data read
+            if (latest_processed_time != "00:00:00")
+            {
+                CheckSimulationEnd();
+                old_processed_time = latest_processed_time;
+            }
         }
 
-        latest_processed_time = temp_time;
-        log_recharge("Latest processed time: " + latest_processed_time + " - Old processed time: " + old_processed_time);
-
-        // Update old_processed_time after the first successful data read
-        if (latest_processed_time != "00:00:00")
-        {
-            CheckSimulationEnd();
-            old_processed_time = latest_processed_time;
-        }
         // std::cout << "[Monitor-RC] Finished" << std::endl;
         log_recharge("Finished");
     }

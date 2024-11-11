@@ -25,7 +25,6 @@
 - [Monitors](#monitors) - [WaveCoverageMonitor](#wavecoveragemonitor) - [AreaCoverageMonitor](#areacoveragemonitor) - [Drone Charge](#drone-charge) - [Drone Recharge](#drone-recharge) - [System Performance](#system-performance)
 - [Implementation](#implementation)
   - [Implementazione software](#implementazione-software)
-  - [_Outsourcing_](#outsourcing)
   - [Implementare il sistema](#implementare-il-sistema)
     - [Componente ChargeBase](#componente-chargebase)
     - [Componente ScannerManager](#componente-scannermanager)
@@ -259,14 +258,7 @@ Il sistema è implementato in [C++](https://isocpp.org/), e fa uso di [PostgreSQ
 
 Redis è stato usato per permettere la comunicazione di dati tra le componenti del sistema.
 
-## _Outsourcing_
-
-Nell'implementazione del sistema abbiamo cionondimeno considerato l'uso di altre tecnologie di cui esso è altresì composto, quali quelle del:
-
-- sistema di comunicazione wireless droni⇒centro di controllo (e vva.): per trasmettere dati e conferme tra droni e centro di controllo
-- sistema GPS: per determinare con precisione la posizione del drone e muoverlo nell'area
-
-Sebbene alcune di queste tecnologie e componenti siano usate nel sistema (come il GPS), la loro implementazione è esterna e relegata a misure di outsourcing.
+Le componenti principali del sistema sono sincronizzate tra di loro utilizzando semafori, ogni componente ha un semaforo per ricevere il comando di partenza e completamento di un tick. In particolare il componente ScannerManager ha anche un semaforo interno che permette la sincronizzazione ad ogni tick di tutti i sui thread, rappresentati le onde del nostro sistema.
 
 ## Implementare il sistema
 
