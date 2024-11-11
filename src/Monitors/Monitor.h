@@ -27,7 +27,7 @@ protected:
     bool sim_running = true;
 
     void WriteToDB(const std::string& query);
-    void CheckSimulationEnd();      // TODO: Implement it in all monitors (using tick_n doesn't make sure that the simulation has eneded)
+    void CheckSimulationEnd();      // TODO: Implement it in all monitors (using tick_n doesn't make sure that the simulation has ended)
 };
 
 class RechargeTimeMonitor final : public Monitor
@@ -128,14 +128,16 @@ private:
         }
     };
 
-    bool write_based_drones = false;
-    bool write_dead_drones = false;
-    std::set<int> failed_drones;
     void checkDroneCharge();
     void checkBasedDrones(std::unordered_set<DroneData, DroneDataHash>& based_drones, pqxx::work& W);
     void checkDeadDrones(std::unordered_set<DroneData, DroneDataHash>& dead_drones, pqxx::work& W);
     std::unordered_set<DroneData, DroneDataHash> getBasedDrones(pqxx::work& W);
     std::unordered_set<DroneData, DroneDataHash> getDeadDrones(pqxx::work& W);
+
+    bool write_based_drones = false;
+    bool write_dead_drones = false;
+    std::set<int> failed_drones;
+    std::string temp_time = "00:00:00";
 };
 
 class SystemPerformanceMonitor final : public Monitor

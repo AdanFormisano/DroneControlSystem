@@ -28,9 +28,9 @@ void AreaCoverageMonitor::checkAreaCoverage()
         std::string query = R"(
         SELECT tick_n, wave_id, drone_id, x, y, created_at
         FROM Drone_logs
-        WHERE status = 'WORKING')";
+        WHERE status = 'WORKING' AND created_at > $1)";
 
-        auto R = W.exec(query);
+        auto R = W.exec_params(query, latest_processed_time);
 
         // Parse area coverage data
         for (const auto& row : R)

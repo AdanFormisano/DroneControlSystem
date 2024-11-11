@@ -12,7 +12,7 @@ void DroneChargeMonitor::checkDroneCharge()
     std::unordered_set<DroneData, DroneDataHash> based_drones;
     std::unordered_set<DroneData, DroneDataHash> dead_drones;
 
-    while (tick_last_read < sim_duration_ticks - 5)
+    while (sim_running)
     {
         try
         {
@@ -35,6 +35,16 @@ void DroneChargeMonitor::checkDroneCharge()
             checkDeadDrones(dead_drones, W);
 
             W.commit();
+
+            latest_processed_time = temp_time;
+            log_charge("Latest processed time: " + latest_processed_time + " - Old processed time: " + old_processed_time);
+
+            // Update old_processed_time after the first successful data read
+            if (latest_processed_time != "00:00:00")
+            {
+                CheckSimulationEnd();
+                old_processed_time = latest_processed_time;
+            }
         }
         catch (const std::exception& e)
         {
@@ -106,33 +116,19 @@ std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataH
 
     // A based drone is a drone with CHARGING status. We need to check if the value he has is the same as the expected one
 
-    auto r = W.exec(
-        "SELECT "
-        "fal.first_tick_alive, "
-        "lta.last_tick_alive, "
-        "fal.drone_id, "
-        "lta.wave_id, "
-        "lta.charge, "
-        "lta.last_tick_alive - fal.first_tick_alive AS ticks_alive "
-        "FROM ("
-        "SELECT DISTINCT ON (drone_id) drone_id, tick_n AS first_tick_alive "
-        "FROM drone_logs "
-        "WHERE status = 'TO_STARTING_LINE' "
-        "ORDER BY drone_id, tick_n ASC "
-        ") fal "
-        "JOIN ("
-        "SELECT tick_n AS last_tick_alive, drone_id, wave_id, charge "
-        "FROM drone_logs "
-        "WHERE status = 'CHARGING'"
-        ") lta "
-        "ON fal.drone_id = lta.drone_id;"
-    );
+    std::string query = R"(
+v
+)";
+
+
+    auto r = W.exec_params(query, latest_processed_time);
 
     for (const auto& row : r)
     {
         const int drone_id = row["drone_id"].as<int>();
         const auto charge = row["charge"].as<float>();
         const int ticks_alive = row["ticks_alive"].as<int>() + 1;
+        const auto read_time = row["created_at"].as<std::string>();
         const float optimal_chg = 100.0f - (ticks_alive * DRONE_CONSUMPTION_RATE);
 
         // Calculate how much charge was used per tick
@@ -150,6 +146,11 @@ std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataH
             write_based_drones = true;
             failed_drones.insert(drone_id);
         }
+
+        if (temp_time < read_time)
+        {
+            temp_time = read_time;
+        }
     }
 
     return based_drones;
@@ -166,7 +167,8 @@ SELECT
     fal.drone_id,
     lta.wave_id,
     lta.charge,
-    lta.last_tick_alive - fal.first_tick_alive AS ticks_alive
+    lta.last_tick_alive - fal.first_tick_alive AS ticks_alive,
+    lta.created_at
 FROM (
     SELECT DISTINCT ON (drone_id) drone_id, tick_n AS first_tick_alive
     FROM drone_logs
@@ -174,22 +176,23 @@ FROM (
     ORDER BY drone_id, tick_n ASC
 ) fal
 JOIN (
-    SELECT tick_n AS last_tick_alive, drone_id, wave_id, charge
+    SELECT tick_n AS last_tick_alive, drone_id, wave_id, charge, created_at
     FROM drone_logs
-    WHERE status = 'DEAD'
+    WHERE status = 'DEAD' AND created_at > $1
 ) lta
 ON fal.drone_id = lta.drone_id;
 )";
 
     try
     {
-        auto r = W.exec(query);
+        auto r = W.exec_params(query, latest_processed_time);
 
         for (const auto& row : r)
         {
             const int drone_id = row["drone_id"].as<int>();
             const auto charge = row["charge"].as<float>();
             const int ticks_alive = row["ticks_alive"].as<int>() + 1;
+            const auto read_time = row["created_at"].as<std::string>();
             const float optimal_chg = 100.0f - (ticks_alive * DRONE_CONSUMPTION_RATE);
 
             // Calculate how much charge was used per tick
@@ -207,6 +210,11 @@ ON fal.drone_id = lta.drone_id;
 
                 write_dead_drones = true;
                 failed_drones.insert(drone_id);
+            }
+
+            if (temp_time < read_time)
+            {
+                temp_time = read_time;
             }
         }
     }
