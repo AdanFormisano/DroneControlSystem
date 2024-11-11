@@ -99,7 +99,6 @@ void Database::CreateTables() {
         W.exec("CREATE INDEX idx_charging_completed_unread ON drone_logs (tick_n, wave_id, drone_id) WHERE status = 'CHARGING_COMPLETED';");
 
 
-
         W.exec(
             "CREATE TABLE wave_coverage_logs ("
             "tick_n INT, "

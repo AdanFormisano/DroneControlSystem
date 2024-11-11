@@ -120,7 +120,7 @@ void AreaCoverageMonitor::InsertUnverifiedTicks()
             auto Y = row.first;
 
             std::string q = "INSERT INTO area_coverage_logs (checkpoint, unverified_ticks) VALUES ";
-            q += "(point(" + std::to_string(X) + ", " + std::to_string(Y) + "), ARRAY[";
+            q += "('(" + std::to_string(X) + ", " + std::to_string(Y) + ")', ARRAY[";
 
             for (auto tick : row.second)
             {

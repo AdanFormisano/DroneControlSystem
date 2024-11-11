@@ -49,7 +49,7 @@ void DroneChargeMonitor::checkDroneCharge()
         catch (const std::exception& e)
         {
             // std::cerr << "[Monitor-DC] Error occurred: " << e.what() << std::endl;
-            log_error("DroneChargeMonitor", "Error occurred");
+            log_error("DroneChargeMonitor", e.what());
             log_charge("Error occurred in DroneChargeMonitor::checkDroneCharge's try block");
         }
     }
@@ -117,7 +117,26 @@ std::unordered_set<DroneChargeMonitor::DroneData, DroneChargeMonitor::DroneDataH
     // A based drone is a drone with CHARGING status. We need to check if the value he has is the same as the expected one
 
     std::string query = R"(
-v
+SELECT
+    fal.first_tick_alive,
+    lta.last_tick_alive,
+    fal.drone_id,
+    lta.wave_id,
+    lta.charge,
+    lta.last_tick_alive - fal.first_tick_alive AS ticks_alive,
+    lta.created_at
+FROM (
+    SELECT DISTINCT ON (drone_id) drone_id, tick_n AS first_tick_alive
+    FROM drone_logs
+    WHERE status = 'TO_STARTING_LINE'
+    ORDER BY drone_id, tick_n ASC
+) fal
+JOIN (
+    SELECT tick_n AS last_tick_alive, drone_id, wave_id, charge, created_at
+    FROM drone_logs
+    WHERE status = 'CHARGING' AND created_at > $1
+) lta
+ON fal.drone_id = lta.drone_id;
 )";
 
 
