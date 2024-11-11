@@ -26,6 +26,9 @@ manage_redis
 # Crea cartelle log
 mkdir_log
 
+# Build DCS
+build_dcs
+
 # Avvia DCS
 dcs_start_msg
 start_dcs

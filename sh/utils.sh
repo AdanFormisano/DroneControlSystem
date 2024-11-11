@@ -53,3 +53,12 @@ start_dcs() {
     DRONE_PID=$!
     sleep 0.2
 }
+
+build_dcs() {
+    mkdir -p build && cd build
+    echo -e "\n ☑️ Building DCS..."
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+    cmake --build . --config Release
+    cd ..
+    echo -e "\n ☑️ DCS built successfully\n"
+}
