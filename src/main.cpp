@@ -55,9 +55,6 @@ int main() {
         // Create the DroneControl object
         DroneControl dc(drone_control_redis);
 
-        // std::cout << "DroneControl process started" << std::endl;
-        log_system("This monitor will start at the end of the simulation");
-
         // Start simulation
         dc.Run();
     } else {
@@ -200,9 +197,7 @@ int main() {
                             sem_wait(sem_cb);
 
                             ++tick_n;
-                            // log("=====================================");
                             log_dcsa("=====================================");
-                            // std::cout << "=====================================" << std::endl;
                         }
                         // Stop time watch
                         auto sim_end_time = std::chrono::high_resolution_clock::now();

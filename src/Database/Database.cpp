@@ -37,11 +37,11 @@ Database::DBCredentials Database::ReadCredentialsFromConfig()
     configFile >> config;
 
     // Estraggo credenziali da JSON
-    const std::string dbname = config["database"]["name"];
-    const std::string user = config["database"]["user"];
-    const std::string password = config["database"]["password"];
-    const std::string hostaddr = config["database"]["host"];
-    const std::string port = config["database"]["port"];
+    const std::string dbname = config["db_name"];
+    const std::string user = config["db_user"];
+    const std::string password = config["db_password"];
+    const std::string hostaddr = config["host"];
+    const std::string port = config["port"];
 
     configFile.close();
 
@@ -150,7 +150,7 @@ void Database::get_DB() {
         {
             // Legge le credenziali dal db_config.json
             auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
-            CreateDB({dbname, user, password, hostaddr, port});
+            // CreateDB({dbname, user, password, hostaddr, port});
             ConnectToDB();
             CreateTables();
             log_db("Successfully connected to DB on attempt " + std::to_string(retry_count + 1));

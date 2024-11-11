@@ -84,6 +84,7 @@ get_DB() {
     DB_NAME=$(jq -r '.db_name' "$CONFIG_FILE")
 
     # Verifica che l'utente PostgreSQL esista
+    echo "Verifica dell'utente PostgreSQL e del database, permessi necessari..."
     user_exists=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")
 
     # Creazione dell'utente solo se non esiste già
@@ -102,11 +103,7 @@ get_DB() {
         echo "Il database '$DB_NAME' esiste già. Nessuna azione necessaria."
     else
         echo "Il database '$DB_NAME' non esiste. Creazione in corso..."
-        sudo -u postgres psql -d postgres -c "CREATE DATABASE $DB_NAME;"
-        sudo -u postgres psql -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
-
-        # Concessione dei permessi per tutte le tabelle (opzionale)
-        sudo -u postgres psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;"
+        sudo -u postgres psql -d postgres -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
 
         echo "Setup completato: Database creato con permessi assegnati."
     fi
