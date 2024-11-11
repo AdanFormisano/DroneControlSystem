@@ -6,23 +6,28 @@
 #include <pqxx/pqxx>
 #include <thread>
 
-void Database::ConnectToDB (
-    const std::string& dbname,
-    const std::string& user,
-    const std::string& password,
-    const std::string& hostaddr,
-    const std::string& port
-    )
+
+
+void Database::ConnectToDB ()
 {
-    ConnectToDB_();
+    auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
+
+    std::string connectionString = "dbname=" + dbname +
+                                   " user=" + user +
+                                   " password=" + password +
+                                   " hostaddr=" + hostaddr +
+                                   " port=" + port;
+
+    conn = std::make_unique<pqxx::connection>(connectionString);
+
+    if (!conn->is_open()) {
+        throw std::runtime_error("DB can't connect");
+    }
 }
 
-// Read credentials from config file
-std::tuple<std::string, std::string,
-           std::string, std::string,
-           std::string>
 
-Database::ReadCredentialsFromConfig()
+// Read credentials from config file
+Database::DBCredentials Database::ReadCredentialsFromConfig()
 {
     std::ifstream configFile("../src/db_config.json");
     if (!configFile.is_open())
@@ -41,45 +46,23 @@ Database::ReadCredentialsFromConfig()
     const std::string hostaddr = config["database"]["host"];
     const std::string port = config["database"]["port"];
 
-    return std::make_tuple(dbname, user, password, hostaddr, port);
-}
-
-// Connect to db
-void Database::ConnectToDB_() {
-    auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
-
-    std::string connectionString = "dbname=" + dbname +
-                                   " user=" + user +
-                                   " password=" + password +
-                                   " hostaddr=" + hostaddr +
-                                   " port=" + port;
-
-    conn = std::make_unique<pqxx::connection>(connectionString);
-
-    if (!conn->is_open()) {
-        throw std::runtime_error("DB can't connect");
-    }
+    return {dbname, user, password, hostaddr, port};
 }
 
 // Create the DB
-void Database::CreateDB(
-    const std::string &dbname,
-    const std::string &user,
-    const std::string &password,
-    const std::string &hostaddr,
-    const std::string &port) {
+void Database::CreateDB(const DBCredentials& credentials) {
     // Connessione al server PostgreSQL (senza specificare un DB)
-    std::string serverConnectionString = "user=" + user +
-                                         " password=" + password +
-                                         " hostaddr=" + hostaddr +
-                                         " port=" + port;
+    std::string serverConnectionString = "user=" + credentials.user +
+                                         " password=" + credentials.password +
+                                         " hostaddr=" + credentials.hostaddr +
+                                         " port=" + credentials.port;
     pqxx::connection C(serverConnectionString);
     pqxx::nontransaction N(C);
 
     // Se il DB non esiste, crealo
-    if (pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='" + dbname + "'"); R.empty()) {
-        log_db("Creating " + dbname + " database");
-        N.exec("CREATE DATABASE " + dbname);
+    if (pqxx::result R = N.exec("SELECT 1 FROM pg_database WHERE datname='" + credentials.dbname + "'"); R.empty()) {
+        log_db("Creating " + credentials.dbname + " database");
+        N.exec("CREATE DATABASE " + credentials.dbname);
     }
 }
 
@@ -104,14 +87,22 @@ void Database::CreateTables() {
             "x FLOAT, "
             "y FLOAT, "
             "checked BOOLEAN, "
+            "is_read BOOLEAN DEFAULT FALSE, "
+            "created_at TIME DEFAULT CURRENT_TIME, "
             "CONSTRAINT PK_drone_logs PRIMARY KEY (tick_n, drone_id))");
+
+        W.exec("CREATE INDEX working_only ON drone_logs (status) WHERE status = 'WORKING';");
+        W.exec("CREATE INDEX idx_dead_unread ON drone_logs (drone_id, wave_id, tick_n) WHERE status = 'DEAD';");
+        W.exec("CREATE INDEX idx_disconnected_unread ON drone_logs (tick_n, wave_id, drone_id) WHERE status = 'DISCONNECTED';");
+
+
 
         W.exec(
             "CREATE TABLE wave_coverage_logs ("
             "tick_n INT, "
             "wave_id INT, "
             "drone_id INT, "
-            "issue_type VARCHAR(255), "
+            "fault_type VARCHAR(255), "
             "CONSTRAINT PK_wave_coverage_logs PRIMARY KEY (tick_n, drone_id));");
 
         W.exec(
@@ -161,13 +152,13 @@ void Database::get_DB() {
         {
             // Legge le credenziali dal db_config.json
             auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
-            CreateDB(dbname, user, password, hostaddr, port);
-            ConnectToDB_();
+            CreateDB({dbname, user, password, hostaddr, port});
+            ConnectToDB();
             CreateTables();
             log_db("Successfully connected to DB on attempt " + std::to_string(retry_count + 1));
             break; // Esci dal loop se la connessione è riuscita
         } catch (const pqxx::sql_error &e) {
-            log_error("Database", "SQL error: " + std::string(e.what()) + " Query was: " + e.query());
+            log_error("Database", "SQL error: " + std::string(e.what()));
         } catch (const pqxx::broken_connection &e) {
             log_error("Database", "Connection error: " +
                                       std::string(e.what()) + " (Attempt " +
@@ -200,7 +191,7 @@ void Database::ExecuteQuery(const std::string &query) const {
         W.exec(query);
         W.commit();
     } catch (const pqxx::sql_error &e) {
-        log_error("Database", "SQL error: " + std::string(e.what()) + " Query was: " + e.query());
+        log_error("Database", "SQL error: " + std::string(e.what()));
     } catch (const std::exception &e) {
         log_error("Database", "Failed to execute query: " + std::string(e.what()));
     }
