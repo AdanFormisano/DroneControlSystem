@@ -3,7 +3,7 @@
 #include <iostream>
 
 void ConsumerThreadRun(Redis& redis, std::string stream, std::string group, std::string consumer,
-                       const std::array<std::unordered_set<coords>, 300>* drones_paths, NewBuffer* buffer, int* tick_n,
+                       const std::array<std::unordered_set<coords>, 300>* drones_paths, Buffer* buffer, int* tick_n,
                        std::mutex& tick_mutex, const std::atomic_bool* sim_running)
 {
     while (*sim_running)

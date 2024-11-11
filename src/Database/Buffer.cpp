@@ -2,11 +2,11 @@
 // Created by adan on 26/09/24.
 //
 
-#include "NewBuffer.h"
+#include "Buffer.h"
 #include "../../utils/LogUtils.h"
 #include <iostream>
 
-void NewBuffer::WriteToBuffer(std::vector<DroneData> &data) {
+void Buffer::WriteToBuffer(std::vector<DroneData> &data) {
     try {
         std::lock_guard lock(buffer_mutex);
 
@@ -20,7 +20,7 @@ void NewBuffer::WriteToBuffer(std::vector<DroneData> &data) {
     }
 }
 
-std::vector<DroneData> NewBuffer::ReadFromBuffer() {
+std::vector<DroneData> Buffer::ReadFromBuffer() {
     try {
         std::lock_guard lock(buffer_mutex);
 
@@ -36,7 +36,7 @@ std::vector<DroneData> NewBuffer::ReadFromBuffer() {
     }
 }
 
-size_t NewBuffer::getSize() {
+size_t Buffer::getSize() {
     std::lock_guard lock(buffer_mutex);
     return buffer.size();
 }

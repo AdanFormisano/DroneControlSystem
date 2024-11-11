@@ -46,6 +46,8 @@ Database::DBCredentials Database::ReadCredentialsFromConfig()
     const std::string hostaddr = config["database"]["host"];
     const std::string port = config["database"]["port"];
 
+    configFile.close();
+
     return {dbname, user, password, hostaddr, port};
 }
 
