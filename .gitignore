@@ -1,11 +1,22 @@
-cmake-build-debug/*
-cmake-build-debug_light/*
-
 # VScode settings
-.vscode/*
+.vscode/
 
 # CLion settings
-.idea/copilot/*
+.idea/
+/src/Database/.idea/
 
 # For now remove build directory
-build/*
+build/
+release/
+cmake-build-debug/
+cmake-build-debug_light/
+cmake-build-debug-lite/
+cmake-build-release/
+.idea/misc.xml
+.idea/vcs.xml
+profiler/
+*.collapsed
+
+# Logs
+/log/
+redis-server.log

@@ -1,0 +1,44 @@
+class Database
+	[ConnectToDB] Creates a connection to "dcs" database
+		Make unique connection to "dcs"
+
+    [ReadCredentials] Reads the credentials from a config file
+        Open the config file
+        Read and parse the credentials
+        Close the config file
+
+    [CreateDB] Given the credentials, creates a new database
+        Check if the database exists
+        If it doesn't exist then
+            Create a new database with the given credentials
+        End if
+
+    [CreateTables] Creates the tables for the database
+        Drop existing tables
+        Create new tables
+
+	[get_DB] Creates and/or connects to the "dcs" database
+	    While retry counter < max tries then
+            ReadCredentials
+            CreateDB
+            ConnectToDB
+            CreateTables
+        End while
+
+	[ExecuteQuery] Executes the indicated query
+		If connection to DB is open then
+			Execute query
+
+
+class Buffer
+	[WriteToBuffer] Writes the indicated vector into the buffer
+		Get the lock for thread safety
+		Bulk insert the data vector into the buffer
+
+	[ReadFromBuffer] Reads the entire buffer
+		Get the lock for thread safety
+		Bulk read the entire buffer by saving the data into a vector
+		Clear the buffer
+
+	[getSize] Return the size of the buffer
+		return Buffer's size

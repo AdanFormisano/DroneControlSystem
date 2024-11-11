@@ -1,40 +1,38 @@
-#ifndef DRONECONTROLSYSTEM_DRONECONTROL_H
-#define DRONECONTROLSYSTEM_DRONECONTROL_H
+#ifndef SYNCEDDRONECONTROL_H
+#define SYNCEDDRONECONTROL_H
 #include "../globals.h"
-#include "../db/Database.h"
-#include "../GUI/UI.h"
-#include <boost/thread.hpp>
-#include <sw/redis++/redis++.h>
-#include <vector>
+#include "../../utils/utils.h"
+#include "../../utils/RedisUtils.h"
+#include "../Database/Database.h"
+#include "../Database/Buffer.h"
 
 using namespace sw::redis;
 
-namespace drone_control {
-// This is the data that represents a drone's status
 class DroneControl {
 public:
     explicit DroneControl(Redis &shared_redis);
 
     Redis &redis;
-    drone_data drones[300]; // Array with data of all the drones
 
-    void Run();                                                                      // Run the DroneControl process
-    void ReadStream();                                                               // Read the stream of data from Redis
-    void new_setDroneData(const std::vector<std::pair<std::string, std::string>> &); // Update the drones' local data
-    std::unordered_map<std::string, std::string> getData(int drone_id);              // Get the local data of a drone
+    void Run();
+    void WriteDroneDataToDB();
 
 private:
-    std::string current_stream_id = "0";  // The id of the last message read from the stream
     int tick_n = 0;
-    std::array<std::array<std::pair<float, float>, 124>, 300> drone_paths;  // Array with the paths of all the drones
-    std::array<int, 300> drone_path_next_index{};                       // Array with the index of the last point of the path of all the drones
-    std::array<bool, 300> checklist{};                                    // Array with bool values to check if the drone is following the path
+    const int num_consumers = 5;
+    std::string current_stream_id = "*";
+    std::string stream = "scanner_stream";
+    std::string group = "scanner_group";
+    std::array<std::unordered_set<coords>, 300> drones_paths{}; // Working paths for drones
+    std::atomic_bool sim_running{true};
+
+    std::mutex tick_mutex;
+
     Database db;
+    Buffer buffer;
 
+    void Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer, const std::array<std::unordered_set<coords>, 300> *drones_paths);
+    void SendWaveSpawnCommand() const;
     void GetDronePaths();
-    bool CheckPath(int drone_id, std::pair<float, float>&);
-    void CheckDroneCharge(int drone_id, float charge, float charge_needed);
 };
-} // namespace drone_control
-
-#endif  // DRONECONTROLSYSTEM_DRONECONTROL_H
+#endif //SYNCEDDRONECONTROL_H

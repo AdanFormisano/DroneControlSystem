@@ -1,0 +1,14 @@
+Redis Connections:	Details	:																		Used by:
+"spawn_wave": 		VALUE used as a flag to indicate whether a new Wave is needed or not 			ScannerManager, DroneControl
+"waves_alive": 		SET used to keep track of which Waves are currently alive in the simulation		Wave, TestGenerator
+"charged_drones":	SET used to keep track of which Drones are currently fully charged/available	Wave, ChargeBase
+"charging_drones": SET used to keep track of all currently charging Drones    ChargeBase, TestGenerator
+
+"scanner_stream": 	STREAM used to upload every Drone status update									DroneControl, Wave, Drone, ChargeBase
+"charge_stream":	STREAM used to upload data needed by ChargeBase									ChargeBase, Drone
+
+connection_pool: 	Used by Waves for efficient multi-thread Redis usage							ScannerManager, Wave, Drone
+
+"scanner_group": 	Group of consumers used for bulk reading of "scanner_stream"					DroneControl
+
+pipeline:			Used to bulk upload data onto "scanner_stream"									Wave

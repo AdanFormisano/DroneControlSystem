@@ -1,2 +1,2 @@
-set follow-fork-mode child
+set follow-fork-mode parent
 set detach-on-fork off

@@ -1,0 +1,41 @@
+[main] Main executing function
+	Create Redis' connections options
+
+	Fork to create DroneControl process
+		Create Redis connection
+		Create DroneControl object
+		Run DroneControl
+
+	Fork to create ScannerManager process
+		Create Redis' connection pool options
+		Create Redis pool
+		Create ScannerManager object
+		Run ScannerManager
+
+	Fork to create ChargeBase process
+		Create Redis connection
+		Create ChargeBase
+		Create random_device used for creating charging rates
+		SetEngine in ChargeBase
+		Run ChargeBase
+
+	Fork to create TestGenerator process
+		Create Redis connection
+		Create TestGenerator object
+		Run TestGenerator
+
+	Fork to create Monitors process
+		Create and run Monitors (AreaCoverage, WaveCoverage, DroneCharge, RechargeTime)
+		When simulation ends run SystemPerformanceMonitor
+
+	End forks
+
+	Create Redis connection
+	Create semaphores (sem_sync_dc, sem_sync_sc, sem_sync_cb, sem_dc, sem_sc, sem_cb)
+	While simultion is running do
+		Post on semaphores (sem_sync_dc, sem_sync_sc, sem_sync_cb) to signal start of new tick
+		Wait on semaphores (sem_dc, sem_sc, sem_cb) that signal end of tick for simulating processes
+		Increase internal tick count
+	End loop
+	Wait for child processes to finish
+	Kill TestGenerator process

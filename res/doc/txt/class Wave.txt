@@ -1,0 +1,60 @@
+class Wave
+	[Wave] Wave's contructor
+		RecycleDrones
+		Set starting internal tick counter
+		Set WaveID
+		For loop on 300 Wave's drones do
+			Create Drone with its data (ID, X, Y, starting_X, starting_Y, tick_drone)
+			Calculate drone's direction
+		End for
+		Self add to "waves_alive" on Redis
+
+	[UploadData] Uploads onto the Redis stream Wave Drone's data
+		For each Drone do
+			Create stream-ready drone-data
+			Add to the pipeline the Redis stream upload function
+		End for
+
+	[setDroneFault] Drone fault manager for a given fault
+		Calculate the DroneID from WaveID
+		Save Drone's current state (into "previous" variable)
+		If fault state != NONE then
+			Set Drone's state to the given fault state
+		End if
+		Set Drone's reconnect_tick
+		Set Drone's high_consumptio_factor
+
+	[RecycleDrones] Used when creating a new Wave, gets all available fully charged Drones
+		Get from Redis DB at most 300 of the fully charged and available drones
+
+	[DeleteDrones] Delete Drones that are dead
+		For each DroneID to be deleted do
+			Calculate the array index of the Drone
+			If Drone hasn't be deleted yet
+				Remove Drone from array
+
+	[AllDronesAreDead] Check if all drones of the wave are Dead
+		return True if all drones are Dead
+
+	[Run] Wave's main execution function
+		Signal the synchronizer to add a new thread to the synch process
+		Create a Redis pipeline
+		While !AllDronesAreDead loop do
+			If the queue for Drone faults is not empty then
+				Parse the fault-data from the queue
+				setDroneFault
+			End if
+			For loop on each Drone do
+				If Drone != nullptr then
+					Execute Drone's Run function
+					Create stream-ready drone-data
+					Add the Redis stream upload function to the pipeline 
+				End if
+			End for
+			Execute Pipeline
+			DeleteDrones
+			Signal the synchronizer that current tick is completed
+			Increase internal tick counter
+		End loop
+		Remove self from alive Waves on Redis
+		Signal synchronizer to remove a thread from the synch process

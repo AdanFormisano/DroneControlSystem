@@ -1,18 +1,31 @@
 #ifndef DRONECONTROLSYSTEM_REDISUTILS_H
 #define DRONECONTROLSYSTEM_REDISUTILS_H
 
-#include <sw/redis++/redis++.h>
 #include <chrono>
+#include <string>
+#include <sw/redis++/redis++.h>
 
 using namespace sw::redis;
 
 namespace utils {
-    // Check if the connection to Redis is successful
-    int RedisConnectionCheck(sw::redis::Redis& redis, std::string clientName);
-    long long RedisGetClientID(sw::redis::Redis& redis);
+int RedisConnectionCheck(sw::redis::Redis &redis, std::string clientName);
+long long RedisGetClientID(sw::redis::Redis &redis);
+bool getSimStatus(sw::redis::Redis &redis);
 
-    // Used for synchronization of processes
-    void SyncWait(Redis& redis);
-}
+// Clear Redis cache
+void clearRedis();
+void clearRedisCache();
+void clearCache(const std::string &cachePath);
 
-#endif //DRONECONTROLSYSTEM_REDISUTILS_H
+// Used for synchronization of processes
+void AddThisProcessToSyncCounter(Redis &redis, const std::string &process_name);
+int NamedSyncWait(Redis &redis, const std::string &process_name);
+
+// Used for synchronization of Scanner and DroneControl processes
+void UpdateSyncTick(Redis &redis, int tick_n);
+void AckSyncTick(Redis &redis, int tick_n);
+bool CheckSyncTick(Redis &redis, int tick_n);
+int GetSyncTick(Redis &redis);
+} // namespace utils
+
+#endif // DRONECONTROLSYSTEM_REDISUTILS_H
