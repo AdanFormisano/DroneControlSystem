@@ -71,6 +71,47 @@ cleanup_ipc() {
     echo "Cleanup completed: IPC resources removed"
 }
 
+get_DB() {
+    # Legge i dati dal file JSON
+    CONFIG_FILE="src/db_config.json"
+    if ! [ -f "$CONFIG_FILE" ]; then
+        echo "Errore: file di configurazione '$CONFIG_FILE' non trovato."
+        exit 1
+    fi
+
+    DB_USER=$(jq -r '.db_user' "$CONFIG_FILE")
+    DB_PASSWORD=$(jq -r '.db_password' "$CONFIG_FILE")
+    DB_NAME=$(jq -r '.db_name' "$CONFIG_FILE")
+
+    # Verifica che l'utente PostgreSQL esista
+    user_exists=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")
+
+    # Creazione dell'utente solo se non esiste già
+    if [ "$user_exists" != "1" ]; then
+        echo "L'utente PostgreSQL '$DB_USER' non esiste. Creazione in corso..."
+        sudo -u postgres psql -d postgres -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+    else
+        echo "L'utente PostgreSQL '$DB_USER' esiste già. Nessuna azione necessaria."
+    fi
+
+    # Funzione per verificare se un database esiste
+    db_exists=$(psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
+
+    # Creazione del database solo se non esiste già
+    if [ "$db_exists" == "1" ]; then
+        echo "Il database '$DB_NAME' esiste già. Nessuna azione necessaria."
+    else
+        echo "Il database '$DB_NAME' non esiste. Creazione in corso..."
+        sudo -u postgres psql -d postgres -c "CREATE DATABASE $DB_NAME;"
+        sudo -u postgres psql -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+
+        # Concessione dei permessi per tutte le tabelle (opzionale)
+        psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;"
+
+        echo "Setup completato: Database creato con permessi assegnati."
+    fi
+}
+
 trap cleanup SIGINT SIGTERM
 
 # show_help() {
