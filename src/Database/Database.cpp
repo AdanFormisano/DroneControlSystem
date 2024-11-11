@@ -6,7 +6,8 @@
 #include <pqxx/pqxx>
 #include <thread>
 
-void Database::ConnectToDB() {
+void Database::ConnectToDB()
+{
     auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
 
     std::string connectionString = "dbname=" + dbname +
@@ -23,9 +24,11 @@ void Database::ConnectToDB() {
 }
 
 // Read credentials from config file
-Database::DBCredentials Database::ReadCredentialsFromConfig() {
+Database::DBCredentials Database::ReadCredentialsFromConfig()
+{
     std::ifstream configFile("../src/db_config.json");
-    if (!configFile.is_open()) {
+    if (!configFile.is_open())
+    {
         throw std::runtime_error("Could not open db_config.json. Check file or path.");
     }
 
@@ -46,7 +49,7 @@ Database::DBCredentials Database::ReadCredentialsFromConfig() {
 }
 
 // Create the DB
-void Database::CreateDB(const DBCredentials &credentials) {
+void Database::CreateDB(const DBCredentials& credentials) {
     // Connessione al server PostgreSQL (senza specificare un DB)
     std::string serverConnectionString = "user=" + credentials.user +
                                          " password=" + credentials.password +
@@ -128,7 +131,9 @@ void Database::CreateTables() {
             "end_tick INT);");
 
         W.commit();
-    } else {
+    }
+    else
+    {
         log_error("Database", "Failed to connect to DB");
     }
 }
@@ -139,8 +144,10 @@ void Database::get_DB() {
     const int retry_delay_ms = 1000; // Ritardo tra i tentativi (in millisecondi)
     int retry_count = 0;
 
-    while (retry_count < max_retries) {
-        try {
+    while (retry_count < max_retries)
+    {
+        try
+        {
             // Legge le credenziali dal db_config.json
             auto [dbname, user, password, hostaddr, port] = ReadCredentialsFromConfig();
             CreateDB({dbname, user, password, hostaddr, port});

@@ -160,8 +160,6 @@ private:
 
     void checkPerformance();
     void getPerformanceData();
-    void getPerformanceData(int last_processed_tick);
-    void simulateQueryExecution(size_t num_rows);
 };
 
 #endif  // MONITOR_H
