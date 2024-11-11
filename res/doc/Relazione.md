@@ -679,6 +679,11 @@ class TestGenerator
 	[Constructor] Define scenarios with their percentages
 		[All_fine] 40% (Testing)
 
+		[Charge_rate_malfunction] 20%
+            ChooseRandomDrone
+            Generate charge_rate_factor (between 0.5 and 0.8)
+            Send IPC message to ScannerManager
+
 		[High_consumption] 20%
 			ChooseRandomDrone
 			Generate high_consumption_factor (between 1.5 and 2)
@@ -704,7 +709,7 @@ class TestGenerator
 			Select correct scenario using generated probability
 			Sleep for 5s (Giving time to system to run)
 		End loop
-
+	
 	[ChooseRandomDrone] Calculates a Drone to select for scenarios
 		Select a Wave from "waves_alive" on Redis
 		Randomly select a Drone
@@ -724,13 +729,28 @@ class Database
 	[ConnectToDB] Creates a connection to "dcs" database
 		Make unique connection to "dcs"
 
-	[get_DB] Creates or connects to the "dcs" database
-		If "dcs" doesn't exist then
-			Create a new "dcs" DB
-		ConnectToDB
-		If connection to db is open then
-			Delete existing tables (drone_logs, ~~monitor_logs~~, system_performance_logs, drone_charge_logs)
-			Create tables (drone_logs, ~~monitor_logs~~, system_performance_logs, drone_charge_logs)
+    [ReadCredentials] Reads the credentials from a config file
+        Open the config file
+        Read and parse the credentials
+        Close the config file
+
+    [CreateDB] Given the credentials, creates a new database
+        Check if the database exists
+        If it doesn't exist then
+            Create a new database with the given credentials
+        End if
+
+    [CreateTables] Creates the tables for the database
+        Drop existing tables
+        Create new tables
+
+	[get_DB] Creates and/or connects to the "dcs" database
+	    While retry counter < max tries then
+            ReadCredentials
+            CreateDB
+            ConnectToDB
+            CreateTables
+        End while
 
 	[ExecuteQuery] Executes the indicated query
 		If connection to DB is open then
@@ -789,7 +809,8 @@ _Pseudocodice di Main_
 		Run TestGenerator
 
 	Fork to create Monitors process
-		# Create and run all monitors
+		Create and run Monitors (AreaCoverage, WaveCoverage, DroneCharge, RechargeTime)
+		When simulation ends run SystemPerformanceMonitor
 
 	End forks
 
@@ -804,41 +825,165 @@ _Pseudocodice di Main_
 	Kill TestGenerator process
 ```
 
+#### Componenti Monitor
+
+```
+class Monitor
+    [CheckSimulationEnd] Checks if the simulation is still running
+        If the simulation has ended, then
+            Set sim_running to false
+        End if
+
+
+class RechargeTimeMonitor
+    [RunMonitor] Runs RechargeTime monitor
+        Create a thread that runs the RechargeTime monitor ([checkDroneRechargeTime])
+
+    [checkDroneRechargeTime] Main execution function for the monitor
+        While sim_running is true
+            Sleep for 10 seconds
+            getChargingDrones
+            getChargedDrones
+            For each charging drone do
+                If drone has completed charging then
+                    Calculate duration of recharge (in ticks)
+                    If duration < 3000 or duration > 4500 then
+                        Add entry to monitor table
+                    End if
+                End if
+            End for
+            Check if simulation has ended
+        End while
+
+    [getChargingDrones] Get list of drones that have started charging
+        Adds to the list of charging drones any new drones that have started charging since the last check
+
+    [getChargedDrones] Get list of drones that have completed charging
+        Adds to the list of charging drones any new drones that have completed charging since the last check
+
+
+class WaveCoverageMonitor
+    [RunMonitor] Runs WaveCoverage monitor
+        Create a thread that runs the WaveCoverage monitor ([checkWaveCoverage])
+
+    [checkWaveCoverage] Main execution function for the monitor
+        While sim_running is true
+            Sleep for 10 seconds
+            checkCoverageVerification
+            Check if simulation has ended
+        End while
+
+    [checkCoverageVerification] Check if every wave is verifying the area
+        getWaveVerification
+        For each failed wave verification do
+            Add entry to monitor table
+        End for
+
+    [getWaveVerification] Get list of waves that have failed verification
+        Adds to the list of failed waves any new waves that have failed verification since the last check
+
+
+class AreaCoverageMonitor
+    [RunMonitor] Runs AreaCoverage monitor
+        Create a thread that runs the AreaCoverage monitor ([checkAreaCoverage])
+
+    [checkAreaCoverage] Main execution function for the monitor
+        Initialize area_coverage_data
+        While sim_running is true
+            Sleep for 10 seconds
+            Find every new entries for WORKING drone
+            For each WORKING drone do
+                If the tick for WORKING drone > area_coverage_data[drone's coords] last tick then
+                    readAreaCoverage
+                End if
+            End for
+            Check if simulation has ended
+        End while
+        InsertUnverifiedTicks
+
+    [readAreaCoverage] Elaborate the given area coverage data
+        If data corresponds to special "starting case" then (first 210 ticks)
+            For each tick from 0 to given current tick do
+                Add tick to list of unverified ticks for that coordinate
+            End for
+        Else if (current tick - last verified tick) > 125 then
+            For each tick from (last verified tick + 126) to current tick do
+                Add tick to list of unverified ticks for that coordinate
+            End for
+        End if
+        Updated area_coverage_data[drone's coords] last tick with current tick
+
+    [InsertUnverifiedTicks] Insert unverified ticks into monitor table
+        For each coord of 6x6 area do
+            Add entry to monitor table for each unverified tick
+        End for
+
+
+class SystemPerformanceMonitor
+    [RunMonitor] Runs SystemPerformance monitor
+        Create a thread that runs the SystemPerformance monitor ([checkPerformance])
+
+
+class DroneChargeMonitor
+    [RunMonitor] Runs DroneCharge monitor
+        Create a thread that runs the DroneCharge monitor ([checkDroneCharge])
+
+    [checkDroneCharge] Main execution function for the monitor
+        While sim_running is true
+            Sleep for 10 seconds
+            getBasedDrones
+            getDeadDrones
+            checkBasedDrones
+            checkDeadDrones
+            Check if simulation has ended
+        End while
+
+    [checkBasedDrones] Elaborates data of based drones
+        Insert into monitor table the drones that are based and have higher consumption than default
+
+    [checkDeadDrones] Elaborates data of dead drones
+        Insert into monitor table the drones that are dead and have higher consumption than default
+
+    [getBasedDrones] Get list of drones that based but have higher consumption than default
+        Adds to the list of based drones any new drones that are based but have higher consumption than default since the last check
+
+    [getDeadDrones] Get list of drones that are dead but have higher consumption than default
+        Adds to the list of dead drones any new drones that are dead but have higher consumption than default since the last check
+```
+
 ## Schema del Database
 
 Di seguito gli schemi delle tabelle del database `dcs` usato
 
 ### Tab `drone_logs`
 
-| Column     | Data Type      | Constraint                         | Info                                |
-| ---------- | -------------- | ---------------------------------- | ----------------------------------- |
-| `tick_n`   | `INT`          | `PRIMARY KEY` `(tick_n, drone_id)` | Il tick attuale della simulazione   |
-| `drone_id` | `INT`          | `NOT NULL`                         | ID univoco del drone                |
-| `status`   | `VARCHAR(255)` | \-                                 | Stato attuale del drone             |
-| `charge`   | `FLOAT`        | \-                                 | % di carica attuale del drone       |
-| `wave`     | `INT`          | \-                                 | L'onda a cui ∈ il drone             |
-| `x`        | `FLOAT`        | \-                                 | Coord x posizione attuale drone     |
-| `y`        | `FLOAT`        | \-                                 | Coord y posizione attuale drone     |
-| `checked`  | `BOOLEAN`      | \-                                 | Indica se drone ha verificato punto |
+| Column       | Data Type      | Constraint                         | Info                                                            |
+|--------------|----------------| ---------------------------------- |-----------------------------------------------------------------|
+| `tick_n`     | `INT`          | `PRIMARY KEY` `(tick_n, drone_id)` | Il tick attuale della simulazione                               |
+| `drone_id`   | `INT`          | `NOT NULL`                         | ID univoco del drone                                            |
+| `status`     | `VARCHAR(255)` | \-                                 | Stato attuale del drone                                         |
+| `charge`     | `FLOAT`        | \-                                 | % di carica attuale del drone                                   |
+| `wave`       | `INT`          | \-                                 | L'onda a cui ∈ il drone                                         |
+| `x`          | `FLOAT`        | \-                                 | Coord x posizione attuale drone                                 |
+| `y`          | `FLOAT`        | \-                                 | Coord y posizione attuale drone                                 |
+| `checked`    | `BOOLEAN`      | \-                                 | Indica se drone ha verificato punto                             |
+| `created_at` | `TIMESTAMP`    | \-                                 | Indica l'istante di tempo in cui il dato è stato scritto sul DB |
 
 ### Tab `wave_coverage_logs`
 
 | Column       | Data Type      | Constraint                         | Info                                |
-| ------------ | -------------- | ---------------------------------- | ----------------------------------- |
+|--------------| -------------- | ---------------------------------- | ----------------------------------- |
 | `tick_n`     | `INT`          | `PRIMARY KEY` `(tick_n, drone_id)` | Il tick attuale della simulazione   |
 | `wave_id`    | `INT`          | -                                  | L'ID dell'onda                      |
 | `drone_id`   | `INT`          | -                                  | ID univoco del drone                |
-| `issue_type` | `VARCHAR(255)` | -                                  | Descriz. dell'eventuale fault state |
+| `fault_type` | `VARCHAR(255)` | -                                  | Descriz. dell'eventuale fault state |
 
 ### Tab `area_coverage_logs`
 
-| Column      | Data Type | Constraint    | Info                                                |
-| ----------- | --------- | ------------- | --------------------------------------------------- |
-| `tick_n`    | `INT`     | `PRIMARY KEY` | FK di `drone_logs(tick_n)`                          |
-| `wave_ids`  | `INT[]`   | \-            | Gli ID delle onde senza copertura                   |
-| `drone_ids` | `INT[]`   | \-            | Gli ID dei droni che non hanno coperto              |
-| `X`         | `INT[]`   | \-            | Coordinate X del checkpoint che non è stato coperto |
-| `Y`         | `INT[]`   | \-            | Coordinate Y del checkpoint che non è stato coperto |
+| Column             | Data Type     | Constraint    | Info                                                |
+|--------------------|---------------| ------------- |-----------------------------------------------------|
+| `checkpoint`       | `VARCHAR(20)` | `PRIMARY KEY` | Rappresenta un checkpoint da verificare dell'area   |
+| `unverified_ticks` | `INT[]`       | \-            | I tick non verificati per un determinato checkpoint |
 
 ### Tab `system_performance_logs`
 

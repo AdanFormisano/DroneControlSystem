@@ -39,5 +39,3 @@
 	End loop
 	Wait for child processes to finish
 	Kill TestGenerator process
-	
-
