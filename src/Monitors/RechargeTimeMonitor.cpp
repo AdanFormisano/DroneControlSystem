@@ -58,7 +58,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
                     {
                         // std::cout << "[Monitor-RC] Drone " << drone_id << " has charged for " << duration_minutes <<
                         //    " minutes" << std::endl;
-                        log_recharge("Drone " +  std::to_string(drone_id) + " has charged for " + std::to_string(duration_minutes) + " minutes");
+                        // log_recharge("Drone " +  std::to_string(drone_id) + " has charged for " + std::to_string(duration_minutes) + " minutes");
                     }
                     else
                     {
@@ -112,7 +112,7 @@ void RechargeTimeMonitor::getChargingDrones(pqxx::work& W)
     }
     else
     {
-        std::cout << "[Monitor-RC] No new drones charging" << std::endl;
+        // std::cout << "[Monitor-RC] No new drones charging" << std::endl;
     }
 }
 
@@ -145,6 +145,6 @@ void RechargeTimeMonitor::getChargedDrones(pqxx::work& W)
     else
     {
         // std::cout << "[Monitor-RC] No new drone has finished recharging" << std::endl;
-        log_recharge("No drone has finished charging");
+        // log_recharge("No drone has finished charging");
     }
 }

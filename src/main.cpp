@@ -140,26 +140,25 @@ int main() {
                         auto monitors_redis = Redis(connection_options);
 
                         // Create the Monitors
-                        CoverageMonitor cm(monitors_redis);
+                        WaveCoverageMonitor cm(monitors_redis);
                         RechargeTimeMonitor rm(monitors_redis);
                         DroneChargeMonitor dm(monitors_redis);
                         AreaCoverageMonitor am(monitors_redis);
 
                         // Run the Monitors' thread
                         cm.RunMonitor();
-                        am.RunMonitor();
                         rm.RunMonitor();
                         dm.RunMonitor();
+                        am.RunMonitor();
 
                         cm.JoinThread();
-                        am.JoinThread();
                         rm.JoinThread();
                         dm.JoinThread();
+                        am.JoinThread();
 
                         SystemPerformanceMonitor sm(monitors_redis);
                         sm.RunMonitor();
                         sm.JoinThread();
-
                     } else {
                         auto main_redis = Redis(connection_options);
 
