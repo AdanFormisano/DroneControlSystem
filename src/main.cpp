@@ -32,6 +32,7 @@
 using namespace sw::redis;
 
 int main() {
+    // utils_sync::restart_postgresql();
 
     ConnectionOptions connection_options;
     connection_options.host = "127.0.0.1";

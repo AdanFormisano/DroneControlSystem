@@ -53,6 +53,24 @@ cleanup() {
 
 }
 
+cleanup_ipc() {
+    echo "Cleaning up IPC resources..."
+
+    # Rimuovi le code di messaggi specifiche
+    rm -rf /dev/shm/charge_fault_queue
+    rm -rf /dev/shm/drone_fault_queue
+
+    # Rimuovi i semafori nominati specifici
+    rm -f /dev/shm/sem.sem_sync_dc
+    rm -f /dev/shm/sem.sem_sync_sc
+    rm -f /dev/shm/sem.sem_sync_cb
+    rm -f /dev/shm/sem.sem_dc
+    rm -f /dev/shm/sem.sem_sc
+    rm -f /dev/shm/sem.sem_cb
+
+    echo "Cleanup completed: IPC resources removed"
+}
+
 trap cleanup SIGINT SIGTERM
 
 # show_help() {
