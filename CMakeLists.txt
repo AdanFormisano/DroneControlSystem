@@ -43,12 +43,11 @@ add_executable(DroneControlSystem
         utils/RedisUtils.h
         utils/utils.cpp
         utils/utils.h
+        src/GUI/UI.cpp
 )
 
 target_compile_definitions(DroneControlSystem PRIVATE BOOST_DATE_TIME_NO_LIB)
-
 include_directories(${CMAKE_SOURCE_DIR}/libs)
-
 
 # <------------ add hiredis dependency --------------->
 find_path(HIREDIS_HEADER hiredis)
@@ -71,4 +70,7 @@ target_include_directories(DroneControlSystem PUBLIC ${LIBPQXX_HEADER})
 find_library(LIBPQXX_LIB pqxx)
 find_library(PQ_LIB pq REQUIRED)
 target_link_libraries(DroneControlSystem ${LIBPQXX_LIB} ${PQ_LIB})
+
+find_package(SFML 2.6 COMPONENTS system window graphics REQUIRED)
+target_link_libraries(DroneControlSystem sfml-system sfml-window sfml-graphics)
 

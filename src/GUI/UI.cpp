@@ -1,51 +1,24 @@
-//
-// Created by adanf on 15/03/2024.
-//
+#include <SFML/Graphics.hpp>
 
-#include "UI.h"
+int RunUI() {
+    // Create a window with dimensions 1800x1800 pixels
+    sf::RenderWindow window(sf::VideoMode(1800, 1800), "Drone Visualization");
 
-namespace ui {
-    UI::UI(Redis& redis) : redis(redis){
-        spdlog::info("UI process starting");
+    // Main loop that continues until the window is closed
+    while (window.isOpen()) {
+        // Process events
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            // Close the window when the close button is clicked
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
+        // Clear the window with a black color
+        window.clear(sf::Color::Black);
+
+        // Draw everything here...
+
+        // Display what has been drawn to the window
+        window.display();
     }
-
-    UI::~UI() {
-        spdlog::info("UI process ending");
-    }
-
-    int UI::Run() {
-        // Main window
-        Fl_Double_Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "Drone Control System");
-        DroneUI dui(0,0);
-
-        window.add(dui);
-
-//        window = new Fl_Window(1200,1200);
-//        window->label("Drone Control System");
-
-//        MovingPoint *point = new MovingPoint(redis, 0, 0, window->w(), window->h());
-//        window->add(point);
-
-
-        // window->callback(close_cb);
-        window.end();
-
-        // Get the main screen dimensions
-        int screen_w = Fl::w();
-        int screen_h = Fl::h();
-
-        // Calculate the window position to center it on the main screen
-        int window_x = (screen_w) / 2;
-        int window_y = (screen_h - window.h()) / 2;
-
-        // Set the window position
-        window.position(window_x, window_y);
-
-        window.show();
-
-        Fl::run();
-        Fl::first_window()->hide();
-
-        return 0;
-    }
-}
