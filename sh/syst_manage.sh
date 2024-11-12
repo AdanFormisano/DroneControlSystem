@@ -87,27 +87,25 @@ get_DB() {
 
     # Verifica che l'utente PostgreSQL esista
     echo "Verifica utente e DB PostgreSQL: permessi necessari..."
-    user_exists=$(sudo -H -i -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")
+    user_exists=$(sudo -i -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")
 
     # Creazione dell'utente solo se non esiste già
     if [ "$user_exists" != "1" ]; then
         echo "L'utente PostgreSQL '$DB_USER' non esiste. Lo creo..."
-        echo "Inserisci la password per l'utente PostgreSQL:"
-        read -s DB_PASSWORD
-        sudo -H -i -u postgres psql -d postgres -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+        sudo -i -u postgres psql -d postgres -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
     else
         echo "L'utente PostgreSQL esiste già"
     fi
 
     # Funzione per verificare se un database esiste
-    db_exists=$(sudo -H -i -u postgres psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
+    db_exists=$(sudo -i -u postgres psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
 
     # Creazione del database solo se non esiste già
     if [ "$db_exists" == "1" ]; then
         echo "Il DB esiste già"
     else
         echo "Il DB non esiste. Lo creo..."
-        sudo -H -i -u postgres psql -d postgres -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
+        sudo -i -u postgres psql -d postgres -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
 
         echo "DB creato"
     fi
