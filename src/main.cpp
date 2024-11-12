@@ -32,6 +32,7 @@
 using namespace sw::redis;
 
 int main() {
+    // utils_sync::restart_postgresql();
 
     ConnectionOptions connection_options;
     connection_options.host = "127.0.0.1";
@@ -53,9 +54,6 @@ int main() {
 
         // Create the DroneControl object
         DroneControl dc(drone_control_redis);
-
-        // std::cout << "DroneControl process started" << std::endl;
-        log_system("This monitor will start at the end of the simulation");
 
         // Start simulation
         dc.Run();
@@ -140,7 +138,7 @@ int main() {
                         auto monitors_redis = Redis(connection_options);
 
                         // Create the Monitors
-                        CoverageMonitor cm(monitors_redis);
+                        WaveCoverageMonitor cm(monitors_redis);
                         RechargeTimeMonitor rm(monitors_redis);
                         DroneChargeMonitor dm(monitors_redis);
 
@@ -153,10 +151,12 @@ int main() {
                         rm.JoinThread();
                         dm.JoinThread();
 
+                        AreaCoverageMonitor am(monitors_redis);
                         SystemPerformanceMonitor sm(monitors_redis);
                         sm.RunMonitor();
+                        am.RunMonitor();
                         sm.JoinThread();
-
+                        am.JoinThread();
                     } else {
                         auto main_redis = Redis(connection_options);
 
@@ -197,9 +197,7 @@ int main() {
                             sem_wait(sem_cb);
 
                             ++tick_n;
-                            // log("=====================================");
                             log_dcsa("=====================================");
-                            // std::cout << "=====================================" << std::endl;
                         }
                         // Stop time watch
                         auto sim_end_time = std::chrono::high_resolution_clock::now();

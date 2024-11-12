@@ -14,8 +14,8 @@ add_executable(DroneControlSystem
         src/ChargeBase/ChargeBase.h
         src/DroneControl/DroneControl.cpp
         src/DroneControl/DroneControl.h
-        src/Database/NewBuffer.cpp
-        src/Database/NewBuffer.h
+        src/Database/Buffer.cpp
+        src/Database/Buffer.h
         src/Database/Database.cpp
         src/Database/Database.h
         src/TestGenerator/TestGenerator.cpp
@@ -23,9 +23,10 @@ add_executable(DroneControlSystem
         src/Monitors/Monitor.cpp
         src/Monitors/Monitor.h
         src/Monitors/RechargeTimeMonitor.cpp
-        src/Monitors/CoverageMonitor.cpp
+        src/Monitors/WaveCoverageMonitor.cpp
         src/Monitors/DroneChargeMonitor.cpp
         src/Monitors/SystemPerformanceMonitor.cpp
+        src/Monitors/AreaCoverageMonitor.cpp
         src/Scanner/ScannerManager.cpp
         src/Scanner/ScannerManager.h
         src/Scanner/ThreadUtils.h

@@ -14,6 +14,11 @@ source sh/syst_manage.sh
 source sh/conf.sh
 source sh/strings.sh
 
+# Cleanup IPC processes
+cleanup_ipc
+
+get_DB
+
 # Prompt DCS iniziale
 init_msg
 
@@ -22,6 +27,9 @@ manage_redis
 
 # Crea cartelle log
 mkdir_log
+
+# Build DCS
+build_dcs
 
 # Avvia DCS
 dcs_start_msg
@@ -52,7 +60,7 @@ while true; do
     [Mm])
         toggle_monitor
         ;;
-    [1-4])
+    [1-5])
         toggle_single_mon $key
         ;;
     [Ii])

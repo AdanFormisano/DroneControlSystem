@@ -2,10 +2,11 @@
 
 # Nomi monitor ad indici
 declare -A MONITOR_NAMES=(
-    [1]="Coverage Area"
-    [2]="Recharge Time"
-    [3]="System Performance"
-    [4]="Drone Charge"
+    [1]="AreaCoverageMonitor"
+    [2]="RechargeTimeMonitor"
+    [3]="SystemPerformanceMonitor"
+    [4]="DroneChargeMonitor"
+    [5]="WaveCoverageMonitor"
 )
 
 REDIS_PORT=7777

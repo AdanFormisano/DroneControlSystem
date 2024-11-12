@@ -2,13 +2,28 @@ class Database
 	[ConnectToDB] Creates a connection to "dcs" database
 		Make unique connection to "dcs"
 
-	[get_DB] Creates or connects to the "dcs" database
-		If "dcs" doesn't exist then
-			Create a new "dcs" DB
-		ConnectToDB
-		If connection to db is open then
-			Delete existing tables (drone_logs, monitor_logs, system_performance_logs, drone_charge_logs)
-			Create tables (drone_logs, monitor_logs, system_performance_logs, drone_charge_logs)
+    [ReadCredentials] Reads the credentials from a config file
+        Open the config file
+        Read and parse the credentials
+        Close the config file
+
+    [CreateDB] Given the credentials, creates a new database
+        Check if the database exists
+        If it doesn't exist then
+            Create a new database with the given credentials
+        End if
+
+    [CreateTables] Creates the tables for the database
+        Drop existing tables
+        Create new tables
+
+	[get_DB] Creates and/or connects to the "dcs" database
+	    While retry counter < max tries then
+            ReadCredentials
+            CreateDB
+            ConnectToDB
+            CreateTables
+        End while
 
 	[ExecuteQuery] Executes the indicated query
 		If connection to DB is open then
@@ -27,4 +42,3 @@ class Buffer
 
 	[getSize] Return the size of the buffer
 		return Buffer's size
-

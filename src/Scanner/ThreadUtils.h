@@ -52,6 +52,7 @@ public:
 
     // Add a task to the thread pool
     void enqueue_task(std::function<void()> task);
+    void shutdown();
 
 private:
     std::vector<std::thread> workers;

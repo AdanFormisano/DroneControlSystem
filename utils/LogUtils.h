@@ -18,6 +18,7 @@ extern std::ofstream coverage_log;
 extern std::ofstream recharge_log;
 extern std::ofstream system_log;
 extern std::ofstream charge_log;
+extern std::ofstream wave_coverage_log;
 
 // Funzioni di logging generale
 void log_all(const std::string &message);  // Log cumulativo
@@ -44,7 +45,8 @@ void log_db(const std::string &message);   // Log per Database
 
 // Funzioni di logging specifiche per monitor
 void log_monitor(const std::string &message);
-void log_coverage(const std::string &message);
+void log_wave_coverage(const std::string &message);
+void log_area_coverage(const std::string &message);
 void log_recharge(const std::string &message);
 void log_system(const std::string &message);
 void log_charge(const std::string &message);

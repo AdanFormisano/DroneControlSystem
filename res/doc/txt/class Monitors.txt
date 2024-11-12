@@ -1,0 +1,121 @@
+class Monitor
+    [CheckSimulationEnd] Checks if the simulation is still running
+        If the simulation has ended, then
+            Set sim_running to false
+        End if
+
+
+class RechargeTimeMonitor
+    [RunMonitor] Runs RechargeTime monitor
+        Create a thread that runs the RechargeTime monitor ([checkDroneRechargeTime])
+
+    [checkDroneRechargeTime] Main execution function for the monitor
+        While sim_running is true
+            Sleep for 10 seconds
+            getChargingDrones
+            getChargedDrones
+            For each charging drone do
+                If drone has completed charging then
+                    Calculate duration of recharge (in ticks)
+                    If duration < 3000 or duration > 4500 then
+                        Add entry to monitor table
+                    End if
+                End if
+            End for
+            Check if simulation has ended
+        End while
+
+    [getChargingDrones] Get list of drones that have started charging
+        Adds to the list of charging drones any new drones that have started charging since the last check
+
+    [getChargedDrones] Get list of drones that have completed charging
+        Adds to the list of charging drones any new drones that have completed charging since the last check
+
+
+class WaveCoverageMonitor
+    [RunMonitor] Runs WaveCoverage monitor
+        Create a thread that runs the WaveCoverage monitor ([checkWaveCoverage])
+
+    [checkWaveCoverage] Main execution function for the monitor
+        While sim_running is true
+            Sleep for 10 seconds
+            checkCoverageVerification
+            Check if simulation has ended
+        End while
+
+    [checkCoverageVerification] Check if every wave is verifying the area
+        getWaveVerification
+        For each failed wave verification do
+            Add entry to monitor table
+        End for
+
+    [getWaveVerification] Get list of waves that have failed verification
+        Adds to the list of failed waves any new waves that have failed verification since the last check
+
+
+class AreaCoverageMonitor
+    [RunMonitor] Runs AreaCoverage monitor
+        Create a thread that runs the AreaCoverage monitor ([checkAreaCoverage])
+
+    [checkAreaCoverage] Main execution function for the monitor
+        Initialize area_coverage_data
+        While sim_running is true
+            Sleep for 10 seconds
+            Find every new entries for WORKING drone
+            For each WORKING drone do
+                If the tick for WORKING drone > area_coverage_data[drone's coords] last tick then
+                    readAreaCoverage
+                End if
+            End for
+            Check if simulation has ended
+        End while
+        InsertUnverifiedTicks
+
+    [readAreaCoverage] Elaborate the given area coverage data
+        If data corresponds to special "starting case" then (first 210 ticks)
+            For each tick from 0 to given current tick do
+                Add tick to list of unverified ticks for that coordinate
+            End for
+        Else if (current tick - last verified tick) > 125 then
+            For each tick from (last verified tick + 126) to current tick do
+                Add tick to list of unverified ticks for that coordinate
+            End for
+        End if
+        Updated area_coverage_data[drone's coords] last tick with current tick
+
+    [InsertUnverifiedTicks] Insert unverified ticks into monitor table
+        For each coord of 6x6 area do
+            Add entry to monitor table for each unverified tick
+        End for
+
+
+class SystemPerformanceMonitor
+    [RunMonitor] Runs SystemPerformance monitor
+        Create a thread that runs the SystemPerformance monitor ([checkPerformance])
+
+
+class DroneChargeMonitor
+    [RunMonitor] Runs DroneCharge monitor
+        Create a thread that runs the DroneCharge monitor ([checkDroneCharge])
+
+    [checkDroneCharge] Main execution function for the monitor
+        While sim_running is true
+            Sleep for 10 seconds
+            getBasedDrones
+            getDeadDrones
+            checkBasedDrones
+            checkDeadDrones
+            Check if simulation has ended
+        End while
+
+    [checkBasedDrones] Elaborates data of based drones
+        Insert into monitor table the drones that are based and have higher consumption than default
+
+    [checkDeadDrones] Elaborates data of dead drones
+        Insert into monitor table the drones that are dead and have higher consumption than default
+
+    [getBasedDrones] Get list of drones that based but have higher consumption than default
+        Adds to the list of based drones any new drones that are based but have higher consumption than default since the last check
+
+    [getDeadDrones] Get list of drones that are dead but have higher consumption than default
+        Adds to the list of dead drones any new drones that are dead but have higher consumption than default since the last check

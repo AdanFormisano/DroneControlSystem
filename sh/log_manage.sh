@@ -5,11 +5,15 @@ toggle_dcs() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCS_RUNNING" = true ]; then
+        if is_process_running $DCS_PID; then
+            return
+        fi
         center_title_with_message "Hai premuto \"d\" e hai reso" "$name nascosto"
         kill $DCS_PID
         wait $DCS_PID 2>/dev/null
         DCS_RUNNING=false
     else
+        hide_all_views
         center_title_with_message "Hai premuto \"d\" e visualizzi" "$name"
         # tail -f ../log/dcs_slow.log &
         tail -F ../log/dcs_slow.log &
@@ -24,6 +28,9 @@ toggle_dcsa() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCSA_RUNNING" = true ]; then
+        if is_process_running $DCSA_PID; then
+            return
+        fi
         center_title_with_message "Hai premuto \"a\" e hai reso" "$name nascosta"
         
         # Controllo e chiusura PID
@@ -38,6 +45,7 @@ toggle_dcsa() {
         DCSA_RUNNING=false
         DCSA_PID=0
     else
+        hide_all_views
         center_title_with_message "Hai premuto \"a\" e visualizzi" "$name"
 
         # Usa `tail -f` anziché `tail -F`
@@ -52,6 +60,9 @@ toggle_dcsa_fast() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$DCSAF_RUNNING" = true ]; then
+        if is_process_running $DCSAF_PID; then
+            return
+        fi
         center_title_with_message "Hai premuto \"D\" e hai reso" "$name nascosta"
         
         # Controllo e chiusura PID
@@ -66,6 +77,7 @@ toggle_dcsa_fast() {
         DCSAF_RUNNING=false
         DCSAF_PID=0
     else
+        hide_all_views
         center_title_with_message "Hai premuto \"D\" e visualizzi" "$name"
 
         # Usa `tail -f` anziché `tail -F`
@@ -80,11 +92,15 @@ toggle_monitor() {
     local dashes=$(generate_dashes "$name")
 
     if [ "$MONITOR_RUNNING" = true ]; then
+        if is_process_running $MONITOR_LOG_PID; then
+            return
+        fi
         center_title_with_message "Hai premuto \"m\" e hai reso" "$name nascosti"
         kill $MONITOR_LOG_PID
         wait $MONITOR_LOG_PID 2>/dev/null
         MONITOR_RUNNING=false
     else
+        hide_all_views
         center_title_with_message "Hai premuto \"m\" e visualizzi" "$name"
         # tail -f ../log/monitor.log &
         tail -F ../log/monitor.log &
@@ -102,20 +118,23 @@ toggle_single_mon() {
     local dashes=$(generate_dashes "$monitor_name")
 
     case $monitor_index in
-    1) log_file="../log/mon/coverage.log" ;;
+    1) log_file="../log/mon/area.log" ;;
     2) log_file="../log/mon/recharge.log" ;;
     3) log_file="../log/mon/system.log" ;;
     4) log_file="../log/mon/charge.log" ;;
+    5) log_file="../log/mon/wave.log" ;;  # Added wave coverage log
     *) return ;;
     esac
 
     if [ -z "${MONITOR_PIDS[$monitor_index]}" ]; then
+        hide_all_views
         center_title_with_message "Hai premuto \"$monitor_index\" e visualizzi" "$monitor_name"
-        # tail -f $log_file &
         tail -F $log_file &
-        # less +F $log_file &
         MONITOR_PIDS[$monitor_index]=$!
     else
+        if is_process_running ${MONITOR_PIDS[$monitor_index]}; then
+            return
+        fi
         center_title_with_message "Hai premuto \"$monitor_index\" e hai reso" "$monitor_name nascosto"
         if ps -p ${MONITOR_PIDS[$monitor_index]} > /dev/null; then
             kill ${MONITOR_PIDS[$monitor_index]}
@@ -130,6 +149,7 @@ toggle_help() {
     local name="AIUTO"
     local dashes=$(generate_dashes "$name")
 
+    hide_all_views
     center_title_with_message "Hai premuto \"i\" e visualizzi" "$name"
     echo "$help_message"
     read -n 1 -r -s input
@@ -140,16 +160,24 @@ toggle_help() {
 
 toggle_hide() {
     if [ "$DCS_RUNNING" = true ]; then
-        toggle_dcs
+        kill $DCS_PID
+        wait $DCS_PID 2>/dev/null || true
+        DCS_RUNNING=false
     fi
     if [ "$DCSA_RUNNING" = true ]; then
-        toggle_dcsa
+        kill $DCSA_PID
+        wait $DCSA_PID 2>/dev/null || true
+        DCSA_RUNNING=false
     fi
     if [ "$MONITOR_RUNNING" = true ]; then
-        toggle_monitor
+        kill $MONITOR_LOG_PID
+        wait $MONITOR_LOG_PID 2>/dev/null || true
+        MONITOR_RUNNING=false
     fi
     if [ "$DCSAF_RUNNING" = true ]; then
-        toggle_dcsa_fast
+        kill $DCSAF_PID
+        wait $DCSAF_PID 2>/dev/null || true
+        DCSAF_RUNNING=false
     fi
     for index in "${!MONITOR_PIDS[@]}"; do
         pid=${MONITOR_PIDS[$index]}
@@ -163,7 +191,6 @@ toggle_hide() {
         unset MONITOR_PIDS[$index]
     done
     MONITOR_RUNNING=false
-    # sleep 0.2 # Evita sovrapposizioni processi
     clear
     center_title_with_message "Hai premuto \"h\" e hai reso" "Output nascosto"
     echo "$instructions"

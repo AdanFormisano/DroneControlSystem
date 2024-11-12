@@ -4,7 +4,7 @@
 #include "../../utils/utils.h"
 #include "../../utils/RedisUtils.h"
 #include "../Database/Database.h"
-#include "../Database/NewBuffer.h"
+#include "../Database/Buffer.h"
 
 using namespace sw::redis;
 
@@ -29,7 +29,7 @@ private:
     std::mutex tick_mutex;
 
     Database db;
-    NewBuffer buffer;
+    Buffer buffer;
 
     void Consume(Redis& redis, const std::string& stream, const std::string& group, const std::string& consumer, const std::array<std::unordered_set<coords>, 300> *drones_paths);
     void SendWaveSpawnCommand() const;

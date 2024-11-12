@@ -6,7 +6,7 @@
 #include "../globals.h"
 
 
-class NewBuffer {
+class Buffer {
 public:
     void WriteToBuffer(std::vector<DroneData> &data);
     std::vector<DroneData> ReadFromBuffer();
