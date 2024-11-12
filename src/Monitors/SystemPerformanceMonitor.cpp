@@ -24,7 +24,10 @@ void SystemPerformanceMonitor::checkPerformance()
             std::string query = "INSERT INTO system_performance_logs (tick_n, working_drones_count, waves_count, performance) VALUES ";
             for (const auto& [tick_n, working_drones_count, waves_count, performance] : performance_data)
             {
+                if (performance < 100.0f)
+                {
                 log_system("Degraded Tick " + std::to_string(tick_n) + " - Performance: " + std::to_string(performance) + "%");
+                }
                 query += "(" +
                     std::to_string(tick_n) + ", " +
                     std::to_string(working_drones_count) + ", " +

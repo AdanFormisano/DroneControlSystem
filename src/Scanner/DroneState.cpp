@@ -215,7 +215,7 @@ void Disconnected::run(Drone *drone) {
             break;
         }
 
-        if (drone->tick_drone >= drone->reconnect_tick + drone->disconnected_tick) {
+        if (drone->tick_drone >= (drone->reconnect_tick - 1) + drone->disconnected_tick) {
             drone->setState(Reconnected::getInstance());
             return;
         }

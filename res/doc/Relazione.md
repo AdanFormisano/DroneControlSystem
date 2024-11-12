@@ -669,7 +669,7 @@ _Pseudocodice di TestGenerator_
 ```
 class TestGenerator
 	[Constructor] Define scenarios with their percentages
-		[All_fine] 40% (Testing)
+		[All_fine] 20% (Testing)
 
 		[Charge_rate_malfunction] 20%
             ChooseRandomDrone
@@ -764,8 +764,6 @@ class Buffer
 ```
 
 ### Altre componenti
-
-_AGGIUNGERE QUI, EVENTUALMENTE, ALTRE COMPONENTI_
 
 #### Componente Main
 
