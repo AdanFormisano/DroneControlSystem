@@ -1,6 +1,8 @@
 #ifndef MONITOR_H
 #define MONITOR_H
 
+#include <bitset>
+
 #include "../Database/Database.h"
 #include "../globals.h"
 #include "sw/redis++/redis++.h"
@@ -86,7 +88,8 @@ private:
 
     // TODO: A single nested map could be used: the first value for each coords is always the "timer", the rest are the list of ticks that were unverified
     std::unordered_map<int, std::array<AreaData, 300>> area_coverage_data; // X, (tick, drone_id) index of array is Y
-    std::unordered_map<int, std::unordered_map<int, std::set<int>>> unverified_ticks; // X, Y, ticks
+    // std::unordered_map<int, std::unordered_map<int, std::set<int>>> unverified_ticks; // X, Y, ticks
+    std::map<int, std::map<int, std::bitset<6000>>> unverified_ticks;
 
     void checkAreaCoverage(); // Reads area coverage data
     void readAreaCoverageData(const AreaData& area_data, int X, int Y); // Reads area coverage data

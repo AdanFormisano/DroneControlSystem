@@ -190,7 +190,7 @@ void log_charge(const std::string &message) {
 }
 
 void log_wave_coverage(const std::string &message) {
-    log_to_stream(coverage_log, format_log_msg("CoverageMonitor", message));
+    log_to_stream(coverage_log, format_log_msg("WaveCoverageMonitor", message));
     log_monitor("[WaveCoverageMonitor] " + message);
 }
 

@@ -52,7 +52,7 @@ void RechargeTimeMonitor::checkDroneRechargeTime()
                     const float duration_minutes = (static_cast<float>(delta_time) * TICK_TIME_SIMULATED) / 60;
                     if (delta_time < 3000 || delta_time > 4500)
                     {
-                        log_recharge("Drone " + std::to_string(drone_id) + " has recharged for " + std::to_string(duration_minutes) + " minutes");
+                        // log_recharge("Drone " + std::to_string(drone_id) + " has recharged for " + std::to_string(duration_minutes) + " minutes");
                         std::string q =
                             "INSERT INTO drone_recharge_logs (drone_id, recharge_duration_ticks, recharge_duration_min, start_tick, end_tick) VALUES ("
                             + std::to_string(drone_id) + ", "
