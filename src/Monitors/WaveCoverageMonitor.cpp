@@ -182,6 +182,5 @@ FROM disconnected_drones_in_working_waves;
             wave_not_verified.push_back({wave_id, tick_n, drone_id, issue_type, x, y});
         }
     }
-
     return wave_not_verified;
 }
