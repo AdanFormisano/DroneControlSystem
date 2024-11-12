@@ -54,7 +54,8 @@ cleanup() {
 }
 
 cleanup_ipc() {
-    echo "Cleaning up IPC resources..."
+    # echo "Cleaning up IPC resources..."
+    # echo "Controllo che l'area da sorvegliare sia ok..."
 
     # Rimuovi le code di messaggi specifiche
     rm -rf /dev/shm/charge_fault_queue
@@ -68,7 +69,8 @@ cleanup_ipc() {
     rm -f /dev/shm/sem.sem_sc
     rm -f /dev/shm/sem.sem_cb
 
-    echo "Cleanup completed: IPC resources removed"
+    # echo "Cleanup completed: IPC resources removed"
+    echo "L'area da sorvegliare è ok"
 }
 
 get_DB() {
@@ -84,28 +86,30 @@ get_DB() {
     DB_NAME=$(jq -r '.db_name' "$CONFIG_FILE")
 
     # Verifica che l'utente PostgreSQL esista
-    echo "Verifica dell'utente PostgreSQL e del database, permessi necessari..."
-    user_exists=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")
+    echo "Verifica utente e DB PostgreSQL: permessi necessari..."
+    user_exists=$(sudo -H -i -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")
 
     # Creazione dell'utente solo se non esiste già
     if [ "$user_exists" != "1" ]; then
-        echo "L'utente PostgreSQL '$DB_USER' non esiste. Creazione in corso..."
-        sudo -u postgres psql -d postgres -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+        echo "L'utente PostgreSQL '$DB_USER' non esiste. Lo creo..."
+        echo "Inserisci la password per l'utente PostgreSQL:"
+        read -s DB_PASSWORD
+        sudo -H -i -u postgres psql -d postgres -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
     else
-        echo "L'utente PostgreSQL '$DB_USER' esiste già. Nessuna azione necessaria."
+        echo "L'utente PostgreSQL esiste già"
     fi
 
     # Funzione per verificare se un database esiste
-    db_exists=$(sudo -u postgres psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
+    db_exists=$(sudo -H -i -u postgres psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
 
     # Creazione del database solo se non esiste già
     if [ "$db_exists" == "1" ]; then
-        echo "Il database '$DB_NAME' esiste già. Nessuna azione necessaria."
+        echo "Il DB esiste già"
     else
-        echo "Il database '$DB_NAME' non esiste. Creazione in corso..."
-        sudo -u postgres psql -d postgres -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
+        echo "Il DB non esiste. Lo creo..."
+        sudo -H -i -u postgres psql -d postgres -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
 
-        echo "Setup completato: Database creato con permessi assegnati."
+        echo "DB creato"
     fi
 }
 
