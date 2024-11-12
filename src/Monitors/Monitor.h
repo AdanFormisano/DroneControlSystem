@@ -88,7 +88,6 @@ private:
 
     // TODO: A single nested map could be used: the first value for each coords is always the "timer", the rest are the list of ticks that were unverified
     std::unordered_map<int, std::array<AreaData, 300>> area_coverage_data; // X, (tick, drone_id) index of array is Y
-    // std::unordered_map<int, std::unordered_map<int, std::set<int>>> unverified_ticks; // X, Y, ticks
     std::map<int, std::map<int, std::bitset<6000>>> unverified_ticks;
 
     void checkAreaCoverage(); // Reads area coverage data
@@ -103,43 +102,22 @@ public:
     void RunMonitor() override;
 
 private:
-    struct DroneData
+    struct NewDroneData
     {
-        int drone_id{};
-        float consumption_factor{};
-        bool arrived_at_base{};
-
-        // Overload the equality operator for comparison in unordered_set
-        bool operator==(const DroneData& other) const
-        {
-            return drone_id == other.drone_id &&
-                consumption_factor == other.consumption_factor &&
-                arrived_at_base == other.arrived_at_base;
-        }
-    };
-
-    struct DroneDataHash
-    {
-        std::size_t operator()(const DroneData& drone) const
-        {
-            // Combine the hash of all fields
-            std::size_t hash1 = std::hash<int>()(drone.drone_id);
-            std::size_t hash2 = std::hash<float>()(drone.consumption_factor);
-            std::size_t hash3 = std::hash<bool>()(drone.arrived_at_base);
-
-            // Combine the hashes using bitwise XOR and shifts to reduce collisions
-            return hash1 ^ (hash2 << 1) ^ (hash3 << 2);
-        }
+        int first_tick = -1;
+        int last_tick = -1;
+        float final_charge{};
+        bool arrived_at_base = false;
     };
 
     void checkDroneCharge();
-    void checkBasedDrones(std::unordered_set<DroneData, DroneDataHash>& based_drones, pqxx::work& W);
-    void checkDeadDrones(std::unordered_set<DroneData, DroneDataHash>& dead_drones, pqxx::work& W);
-    std::unordered_set<DroneData, DroneDataHash> getBasedDrones(pqxx::work& W);
-    std::unordered_set<DroneData, DroneDataHash> getDeadDrones(pqxx::work& W);
+    void getDroneData();
+    void ElaborateData();
 
     bool write_based_drones = false;
     bool write_dead_drones = false;
+    std::unordered_map<int, NewDroneData> drones_data;
+    std::vector<int> data_ready;    // Drone IDs that have all data ready
     std::set<int> failed_drones;
     std::string temp_time = "00:00:00";
 };

@@ -140,16 +140,16 @@ int main() {
                         // Create the Monitors
                         WaveCoverageMonitor cm(monitors_redis);
                         RechargeTimeMonitor rm(monitors_redis);
-                        // DroneChargeMonitor dm(monitors_redis);
+                        DroneChargeMonitor dm(monitors_redis);
 
                         // Run the Monitors' thread
                         cm.RunMonitor();
                         rm.RunMonitor();
-                        // dm.RunMonitor();
+                        dm.RunMonitor();
 
                         cm.JoinThread();
                         rm.JoinThread();
-                        // dm.JoinThread();
+                        dm.JoinThread();
 
                         AreaCoverageMonitor am(monitors_redis);
                         SystemPerformanceMonitor sm(monitors_redis);
