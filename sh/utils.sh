@@ -10,6 +10,8 @@ constants(){
     MONITOR_RUNNING=false
     MONITOR_LOG_PID=0
     declare -A MONITOR_PIDS
+    MONITOR2_RUNNING=false
+    MONITOR2_LOG_PID=0
 }
 
 # Funzione per centrare il testo
@@ -105,4 +107,9 @@ hide_all_views() {
         unset MONITOR_PIDS[$index]
     done
     MONITOR_RUNNING=false
+    if [ "$MONITOR2_RUNNING" = true ]; then
+        kill $MONITOR2_LOG_PID
+        wait $MONITOR2_LOG_PID 2>/dev/null || true
+        MONITOR2_RUNNING=false
+    fi
 }

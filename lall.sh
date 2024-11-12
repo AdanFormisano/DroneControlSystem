@@ -60,7 +60,7 @@ while true; do
     [Mm])
         toggle_monitor
         ;;
-    [1-4])
+    [1-5])
         toggle_single_mon $key
         ;;
     [Ii])

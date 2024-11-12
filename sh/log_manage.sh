@@ -118,19 +118,18 @@ toggle_single_mon() {
     local dashes=$(generate_dashes "$monitor_name")
 
     case $monitor_index in
-    1) log_file="../log/mon/coverage.log" ;;
+    1) log_file="../log/mon/area.log" ;;
     2) log_file="../log/mon/recharge.log" ;;
     3) log_file="../log/mon/system.log" ;;
     4) log_file="../log/mon/charge.log" ;;
+    5) log_file="../log/mon/wave.log" ;;  # Added wave coverage log
     *) return ;;
     esac
 
     if [ -z "${MONITOR_PIDS[$monitor_index]}" ]; then
         hide_all_views
         center_title_with_message "Hai premuto \"$monitor_index\" e visualizzi" "$monitor_name"
-        # tail -f $log_file &
         tail -F $log_file &
-        # less +F $log_file &
         MONITOR_PIDS[$monitor_index]=$!
     else
         if is_process_running ${MONITOR_PIDS[$monitor_index]}; then

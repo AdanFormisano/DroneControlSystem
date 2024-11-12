@@ -14,10 +14,11 @@ std::ofstream dcs_slow_log("../log/dcs_slow.log");
 std::ofstream dcsa_slow_log("../log/dcsa_slow.log");
 std::ofstream mon_log("../log/monitor.log");
 
-std::ofstream coverage_log("../log/mon/coverage.log");
+std::ofstream area_log("../log/mon/area.log");
 std::ofstream recharge_log("../log/mon/recharge.log");
 std::ofstream system_log("../log/mon/system.log");
 std::ofstream charge_log("../log/mon/charge.log");
+std::ofstream wave_log("../log/mon/wave.log");
 
 // std::map<int, std::vector<std::string>> log_buffer;
 std::map<int, std::vector<std::string>> dcs_log_buffer;
@@ -154,7 +155,8 @@ void close_logs() {
     dcs_slow_log.close();
     dcsa_slow_log.close();
     mon_log.close();
-    coverage_log.close();
+    area_log.close();
+    wave_log.close();
     recharge_log.close();
     system_log.close();
     charge_log.close();
@@ -190,18 +192,18 @@ void log_charge(const std::string &message) {
 }
 
 void log_wave_coverage(const std::string &message) {
-    log_to_stream(coverage_log, format_log_msg("WaveCoverageMonitor", message));
+    log_to_stream(wave_log, format_log_msg("WaveCoverageMonitor", message));
     log_monitor("[WaveCoverageMonitor] " + message);
 }
 
 void log_area_coverage(const std::string &message) {
-    log_to_stream(coverage_log, format_log_msg("AreaCoverageMonitor", message));
+    log_to_stream(area_log, format_log_msg("AreaCoverageMonitor", message));
     log_monitor("[AreaCoverageMonitor] " + message);
 }
 
 void log_recharge(const std::string &message) {
-    log_to_stream(recharge_log, format_log_msg("RechargeMonitor", message));
-    log_monitor("[RechargeMonitor] " + message);
+    log_to_stream(recharge_log, format_log_msg("RechargeTimeMonitor", message));
+    log_monitor("[RechargeTimeMonitor] " + message);
 }
 
 void log_system(const std::string &message) {
