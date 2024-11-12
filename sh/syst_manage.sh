@@ -86,7 +86,7 @@ get_DB() {
     DB_NAME=$(jq -r '.db_name' "$CONFIG_FILE")
 
     # Verifica che l'utente PostgreSQL esista
-    echo "Verifica utente PostgreSQL e DB, permessi necessari..."
+    echo "Verifica utente e DB PostgreSQL: permessi necessari..."
     user_exists=$(sudo -H -i -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")
 
     # Creazione dell'utente solo se non esiste già
