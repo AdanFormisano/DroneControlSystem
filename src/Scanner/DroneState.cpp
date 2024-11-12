@@ -56,7 +56,7 @@ void Ready::run(Drone *drone) {
         return;
     }
 
-    if (drone->ctx->getReadyDrones() - drone->ctx->getDronesNotWaiting() < 300) {
+    if (drone->ctx->getReadyDrones() < 300 - drone->ctx->getDronesNotWaiting() ) {
         // Wait for all drones to be ready
         drone->charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
     } else {
@@ -168,7 +168,7 @@ void Disconnected::hidden_to_starting_line(Drone *drone) {
 
 void Disconnected::hidden_ready(Drone *drone) {
     drone->hidden_charge -= DRONE_CONSUMPTION_RATE * drone->high_consumption_factor;
-    if (drone->ctx->getReadyDrones() >= 300) {
+    if (drone->ctx->getReadyDrones() >= 300 - drone->ctx->getDronesNotWaiting()) {
         drone->previous = drone_state_enum::WORKING;
     }
 }
