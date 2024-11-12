@@ -49,7 +49,6 @@ target_compile_definitions(DroneControlSystem PRIVATE BOOST_DATE_TIME_NO_LIB)
 
 include_directories(${CMAKE_SOURCE_DIR}/libs)
 
-
 # <------------ add hiredis dependency --------------->
 find_path(HIREDIS_HEADER hiredis)
 target_include_directories(DroneControlSystem PUBLIC ${HIREDIS_HEADER})

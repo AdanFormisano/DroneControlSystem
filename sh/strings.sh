@@ -31,10 +31,11 @@ instructions="
   • [h] per nascondere tutto
   • [i] per info su ciascuna vista
   • [m] per mostrare i Monitor
-       [1] Coverage Area
-       [2] Recharge Time
-       [3] System Performance
-       [4] Drone Charge
+       [1] AreaCoverageMonitor
+       [2] RechargeTimeMonitor
+       [3] SystemPerformanceMonitor
+       [4] DroneChargeMonitor
+       [5] WaveCoverageMonitor
 
   -------------------------------
    Puoi premerli anche
@@ -65,10 +66,11 @@ Ecco cosa accade alla pressione di ogni tasto:
   Mostra i log dei monitor tutti assieme
   
   Premendo un numero, si può vedere il log di un monitor specifico
-  • [1] Coverage Area: Mostra i log dell'area di copertura
-  • [2] Recharge Time: Mostra i log del tempo di ricarica
-  • [3] System Performance: Mostra i log delle prestazioni del sistema
-  • [4] Drone Charge: Mostra i log della carica dei droni
+  • [1] AreaCoverageMonitor: Mostra i log dell'area di copertura
+  • [2] RechargeTimeMonitor: Mostra i log del tempo di ricarica
+  • [3] SystemPerformanceMonitor: Mostra i log delle prestazioni del sistema
+  • [4] DroneChargeMonitor: Mostra i log della carica dei droni
+  • [5] WaveCoverageMonitor: Mostra i log della copertura delle onde
 
 ----------------------
 
