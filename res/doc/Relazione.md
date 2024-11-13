@@ -104,8 +104,7 @@ Il sistema progettato è basato, come detto, su una delle tracce di progetto for
 > 4. Monitors per almeno tre proprietà funzionali
 > 5. Monitors per almeno due proprietà non-funzionali
 
-Il sistema si occupa quindi di verificare che ogni punto dell'area sia sorvegliato ogni cinque minuti, e, in caso
-contrario, segnala eventuali anomalie.
+Il sistema si occupa quindi di verificare che ogni punto dell'area sia sorvegliato ogni cinque minuti, e, in caso contrario, segnala eventuali anomalie.
 
 ## Modello concettuale ed illustrazione del sistema
 
