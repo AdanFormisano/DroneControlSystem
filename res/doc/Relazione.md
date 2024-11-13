@@ -1,5 +1,10 @@
-# Indice
+<div align="center">
+	<b style="font-size: 2.5em;">DroneControlSystem</b>
+	<br>
+	Adan Formisano 1813917 <br>Marco Castellani 1718187 <br>Rory Ucer 1934865<br>
+</div>
 
+# Indice
 - [Indice](#indice)
 - [DroneControlSystem](#dronecontrolsystem)
 	- [Esecuzione](#esecuzione)
