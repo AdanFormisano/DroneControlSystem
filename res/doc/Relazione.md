@@ -83,7 +83,7 @@ Il progetto possiede un `run.sh` che permette di eseguire il sistema in maniera 
 
 In alternativa è possibile effettuare `build` manualmente il utilizzando `cmake` e poi eseguire il binario generato.
 
-### Requisiti di esecuzione
+### Requisiti
 - PostgreSQL
 - [redis-plus-plus](https://github.com/sewenew/redis-plus-plus)
 

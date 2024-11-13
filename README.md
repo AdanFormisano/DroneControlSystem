@@ -19,18 +19,22 @@ Il progetto deve includere i seguenti componenti:
 4. Monitors per almeno tre proprietà funzionali
 5. Monitors per almeno due proprietà non funzionali
 
-## Dipendenze e software usato
-
-- [C++](https://isocpp.org/)
-- [PostgreSQL](https://www.postgresql.org/)
-- [redis-plus-plus](https://github.com/sewenew/redis-plus-plus)
-- [spdlog](https://github.com/gabime/spdlog)
-
 ## Main PDF
 
 Il documento ufficiale da cui è tratta la [Traccia progetto](#traccia-progetto) è
 fornito [qui](https://drive.google.com/drive/folders/1HCPIGL4mzhRJXjWQehEopvJYqsjLs2WF) dal
 prof [Enrico Tronci](https://corsidilaurea.uniroma1.it/it/users/enricotronciuniroma1it)
+
+## Esecuzione
+
+Il progetto possiede un `run.sh` che permette di eseguire il sistema in maniera semplice. Per eseguire il sistema, basta eseguire il comando `./run.sh` da terminale (lo script potrebbe richiedere i privilegi elevati per la creazione del database e del suo owner).
+
+In alternativa è possibile effettuare `build` manualmente il utilizzando `cmake` e poi eseguire il binario generato.
+
+### Requisiti
+
+- [PostgreSQL](https://www.postgresql.org/)
+- [redis-plus-plus](https://github.com/sewenew/redis-plus-plus)
 
 ## Relazione progetto
 
