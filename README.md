@@ -38,4 +38,4 @@ In alternativa è possibile effettuare `build` manualmente il utilizzando `cmake
 
 ## Relazione progetto
 
-La relazione del progetto è [qui](res/doc/Relazione.md)
+La relazione del progetto è [qui](res/doc/Relazione.md) in markdown, o in pdf tra gli altri file nella root dello zip.
