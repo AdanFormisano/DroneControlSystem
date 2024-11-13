@@ -224,7 +224,7 @@ int main() {
                         // std::cout << "Entire system duration: " << shutoff_duration << " ms" << std::endl;
 
                         std::this_thread::sleep_for(std::chrono::seconds(5));
-                        log_main("Exiting...");
+                        log_main("Finished. You can exit now or stay for logs");
                         // std::cout << "Exiting..." << std::endl;
 
                         close_logs();

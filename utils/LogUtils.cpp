@@ -187,8 +187,8 @@ void log_monitor(const std::string &message) {
 }
 
 void log_charge(const std::string &message) {
-    log_to_stream(charge_log, format_log_msg("ChargeMonitor", message));
-    log_monitor("[ChargeMonitor] " + message);
+    log_to_stream(charge_log, format_log_msg("DroneChargeMonitor", message));
+    log_monitor("[DroneChargeMonitor] " + message);
 }
 
 void log_wave_coverage(const std::string &message) {
@@ -207,8 +207,8 @@ void log_recharge(const std::string &message) {
 }
 
 void log_system(const std::string &message) {
-    log_to_stream(system_log, format_log_msg("SystemMonitor", message));
-    log_monitor("[SystemMonitor] " + message);
+    log_to_stream(system_log, format_log_msg("SystemPerformanceMonitor", message));
+    log_monitor("[SystemPerformanceMonitor] " + message);
 }
 
 // Funzioni di log con processi specifici
