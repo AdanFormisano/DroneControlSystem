@@ -66,7 +66,6 @@
 		- [Consumo anomalo](#consumo-anomalo)
 		- [Ricarica anomala](#ricarica-anomala)
 		- [Performance del sistema](#performance-del-sistema)
-- [Conclusione](#conclusione)
 
 # DroneControlSystem
 
@@ -1051,7 +1050,9 @@ Per verificare il corretto funzionamento del sistema, abbiamo tenuto conto di di
 
 Quando avviamo il sistema i componenti princiapli vengono creati e sincronizzati tra loro per poter avviare la simulazione. Successivamente, dopo la connessione al Database e alla creazione dell'onda, ci troviamo di fronte alla vista dei tick che scorrono ad indicare l'avvenuto avvio della simulazione.
 
-<img src="../med/log/00_system_start.png" alt="syst_start" style="zoom: 50%;" />
+<div align="center">
+	<img src="../med/log/00_system_start.png" alt="syst_start" style="zoom: 45%;" />
+</div>
 
 ### Vita completa dei droni
 
@@ -1081,16 +1082,18 @@ Per vedere che si sia verificato basta guardare l'output loggato di `drone_logs`
 
 Viene selezionato un drone casuale che "esplode" (o cessa di funzionare). Il suo stato viene impostato su `DEAD` da `ScannerManager`.
 
-| <img src="../med/log/02_drone_exploded.png" style="zoom: 60%;"> | <img src="../med/db/drone_exploded.png" style="zoom : 103%;"> |
-| --------------------------------------------------------------- | ---------------------------------------------------------------- |
-
+<div align="center">
+	<img src="../med/log/02_drone_exploded.png" style="zoom: 60%;">
+	<img src="../med/db/drone_exploded.png" style="zoom : 82.8%;">
+</div>
 
 ### Scenario _High consumption_
 
 Viene scelto un drone casuale e viene aumentato il suo consumo di energia (tra 1.5 e 2 volte rispetto al normale). `ScannerManager` imposta perciò il fattore di consumo elevato del drone.
-
-<img src="../med/log/03_drone_high_cons.png">
-<img src="../med/db/drone_charge_mon.png">
+<div align="center">
+	<img src="../med/log/03_drone_high_cons.png" style="zoom: 51.3%;">
+	<img src="../med/db/drone_charge_mon.png" style="zoom: 100%;">
+</div>
 
 ### Scenario _Charge rate malfunction_
 
@@ -1122,10 +1125,11 @@ Inoltre, fino a quando la prima onda non avrà terminato di lavorare, [AreaCover
 
 Per questa esecuzione del sistema che abbiamo deciso di analizzare, possiamo osservare come, a causa dell'input ricevuto da TestGenerator, il drone $1102$ abbia smesso di funzionare correttamente; quindi il monitor [WaveCoverageMonitor](#wavecoveragemonitor) giustamente riporta che dal tick $387$ al tick $636$ l'onda $1$ abbia avuto un drone che ha mancato la verifica dei propri punti.
 
-<img src="../med/log/02_drone_exploded.png">
-<img src="../med/db/drone_exploded1102.png">
-<img src="../med/db/drone_expl_mon_start.png">
-<img src="../med/db/drone_expl_mon_end.png">
+<div align="center">
+	<img src="../med/db/drone_exploded1102.png" style="zoom: 65%;">
+	<img src="../med/db/drone_expl_mon_start.png" style="zoom: 100%;">
+	<img src="../med/db/drone_expl_mon_end.png" style="zoom: 100%;">
+</div>
 
 
 ### Consumo anomalo
@@ -1135,21 +1139,26 @@ Come già esposto precedentemente, il TestGenerator può scegliere non solo qual
 Nel nostro caso il drone $512$ è stato scelto e come riportato dal monitor [ChargeDroneMonitor](#drone-charge) il drone ha avuto un consumo medio a tick di $0.153599$ con un fattore di $1.142511$ volte, rispetto ad un consumo normale. Ovviamente il fattore scelto dal TestGenerator risulta più alto rispetto a quello riportato dal monitor, questo perchè il drone ha avuto un numero significato di tick per cui il suo consumo non è stato anomalo, andando quindi ad abbassare il valore medio del suo fattore di consumo.
 
 Ci potrebbero essere casi in cui il drone nonostante il suo consumo anomale riesce a tornare alla base.
-<img src="../med/log/03_drone_high_cons.png">
-<img src="../med/db/drone_charge_mon.png">
+<div align="center">
+    <img src="../med/log/03_drone_high_cons.png" style="zoom: 51%;">
+    <img src="../med/db/drone_charge_mon.png">
+</div>
+
 
 ### Ricarica anomala
 Nel caso in cui un drone abbia un malfunzionamento durante la fase di ricarica, il monitor [RechargeTimeMonitor](#drone-recharge) riporterà un'anomalia nel tempo di ricarica. Ad esempio, il drone $4107$ ha avuto un tempo di ricarica fuori dal range prestabilito di $[2,3]\ h$ (la sua ricarica è durata $4669$ tick), il monitor registra il numero di tick e i minuti effettivi impiegati per la ricarica. Questo permette di identificare eventuali problemi nel processo di ricarica.
 
-<img src="../med/log/07_drone_recharge_mon.png">
-<img src="../med/db/drone_recharge_mon.png">
+<div align="center">
+    <img src="../med/log/07_drone_recharge_mon.png" style="zoom: 68%;">
+    <img src="../med/db/drone_recharge_mon.png">
+</div>
+
 
 ### Performance del sistema
 
 Come riportato dai monitor della copertura, alcuni droni (e quindi onde) non hanno correttamente verificato alcuni punti dell'area. Per questo [SystemPerformanceMonitor](#system-performance) ha riportato che per alcuni tick, come il $460$, un valore percentuale delle performace sotto il 100%, indicando che per quel tick non tutti i droni "a lavoro" hanno effettuato il loro compito di copertura.
 
-<img src="../med/db/drone_wv_perf_mon.png">
-<img src="../med/db/drone_perf_mon.png">
-
-# Conclusione
-GG <3
+<div align="center">
+    <img src="../med/db/drone_wv_perf_mon.png" style="zoom: 98%;">
+    <img src="../med/db/drone_perf_mon.png" style="zoom: 81.3%;">
+</div>
