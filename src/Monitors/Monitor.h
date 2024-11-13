@@ -61,8 +61,6 @@ private:
         int tick_n;
         int drone_id;
         std::string issue_type;
-        int X;
-        int Y;
     };
 
     std::vector<WaveVerification> getWaveVerification(); // wave_id, tick_n, drone_id

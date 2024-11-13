@@ -110,38 +110,38 @@ dead_drones AS (
     GROUP BY drone_id, wave_id
 ),
 drones_in_working_waves AS (
-    SELECT l.tick_n, l.wave_id, l.drone_id, l.status, l.checked, l.x, l.y, l.created_at
+    SELECT l.tick_n, l.wave_id, l.drone_id, l.status, l.checked, l.created_at
     FROM drone_logs l
     JOIN working_waves w ON l.tick_n = w.tick_n AND l.wave_id = w.wave_id
     WHERE l.created_at > $1
 ),
 working_unchecked_drones AS (
-    SELECT tick_n, wave_id, drone_id, x, y, created_at
+    SELECT tick_n, wave_id, drone_id, created_at
     FROM drones_in_working_waves
     WHERE status = 'WORKING' AND checked = FALSE
 ),
 dead_drones_in_still_working_waves AS (
-    SELECT w.tick_n, w.wave_id, d.drone_id, l.x, l.y, l.created_at
+    SELECT w.tick_n, w.wave_id, d.drone_id, l.created_at
     FROM dead_drones d
     JOIN working_waves w ON d.wave_id = w.wave_id AND w.tick_n > d.death_tick
     LEFT JOIN drone_logs l ON l.drone_id = d.drone_id AND l.wave_id = d.wave_id AND l.tick_n = d.death_tick
     WHERE l.created_at > $1
 ),
 disconnected_drones_in_working_waves AS (
-    SELECT tick_n, wave_id, drone_id, x, y, created_at
+    SELECT tick_n, wave_id, drone_id, created_at
     FROM drones_in_working_waves
     WHERE status = 'DISCONNECTED'
 )
 SELECT
-    'WORKING_UNCHECKED' AS issue_type, tick_n, wave_id, drone_id, x, y, created_at
+    'WORKING_UNCHECKED' AS issue_type, tick_n, wave_id, drone_id, created_at
 FROM working_unchecked_drones
 UNION ALL
 SELECT
-    'DIED_WHILE_WORKING' AS issue_type, tick_n, wave_id, drone_id, x, y, created_at
+    'DIED_WHILE_WORKING' AS issue_type, tick_n, wave_id, drone_id, created_at
 FROM dead_drones_in_still_working_waves
 UNION ALL
 SELECT
-    'DISCONNECTED' AS issue_type, tick_n, wave_id, drone_id, x, y, created_at
+    'DISCONNECTED' AS issue_type, tick_n, wave_id, drone_id, created_at
 FROM disconnected_drones_in_working_waves;
 )";
 
@@ -169,8 +169,8 @@ FROM disconnected_drones_in_working_waves;
             int wave_id = row["wave_id"].as<int>();
             int drone_id = row["drone_id"].as<int>();
             auto issue_type = row["issue_type"].as<std::string>();
-            int x = row["x"].as<int>();
-            int y = row["y"].as<int>();
+            // auto x = row["x"].as<float>();
+            // auto y = row["y"].as<float>();
             auto read_time = row["created_at"].as<std::string>();
 
             // Update lastProcessedTime to the maximum timestamp
@@ -179,7 +179,7 @@ FROM disconnected_drones_in_working_waves;
                 latest_processed_time = read_time;
             }
 
-            wave_not_verified.push_back({wave_id, tick_n, drone_id, issue_type, x, y});
+            wave_not_verified.push_back({wave_id, tick_n, drone_id, issue_type});
         }
     }
     return wave_not_verified;
