@@ -8,7 +8,7 @@
 - [Indice](#indice)
 - [DroneControlSystem](#dronecontrolsystem)
 	- [Esecuzione](#esecuzione)
-		- [Requisiti di esecuzione](#requisiti-di-esecuzione)
+		- [Requisiti](#requisiti)
 - [Descrizione generale](#descrizione-generale)
 	- [Fini del sistema](#fini-del-sistema)
 	- [Modello concettuale ed illustrazione del sistema](#modello-concettuale-ed-illustrazione-del-sistema)
